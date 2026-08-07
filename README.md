@@ -1,55 +1,113 @@
-# Mintlify Starter Kit
+# Calibri Knowledge Base
 
-Use the starter kit to get your docs deployed and ready to customize.
+Customer-facing documentation for Calibri, published with
+[Mintlify](https://mintlify.com) at **https://docs.calibri.io**.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+One site, two tabs:
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+| Tab | Content | Path |
+|---|---|---|
+| **Documentation** | The knowledge base — concepts, self-custody, resolution, legal | repo root |
+| **API Reference** | Base URLs, auth, errors, WebSocket, and (in progress) generated endpoint pages | `api-reference/` |
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+`calibripredict/api` is the outgoing **Slate** site. It stays live until the API
+Reference tab carries the full endpoint surface — see `OPENAPI_MIGRATION.md` in
+that repo.
 
-## AI-assisted writing
+<!-- If the account moves to Enterprise, `api-reference/` lifts out into its own
+repo and is re-attached with a `sourceRef` entry in the navigation below.
+Multi-repository deployments are Enterprise-only, which is why both tabs live
+here for now. -->
 
-Set up your AI coding tool to work with Mintlify:
+## Layout
+
+| Path | Purpose |
+|---|---|
+| `docs.json` | Mintlify config — theme, brand colours, navigation. A page not listed here is unreachable |
+| `*.mdx` | Content, one page per file |
+| `logo/`, `favicon.svg` | Brand assets |
+
+The homepage is `introduction.mdx` — the first page of the first group.
+
+## Editing
+
+Every page opens with frontmatter, and the `title` there is the page heading —
+do **not** add an `# H1` in the body:
+
+```mdx
+---
+title: "Fees"
+description: "One sentence that appears under the title and in search results."
+---
+```
+
+Internal links are root-absolute and **omit the extension**:
+
+```mdx
+See [Fees](/concepts/fees).
+```
+
+### Components
+
+Callouts:
+
+```mdx
+<Note>
+  A tip or aside.
+</Note>
+
+<Warning>
+  Something the reader must not get wrong.
+</Warning>
+```
+
+Sequences:
+
+```mdx
+<Steps>
+  <Step title="Create the passkey">
+    Body text.
+  </Step>
+</Steps>
+```
+
+Link grids, used for the "Related" / "Next steps" block at the foot of a page:
+
+```mdx
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    What trading costs.
+  </Card>
+</CardGroup>
+```
+
+MDX parses `{` and `}` as expressions and `<` as JSX. Keep braces and angle
+brackets inside code fences or inline code, or the build fails.
+
+## Preview locally
 
 ```bash
-npx skills add https://mintlify.com/docs
-```
-
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
-
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
 npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+`mint broken-links` checks internal links before you push.
 
-## Publishing changes
+## Publishing
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Published at **https://docs.calibri.io**. Mintlify's GitHub App watches `master`
+and deploys on push — there is no build step in this repo and no workflow file,
+so merging is the whole publish process.
 
-## Need help?
+The repo is **private**; the published site is **public**. Those are independent:
+making the repo private does not gate the site, and nothing here should be
+written on the assumption that it does.
 
-### Troubleshooting
+Branch is `master`, not `main` — check that in Mintlify's Git Settings if a push
+does not deploy.
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+## Adding a page
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+1. Create the `.mdx` file with `title` and `description` frontmatter.
+2. Add its path (no extension) to the right group in `docs.json`.
+3. Link it from a related page's `<CardGroup>` so it is reachable by reading, not just by nav.

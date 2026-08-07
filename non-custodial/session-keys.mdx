@@ -1,0 +1,100 @@
+---
+title: "Trading without a prompt per order"
+description: "Session keys — how a passkey wallet authorises one browser key to sign orders, what that key can and cannot do, and how to revoke it."
+---
+
+If you use a **passkey wallet**, every order is signed by your passkey — which
+means a Face ID, Touch ID, or PIN prompt each time you trade. That is fine for a
+deposit. It is exhausting for trading.
+
+A **session key** fixes it. You approve **once**, and orders sign silently after
+that.
+
+## What a session key is
+
+A session key is a **P-256 keypair generated inside your browser**, held
+non-extractably, that your passkey authorises your Safe to accept **for placing
+orders only**. Once it is unlocked, placing an order costs no prompt at all.
+
+It is deliberately narrow:
+
+| | |
+|---|---|
+| **Can** | Sign orders on the Calibri exchange |
+| **Cannot** | Withdraw. Redeem winnings. Change approvals. Add a Safe owner. Sign anything for any other contract |
+
+**The session key is not a Safe owner.** All it can do is make your Safe accept a
+Calibri order signature — and only when the exchange itself is the caller.
+Withdrawals and redemptions still require your passkey, always.
+
+<Note>
+  An unlocked session key is roughly equivalent to being logged in on any exchange: whoever holds the device can trade. The meaningful difference is that this one **provably cannot move your money out**, where a normal logged-in session usually can.
+</Note>
+
+## How to set one up
+
+<Steps>
+  <Step title="Unlock trading">
+    On the order form, choose **Unlock trading**. Your browser generates the
+    keypair and never releases the private half.
+  </Step>
+  <Step title="Approve with your passkey">
+    One Face ID / Touch ID / PIN prompt authorises the key on your Safe. This is
+    an on-chain authorisation; Calibri relays it and pays the gas.
+  </Step>
+  <Step title="Trade">
+    Orders now sign silently until the key expires, locks, or you revoke it.
+  </Step>
+</Steps>
+
+If your device or browser doesn't support passkeys, or the feature isn't enabled
+on this deployment, the app simply keeps prompting per order — the original
+behaviour, and always a valid fallback.
+
+## When it stops working
+
+Three separate things end a session, and they are not the same:
+
+| | What happens | What you do |
+|---|---|---|
+| **Idle lock** | After a period with no orders (**15 minutes** by default) the key drops out of memory | Unlock again — a single passkey prompt |
+| **Expiry** | Grants are issued for a fixed lifetime (**30 days** by default) | Authorise a new key |
+| **Revocation** | You revoke it deliberately | Authorise a new key |
+
+You can revoke **one** key or **all** of them at once. Revoke-all is the
+emergency path and works no matter how many keys exist.
+
+<Warning>
+  Revoking is immediate and **also cancels resting orders that key signed**. Expiry does not: an order signed while the key was live still settles normally even if the key has since expired. Expiry limits what can be *placed*, not what can be *settled* — otherwise a 30-day key would strand every longer-dated order it ever signed.
+</Warning>
+
+## Lost or stolen device
+
+Revoke the session key. It takes effect on-chain the moment it lands, and your
+funds were never reachable by that key in the first place — a session key cannot
+withdraw. Your passkey remains the only thing that can move money.
+
+## For API clients
+
+Session keys are a browser convenience. A server-side integration signing with
+an API key does not need one — see the
+[API Reference](/api-reference/introduction) for the session-key
+endpoints and the order-signature envelope if you are building your own client.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Your wallet options" href="/non-custodial/wallets">
+    Passkey wallet vs your own wallet.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    How an order is authorised and validated.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    What the Safe is and what can act on it.
+  </Card>
+  <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
+    Still passkey-only.
+  </Card>
+</CardGroup>
+

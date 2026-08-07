@@ -1,0 +1,73 @@
+---
+title: "Getting Started"
+description: "Create an account, set up your wallet, fund it, and place your first order — in one place."
+---
+
+This is the shortest path from zero to your first trade on Calibri. Four steps:
+**create an account**, **set up your wallet**, **fund it**, and **place an
+order**.
+
+<Steps>
+  <Step title="Create an account">
+    Sign up with an email address, or **Sign in with Ethereum (SIWE)** using a
+    wallet. Verify your email, then complete **KYC** if it's required in your
+    region — KYC can gate trading and withdrawals. See
+    [KYC verification](/account-kyc).
+  </Step>
+  <Step title="Set up your wallet">
+    Calibri is fully non-custodial, so your funds live in a Safe that only you
+    control. Set it up with a **passkey** (Face ID, Touch ID, or your device
+    PIN — nothing to install) or by **connecting a wallet** you already use. See
+    [Your wallet options](/non-custodial/wallets).
+  </Step>
+  <Step title="Fund it">
+    Calibri settles in **USDC** (a US-dollar stablecoin, 6 decimals). Send USDC
+    to your Safe's address and it becomes spendable for trading. See
+    [Funding your account](/wallet-deposits).
+  </Step>
+  <Step title="Place your first order">
+    Pick a market, choose **YES** or **NO**, and place a **limit** or **market**
+    order. Price is between `0.01` and `0.99` and reads as a probability — a YES
+    order at `0.60` means the market prices the outcome at ~60%. See
+    [Placing orders](/trading-placing-orders) and
+    [Core concepts](/concepts/core-concepts).
+  </Step>
+  <Step title="Watch it settle">
+    When the market resolves, **winning contracts pay the full 1.00 USDC per
+    share** and losing contracts pay `0`. There is **no fee at settlement** — the
+    only trading cost is the taker fee at the moment of the fill. You claim the
+    payout yourself; see [Redeeming winnings](/non-custodial/redeeming-winnings)
+    and [Fees](/concepts/fees).
+  </Step>
+</Steps>
+
+## What "non-custodial" means for you
+
+Calibri never holds your money. Your USDC sits in **your own 1-of-1 Gnosis
+Safe** on-chain, and only you can move it.
+
+- You **sign** every order. The operator relays it to the market and pays the gas, so signing costs you nothing.
+- You **redeem winnings yourself** after a market resolves — the payout is yours to claim, not Calibri's to release.
+- Your funds stay **withdrawable even if Calibri is offline**.
+
+<Note>
+  The trade-off is that self-custody is genuinely self-custody: nobody can recover your wallet for you. See [Your wallet options](/non-custodial/wallets) for how each setup handles that, and [Self-custody](/non-custodial/overview) for the full model.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Binary YES/NO markets, prices as probabilities, contracts, and settlement.
+  </Card>
+  <Card title="How prediction markets work" href="/how-prediction-markets-work">
+    The economics and intuition behind prediction markets.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The single taker fee and how it's computed.
+  </Card>
+  <Card title="Rewards" href="/concepts/rewards">
+    Maker rebates and referral rewards.
+  </Card>
+</CardGroup>
+

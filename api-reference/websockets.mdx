@@ -1,0 +1,166 @@
+---
+title: "WebSocket streams"
+description: "Real-time order book, candles, trades, underlying prices, and your own order/fill/balance updates — subscribed with stream query parameters on one connection."
+---
+
+The WebSocket gives near-real-time updates on the order book, live prices, and
+your own account. Public streams need no authentication; private streams are
+signed exactly like a REST request.
+
+```
+wss://calibri.io/api/v2/websocket/public     # public streams only
+wss://calibri.io/api/v2/websocket/private    # public + private on one connection
+```
+
+Subscribe by adding one or more `stream=` query parameters to the connection
+URL. You can combine as many as you like — including public and private together
+— so a client needs **one** connection, not several.
+
+```
+?stream=12.ob-inc&stream=order&stream=trade&stream=balance
+```
+
+Each message is a JSON object **keyed by the stream name**, so one handler can
+switch on the key:
+
+```json
+{ "12.ob-inc": { "asks": [], "bids": [["0.60","100"]], "sequence": 9713 } }
+```
+
+## Channel reference
+
+`{market}` is a market id; `{period}` a k-line period; `{symbol}` a Coinbase
+product id.
+
+| Stream | Auth | Payload |
+|---|---|---|
+| `{market}.ob-snap` | none | Full order-book snapshot, sent once on subscribe |
+| `{market}.ob-inc` | none | Order-book increments. Subscribing also delivers an initial `.ob-snap` |
+| `{market}.kline-{period}` | none | OHLC candle updates — `[ts, o, h, l, c, v]` |
+| `{market}.trades` | none | Public trade tape (matched contracts) |
+| `crypto.{symbol}` | none | Underlying-asset price ticks |
+| `order` | signed | Your order create / update / fill / cancel events |
+| `trade` | signed | Your own fills |
+| `balance` | signed | Your balance changes |
+
+<Warning>
+  Order-book increments carry a `sequence`. **If it skips, re-subscribe** to get a fresh `.ob-snap` and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
+</Warning>
+
+## Authenticating a private connection
+
+The upgrade request is HMAC-signed like any other `GET`, so the signed `path`
+must include the **full `?stream=…` query string**:
+
+```javascript
+const sign = require("./sign");
+
+const baseUrl = "wss://calibri.io/api/v2";
+const streams =
+  "?stream=12.ob-inc&stream=order&stream=trade&stream=balance";
+const path = `/websocket/private${streams}`;
+
+// Sign the full path, query string included.
+const headers = sign("GET", `/api/v2${path}`);
+const ws = new WebSocket(`${baseUrl}${path}`, { headers });
+```
+
+See [Authentication](/api-reference/authentication) for the canonical message.
+
+## Underlying price feed
+
+`?stream=crypto.{symbol}` republishes the venue a candle-direction market
+settles against, so the line a member watches and the price they are paid on
+cannot diverge.
+
+```json
+{
+  "crypto.BTC-USD": {
+    "product_id": "BTC-USD",
+    "price": 64231.7,
+    "timestamp": 1795000123,
+    "bucket_start": 1795000000,
+    "bucket_open": 64200.0,
+    "bucket_seconds": 300
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `price` | Latest price |
+| `timestamp` | Unix **seconds** — the same unit the historical endpoint uses, so history and live ticks concatenate directly |
+| `bucket_start` | Opening instant of the candle currently forming |
+| `bucket_open` | That candle's open — the level a candle-direction window is judged against |
+| `bucket_seconds` | Width of the forming candle |
+
+Throttled to roughly one message per second, newest-wins.
+
+<Note>
+  `bucket_open` is for **drawing**. Settlement reads the authoritative closed candle — see [How markets are resolved](/concepts/resolution-sources).
+</Note>
+
+## Private streams
+
+**Order** — every create, partial fill, full fill, cancel, and rejection:
+
+```json
+{
+  "order": {
+    "id": 173757,
+    "market": "12",
+    "side": "yes",
+    "ord_type": "limit",
+    "price": "0.60",
+    "state": "wait",
+    "origin_volume": "100",
+    "remaining_volume": "100",
+    "locked": "61.68",
+    "contracts_count": 0,
+    "created_at": "2026-08-07T08:46:59Z",
+    "updated_at": "2026-08-07T08:46:59Z"
+  }
+}
+```
+
+**Trade** — your own fills. **Balance** — changes to the pool collateralising
+your orders, i.e. the mirror of your Safe:
+
+```json
+{
+  "balance": {
+    "currency": "usdc",
+    "balance": "10000.00",
+    "locked": "61.68",
+    "available": "9938.32",
+    "updated_at": "2026-08-07T08:46:59Z"
+  }
+}
+```
+
+Balance values are strings — parse as decimals, not floats.
+
+<Warning>
+  **Settlement does not credit a winner automatically.** On-chain resolution only makes the winning outcome token redeemable; the balance moves when **you redeem**. Do not wait on a balance event at resolution time — see [Redeeming winnings](/non-custodial/redeeming-winnings).
+</Warning>
+
+Balance updates are triggered by order creation (locking stake **plus** the
+taker-fee reserve), cancellation, partial fills, rejection, redemption, and
+voids.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Authentication" href="/api-reference/authentication">
+    Signing the private upgrade request.
+  </Card>
+  <Card title="API overview" href="/api-reference/introduction">
+    Base URLs and conventions.
+  </Card>
+  <Card title="Recurring markets" href="/concepts/recurring-markets">
+    What the crypto feed is for, and what settles a window.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    Why a resting order locks more than its stake.
+  </Card>
+</CardGroup>

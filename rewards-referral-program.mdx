@@ -1,0 +1,72 @@
+---
+title: "Referral Program"
+description: "Refer traders and earn a share of the fees on their trades."
+---
+
+The referral program pays you a share of the **taker fee** on trades made by
+members you referred. It's one of the two reward types on Calibri — see
+[Rewards](/concepts/rewards) for the maker rebate and the shared payout mechanics.
+
+## How it works
+
+1. **You refer someone.** They join Calibri through your referral.
+2. **They trade as the taker.** Whenever a member you referred crosses the book
+   and pays a taker fee, you (the referrer) accrue a **percentage of that fee**.
+3. **You get paid.** Referral rewards accrue live and are paid out by the daily
+   sweep.
+
+The reward is tied to your referred members' **taker activity** — the side that
+takes liquidity and pays the fee — not their maker (resting-order) activity.
+
+<Note>
+  Because the reward is a share **of the taker fee**, a referred trade that pays **no** fee (for example at a very lopsided price — see [Fees](/concepts/fees)) generates **no** referral reward.
+</Note>
+
+## The rate
+
+Referral rates are **operator-set per market category and may be zero**. There is
+**no fixed referral percentage** baked into the product. The applicable rate is
+published in the rewards schedule and shown in-app — this page describes the
+mechanism, not the numbers.
+
+## How and when you're paid
+
+Referral rewards follow the same flow as every other reward (full detail in
+[Rewards](/concepts/rewards)):
+
+- **Accrue live.** Each qualifying referred trade records a **pending** referral
+  reward. Nothing moves for the reward at trade time — only the taker fee moves.
+- **Watch it grow.** Your pending total is readable in near-real-time; the rewards
+  response separates `maker` and `referral` amounts:
+  ```json
+  { "currency": "usdc", "total": "12.35", "maker": "10.00", "referral": "2.35" }
+  ```
+- **Daily payout.** A **daily sweep** pays out pending rewards, independent of
+  whether any market has resolved.
+- **Paid to your Safe.** Referral rewards are paid **on-chain to your Safe**. A
+  referrer with no registered Safe stays accrued until one exists, and amounts
+  below gas cost roll into the next sweep rather than being lost.
+
+## Voided markets
+
+If a referred trade's market is **voided**, the trade is fully refunded (stake +
+taker fee). Referral rewards that are still **pending** for it are removed;
+referral rewards already **paid** are **not clawed back** — you keep them.
+
+## Track your referrals
+
+Your referral earnings — pending and paid — are visible in-app and via the API's
+rewards endpoints (see the
+[API Reference](/api-reference/introduction)).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Rewards" href="/concepts/rewards">
+    Maker rebates, the daily sweep, and payout mechanics.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The taker fee that funds every referral reward.
+  </Card>
+</CardGroup>
+

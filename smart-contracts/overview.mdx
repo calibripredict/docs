@@ -1,0 +1,82 @@
+---
+title: "Smart Contracts"
+description: "The on-chain contracts behind non-custodial trading — USDC, ConditionalTokens (CTF), the CTF Exchange, CalibriResolver, and your per-member Gnosis Safe — and how to verify the live addresses."
+---
+
+Trading on Calibri runs on a **Conditional Token Framework (CTF)** deployment on
+**Polygon**. Every contract is public and verifiable — you never have to trust
+that funds are where we say they are, because you can check on-chain. This page
+explains each contract's role in plain language; the
+[deployed addresses](/smart-contracts/deployed-addresses) page has the live
+values and how to verify them.
+
+<Note>
+  Every trade on Calibri settles against these contracts — see [Self-custody](/non-custodial/overview) for how a signed order becomes an on-chain position.
+</Note>
+
+## The contracts and what they do
+
+| Contract | Plain-English role |
+|---|---|
+| **USDC (collateral)** | The stablecoin that backs every position. Deposits, stakes, fees, winnings, and rewards are all in USDC (6 decimals). |
+| **ConditionalTokens (CTF)** | Gnosis' audited framework. It **holds the collateral** and mints the **YES / NO outcome tokens** for each market. At resolution, winning tokens **redeem for USDC directly from the CTF** — funds live here, not with the operator. |
+| **CTF Exchange** | Where signed non-custodial orders are matched and executed on-chain. Its name is baked into the EIP-712 signing domain per brand, so your wallet signs against **your** exchange. |
+| **CalibriResolver** | The **oracle** that reports each market's outcome to the CTF. It can **only report** outcomes — it **cannot take or freeze funds** — and it has trustless fallbacks (see below). |
+| **Your Gnosis Safe (1-of-1)** | Your own smart-contract wallet — the **funds source and order maker**. Owned solely by your wallet; the operator only **deploys it and relays your signed actions**, paying gas. You always sign. |
+
+## What "non-custodial" actually guarantees
+
+- **You hold the funds** — Your USDC sits in **your own 1-of-1 Safe**. Only your wallet can authorize a move. The operator can never move funds without your signature.
+- **The operator can only report** — CalibriResolver reports outcomes; it can't seize collateral. Redemption of winnings happens **directly from the CTF**, so your winnings are never custodied by the operator between resolution and redeem.
+- **You sign, the operator pays gas** — Deploying your Safe, approvals, order settlement, and redemption are all **relayed** by the operator. You sign; you never need to hold gas.
+- **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or refunds. See [Market resolution](/non-custodial/resolution).
+
+## Verifying and interacting on-chain
+
+As a non-custodial user you can independently verify every contract and, if you
+want, interact with them directly:
+
+- **Read the code and balances** on the network's block explorer.
+- **Check your Safe** holds the USDC you deposited.
+- **Redeem winnings** yourself by signing a Safe transaction that the operator
+  relays — see [Redeeming winnings](/non-custodial/redeeming-winnings).
+
+## Where the live addresses come from
+
+<Warning>
+  **Never hard-code contract addresses.** Addresses are **per-deployment** — they differ by network and by brand, and local/testnet addresses are throwaway. The app reads them from the API for exactly this reason, and so should you.
+</Warning>
+
+The **canonical, deployment-correct source** for every address you need is the
+CTF-config API:
+
+- **`GET /api/v2/atlas/account/wallet`** — your member-level
+  funding config: `exchange_address`, `conditional_tokens_address`,
+  `usdc_address`, `chain_id`, `blockchain_key`, `domain_name` (the exchange's
+  EIP-712 domain), your `proxy_address` (your Safe), `owner_address` (the owning
+  wallet), and `signature_type`.
+- **`GET /api/v2/atlas/account/wallet/markets/:id`** — everything
+  above **plus** the market-specific `condition_id`, `yes_token_id`, and
+  `no_token_id`.
+
+These endpoints are the source of truth. The [Deployed
+addresses](/smart-contracts/deployed-addresses) page lists the live mainnet
+values and walks through verifying each one on the explorer.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    Deploy, fund, and make your Safe trade-ready.
+  </Card>
+  <Card title="Deployed addresses" href="/smart-contracts/deployed-addresses">
+    Per-network address table and explorer link patterns.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    The EIP-712 domain and order struct you sign.
+  </Card>
+  <Card title="Resolution & recovery" href="/non-custodial/resolution">
+    Operator → UMA → deadman void.
+  </Card>
+</CardGroup>
+

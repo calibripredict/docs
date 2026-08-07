@@ -1,0 +1,206 @@
+---
+title: "Signed orders (EIP-712)"
+description: "Build, sign, and place a non-custodial order — the EIP-712 Order domain and struct, 6-decimal unit rules, and the atlas order endpoint."
+---
+
+A non-custodial order is a standard limit order **authorized by an EIP-712
+signature**. You build the typed `Order`, sign it with your EOA, and post it to
+atlas, which validates the signature and relays the order to the engine. The
+resting order locks your [`locked_safe`](/non-custodial/balances) pool.
+
+<Note>
+  Orders are **placed** through atlas so the signature can be validated and attached. They are **read** back from the engine at `GET /api/v2/pythia/orders`. Posting an unsigned order directly to the engine is not a supported path — every order on Calibri carries your signature.
+</Note>
+
+## 1. Read the market's CTF config
+
+**`GET /api/v2/atlas/account/wallet/markets/:id`**
+
+Returns your funding config plus the market's `condition_id`, `yes_token_id`, and `no_token_id`. Returns `404` if the market is custodial-only (not CTF-registered).
+
+The config gives you every value needed to build and sign the order:
+`exchange_address`, `chain_id`, `domain_name`, `proxy_address` (your Safe / the
+maker), `owner_address` (what owns the Safe), `signature_type`,
+`session_keys_enabled`, `safe_status`, and the token ids.
+
+<Note>
+  The YES/NO token ids are also published on the **public** market payload as `ctf_yes_token_id` / `ctf_no_token_id`, so a client that already holds a market can build an order without a per-market authenticated call.
+</Note>
+
+<Warning>
+  Check `safe_status` before signing. `setup_required` means approvals are still outstanding: an order placed then will **rest on the book and then fail to settle**, which is worse than being rejected. Only `ready` is safe to trade on.
+</Warning>
+
+<Warning>
+  `domain_name` is **served, not hard-coded** — it is this deployment's EIP-712 domain name (default legacy value `"Polymarket CTF Exchange"`). You **must** sign with the served value or the signature will not recover.
+</Warning>
+
+## 2. The EIP-712 domain
+
+```
+name:              domain_name       (from ctf-config)
+version:           "1"
+chainId:           chain_id          (from ctf-config)
+verifyingContract: exchange_address  (from ctf-config)
+```
+
+## 3. The Order struct
+
+EIP-712 field names are camelCase:
+
+```
+Order(
+  uint256 salt,
+  address maker,          // your Safe (POLY_GNOSIS_SAFE / POLY_1271) or EOA (EOA-direct)
+  address signer,         // your wallet EOA — or the Safe itself, for POLY_1271
+  address taker,          // 0x0 (public)
+  uint256 tokenId,        // YES or NO ERC-1155 token id for the order side
+  uint256 makerAmount,    // USDC collateral in, 6-decimal base units
+  uint256 takerAmount,    // outcome tokens out, 6-decimal base units
+  uint256 expiration,     // unix seconds, non-zero
+  uint256 nonce,
+  uint256 feeRateBps,     // must be 0
+  uint8   side,           // 0 = BUY (both YES and NO legs are BUYs that mint)
+  uint8   signatureType   // 2 = POLY_GNOSIS_SAFE, 3 = POLY_1271, 0 = EOA
+)
+```
+
+<Info>
+  YES vs NO is carried **only** by `tokenId`. `side` is always `0` (BUY) — both legs are buys that mint a complete set.
+</Info>
+
+### Signature types
+
+Which type applies depends on **what owns your Safe**. The `signature_type`
+returned by `ctf-config` tells you, so you never have to infer it:
+
+| Type | Owner of the Safe | `maker` / `signer` | How it is signed |
+|---|---|---|---|
+| `2` — `POLY_GNOSIS_SAFE` | Your wallet address (EOA) | `maker` = Safe, `signer` = your EOA | Your wallet signs the typed data; the exchange ECDSA-recovers `signer` and requires `getSafeAddress(signer) == maker` |
+| `3` — `POLY_1271` | A passkey signer contract | `maker` = `signer` = **the Safe** | A WebAuthn assertion, wrapped as an EIP-1271 contract signature and validated on-chain |
+| `0` — `EOA` | — (no Safe) | Both your EOA | Direct EOA signing; a fallback path |
+
+<Warning>
+  For `POLY_1271` the exchange does **no address derivation** — it requires `signer == maker`, that `maker` has code, and that `isValidSignatureNow(maker, hash, sig)` passes. That is exactly what allows a *contract* to own the Safe. A passkey order sent as type `2` cannot work: that path ECDSA-recovers a key which does not exist.
+</Warning>
+
+For types `2` and `0` the signature is your **EOA** signing the typed data above.
+For type `3` there is no EOA key at all — see
+[Your wallet options](/non-custodial/wallets).
+
+### Type 3: passkey signature or session-key envelope
+
+A `POLY_1271` order carries one of **two** signature shapes, and the server tells
+them apart by length alone — never by a client-supplied flag:
+
+| Shape | Content |
+|---|---|
+| **Passkey** | The WebAuthn assertion, wrapped as a Safe contract signature. Long |
+| **Session key** | `abi.encode(uint256 keyId, bytes32 r, bytes32 s)` — exactly **96 bytes** (`0x` + 192 hex chars) |
+
+The grant id is read out of the envelope's first word, so a client cannot name a
+live grant while signing with an expired key. A session-signed order is
+additionally checked against its grant's expiry at intake; an expired or revoked
+grant is rejected with `422 Your trading key has expired or been revoked —
+approve with your passkey`.
+
+See [Trading without a prompt per order](/non-custodial/session-keys).
+
+## 4. Amount and unit rules
+
+`CTF_UNIT_SCALE = 1_000_000`. USDC and CTF outcome tokens are **both
+6-decimal** — 1 contract = 1 outcome token = `1e6` base units.
+
+- `takerAmount == round(volume * 1e6)` exactly.
+- `makerAmount == round(legPrice * volume * 1e6)`, where **`legPrice` is the
+  order's own side price** — a NO order signs the NO's own price, **not** an
+  inverted YES probability.
+- The implied price `makerAmount / takerAmount` must equal `price` within
+  `1e-4`.
+
+**Example** — buy 100 YES contracts at `0.60`:
+
+| Field | Value |
+|---|---|
+| `takerAmount` | `100000000` (100 × 1e6) |
+| `makerAmount` | `60000000` (0.60 × 100 × 1e6) |
+| implied price | `60000000 / 100000000 = 0.60` ✓ |
+
+## 5. Sign and build the wire object
+
+Sign the typed data with your EOA key
+(`wallet.signTypedData(domain, { Order: [...] }, order)`), then assemble the
+`signed_order` wire object (snake_case). **Every big-integer field is a decimal
+string** — including `fee_rate_bps`; `side` and `signature_type` are numbers:
+
+```json
+{
+  "salt": "3040…",
+  "maker": "0x… (Safe)",
+  "signer": "0x… (EOA)",
+  "taker": "0x0000000000000000000000000000000000000000",
+  "token_id": "123…",
+  "maker_amount": "60000000",
+  "taker_amount": "100000000",
+  "expiration": "1795000000",
+  "nonce": "0",
+  "fee_rate_bps": "0",
+  "side": 0,
+  "signature_type": 2,
+  "signature": "0x…"
+}
+```
+
+## 6. Place the order
+
+**`POST /api/v2/atlas/account/orders`**
+
+Places a non-custodial (signed) order. Atlas validates the `signed_order`, relays it to the engine as an orchestrated order (`custody = "self"`), and attaches the signature to the order record. Returns the engine order object, `201`.
+
+Request body:
+
+```json
+{
+  "market": "will-x-happen",
+  "side": "yes",
+  "ord_type": "limit",
+  "price": "0.60",
+  "volume": "100",
+  "post_only": false,
+  "signed_order": { "…the object from step 5…": "" }
+}
+```
+
+If attaching the signature fails, atlas cancels the engine order so no unsignable
+orphan is left behind.
+
+### Server-side validation
+
+Atlas fully validates the signed order before anything is placed, rejecting with
+`422` unless:
+
+- it is a **limit** order with a valid side and `price ∈ (0, 1)`;
+- the market is CTF-registered and `token_id` matches the side's token;
+- `side == 0`, `taker == 0x0`, `fee_rate_bps == 0`;
+- `expiration` is non-zero, unexpired, and within 365 days;
+- amounts match the volume and price (see the unit rules above);
+- the maker is a Safe **registered to you** and settlement-ready;
+- for types `2` / `0`, `signer` equals your member EOA and the **signature
+  ECDSA-recovers to `signer`**;
+- for type `3`, `signer == maker` and the **Safe itself verifies the signature**
+  (EIP-1271) — plus, for a session-key envelope, the grant is still within its
+  expiry.
+
+A check that cannot be completed — blockchain service unreachable, Safe
+readiness unknown — **fails closed**: the order is rejected rather than placed
+unverified.
+
+Common errors: `422 signed_order with signature is required for non-custodial
+orders`, `422 Member safe is not settlement-ready`, `422 signed_order signature
+does not match the signer`. Engine `4xx` responses are passed through; upstream
+failures return `502`.
+
+## Related
+
+- [The Safe](/non-custodial/the-safe) — make the Safe trade-ready before signing
+- [Redeeming winnings](/non-custodial/redeeming-winnings) — claim payouts after a market resolves

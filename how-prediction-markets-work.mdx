@@ -1,0 +1,110 @@
+---
+title: "How Prediction Markets Work"
+description: "The intuition and economics behind trading on real-world outcomes."
+---
+
+Prediction markets let people trade contracts whose payout depends on the outcome
+of a real-world event. The price of a contract reflects the crowd's collective
+estimate of how likely that outcome is. This page covers the intuition; for the
+precise mechanics on Calibri, see [Core Concepts](/concepts/core-concepts).
+
+## Contracts and price
+
+Every Calibri market is **binary**: it resolves to **YES** or **NO**. There are
+two contracts per market:
+
+- A **YES contract** pays **1.00 USDC** if the outcome is YES, and **0** if NO.
+- A **NO contract** pays **1.00 USDC** if the outcome is NO, and **0** if YES.
+
+A contract's price is always between `0.01` and `0.99` and reads directly as a
+probability. Because YES and NO are the two halves of the same question, their
+prices always sum to **1.00** — if YES is `0.60`, NO is `0.40`.
+
+You take a view by **buying the side you believe in**. Buying YES profits if the
+event happens; buying NO profits if it doesn't. (Buying NO at `0.40` is the mirror
+image of exiting a YES position at `0.60` — the same economic bet.)
+
+## A worked example
+
+Suppose a market asks *"Will Candidate X win the election?"* and YES is trading at
+`0.58` — the market thinks there's a ~58% chance.
+
+If you think the market is **underestimating** X's chances:
+
+- You buy **100 YES** contracts at `0.58`, costing **58.00 USDC**.
+- If X wins, each contract pays **1.00 USDC** → you receive **100.00 USDC**.
+- Your profit is **42.00 USDC**.
+
+If you think the market is **overestimating** X:
+
+- You buy **100 NO** contracts at `0.42`, costing **42.00 USDC**.
+- If X loses, each NO contract pays **1.00 USDC** → you receive **100.00 USDC**.
+- Your profit is **58.00 USDC**.
+
+If the outcome goes against you, the losing contracts pay **0** and your loss is
+limited to what you paid. Your maximum loss on any position is known upfront: the
+cost of the contracts.
+
+## Why prices move
+
+Prices change as new information arrives and as traders update their views. Say a
+market prices a company's earnings beat at `0.60`. If the company then reports
+strong results, buyers push the YES price up toward `0.75`; anyone who bought
+earlier at `0.60` now holds contracts worth more, and can sell to lock in the
+gain rather than wait for settlement.
+
+This is the core of trading a prediction market: **you profit from being right
+about the price, not only from the final outcome.** You can enter when you think a
+side is mispriced and exit once the price moves your way.
+
+## What keeps prices honest
+
+Prediction-market prices tend to track true probabilities because of a few forces:
+
+- **Real stakes.** People with money on the line tend to price more carefully than
+  people answering a poll.
+- **The YES + NO = 1.00 identity.** If the two sides ever drift away from summing
+  to 1.00, the mismatch is an opportunity that traders quickly close — pulling
+  prices back into line.
+- **Continuous updating.** Prices adjust the moment new information appears, rather
+  than waiting for a scheduled forecast.
+
+The result is a live, market-implied probability for each event that updates in
+real time.
+
+## Settlement
+
+When a market resolves, each contract pays out automatically:
+
+```
+Winning side  → 1.00 USDC per share
+Losing side   → 0
+```
+
+The winner collects the full pot — their own stake plus the loser's. There is **no
+fee at settlement or redemption**; your only trading cost is the taker fee at the
+moment your order fills (see [Fees](/concepts/fees)). Winners redeem their payout
+on-chain themselves.
+
+If a market can't be resolved fairly it is **voided**: every position is refunded
+its collateral and the taker fee is returned, so nobody wins or loses. For how
+markets resolve on-chain — including the escalation ladder and the deadman
+fallback — see [Market resolution](/non-custodial/resolution).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Binary markets, the combined order book, contracts, and lifecycle.
+  </Card>
+  <Card title="Placing orders" href="/trading-placing-orders">
+    How to actually place a limit or market order and read your position.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The single taker fee and how it's computed.
+  </Card>
+  <Card title="Getting started" href="/getting-started/overview">
+    Open an account, fund it, and place your first trade.
+  </Card>
+</CardGroup>
+

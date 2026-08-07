@@ -1,0 +1,596 @@
+components:
+  schemas:
+    CurrentUserEntity:
+      properties:
+        base_currency_id:
+          example: 'usdc'
+          type: 'string'
+        can_change_password:
+          example: true
+          type: 'boolean'
+        can_link_wallet:
+          example: false
+          type: 'boolean'
+        email:
+          example: 'alex@example.com'
+          type: 'string'
+        entity_type:
+          enum:
+            - 'individual'
+            - 'business'
+          example: 'individual'
+          type: 'string'
+        id:
+          example: 4821
+          type: 'number'
+        is_withdrawal_hold_exempt:
+          example: false
+          type: 'boolean'
+        kyc:
+          $ref: '#/components/schemas/KycStatusEntity'
+          description: 'The verification checklist, computed from labels and level. Level 3 and above reads as verified unless a step is explicitly marked required.'
+        labels:
+          description: 'Public labels only.'
+          items:
+            $ref: '#/components/schemas/LabelEntity'
+          type: 'array'
+        level:
+          example: 2
+          type: 'number'
+        otp:
+          example: true
+          type: 'boolean'
+        referral_code:
+          example: 'CAL7X2QM'
+          type:
+            - 'string'
+            - 'null'
+        role:
+          example: 'member'
+          type: 'string'
+        source_of_funds:
+          description: 'Read off the profile, not the user row.'
+          example: 'salary'
+          type:
+            - 'string'
+            - 'null'
+        state:
+          enum:
+            - 'pending'
+            - 'active'
+            - 'banned'
+            - 'deleted'
+          example: 'active'
+          type: 'string'
+        uid:
+          example: 'ID1A2B3C4D5E'
+          type: 'string'
+        username:
+          example: null
+          type:
+            - 'string'
+            - 'null'
+        wallet_address:
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'id'
+        - 'uid'
+        - 'email'
+        - 'role'
+        - 'base_currency_id'
+        - 'level'
+        - 'otp'
+        - 'state'
+        - 'entity_type'
+        - 'is_withdrawal_hold_exempt'
+        - 'labels'
+        - 'kyc'
+        - 'can_change_password'
+        - 'can_link_wallet'
+      type: 'object'
+    EmailConfirmRequest:
+      properties:
+        token:
+          description: 'From the confirmation email.'
+          example: 'eyJhbGciOi…'
+          type: 'string'
+      required:
+        - 'token'
+      type: 'object'
+    KycItemEntity:
+      properties:
+        position:
+          description: 'Display order, 1–11. Stable, so a client can render the checklist in sequence.'
+          example: 7
+          type: 'number'
+        status:
+          description: 'One of `available`, `pending`, `verified`, `rejected`, `required`, `not_available`. `not_available` means the step does not apply to your account type — it is not a step you can complete.'
+          enum:
+            - 'available'
+            - 'pending'
+            - 'verified'
+            - 'rejected'
+            - 'required'
+            - 'not_available'
+          example: 'verified'
+          type: 'string'
+      required:
+        - 'status'
+        - 'position'
+      type: 'object'
+    KycStatusEntity:
+      properties:
+        document:
+          $ref: '#/components/schemas/KycItemEntity'
+        email:
+          $ref: '#/components/schemas/KycItemEntity'
+        liveness:
+          $ref: '#/components/schemas/KycItemEntity'
+        occupation_profile:
+          $ref: '#/components/schemas/KycItemEntity'
+          description: 'Inherits the `profile` status unless specifically marked required.'
+        pep:
+          $ref: '#/components/schemas/KycItemEntity'
+          description: 'Politically-exposed-person screening.'
+        phone:
+          $ref: '#/components/schemas/KycItemEntity'
+        profile:
+          $ref: '#/components/schemas/KycItemEntity'
+        proof_of_address:
+          $ref: '#/components/schemas/KycItemEntity'
+        selfie:
+          $ref: '#/components/schemas/KycItemEntity'
+        source_of_funds:
+          $ref: '#/components/schemas/KycItemEntity'
+        source_of_funds_profile:
+          $ref: '#/components/schemas/KycItemEntity'
+          description: 'Inherits the `profile` status unless specifically marked required.'
+      required:
+        - 'email'
+        - 'phone'
+        - 'profile'
+        - 'occupation_profile'
+        - 'source_of_funds_profile'
+        - 'pep'
+        - 'document'
+        - 'selfie'
+        - 'liveness'
+        - 'proof_of_address'
+        - 'source_of_funds'
+      type: 'object'
+    LabelEntity:
+      properties:
+        created_at:
+          example: '2026-07-01T09:12:00Z'
+          type: 'string'
+        key:
+          description: 'What was checked — `email`, `phone`, `document`, `profile`, `selfie`.'
+          example: 'document'
+          type: 'string'
+        scope:
+          description: 'Only `public` labels are returned to you; `private` ones are operator-side.'
+          example: 'public'
+          type: 'string'
+        updated_at:
+          example: '2026-07-02T14:30:00Z'
+          type: 'string'
+        value:
+          description: 'Where it got to: `verified`, `pending`, `rejected`, `required`, `drafted`.'
+          example: 'verified'
+          type: 'string'
+      required:
+        - 'key'
+        - 'value'
+        - 'scope'
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
+    MessageEntity:
+      properties:
+        message:
+          description: 'Human-readable confirmation. The operation succeeded if the status is 2xx.'
+          example: 'Password was reset'
+          type: 'string'
+      required:
+        - 'message'
+      type: 'object'
+    PasswordResetConfirmRequest:
+      properties:
+        confirm_password:
+          description: 'Must equal `password` exactly; the server rejects a mismatch.'
+          example: 'a new passphrase'
+          type: 'string'
+        password:
+          example: 'a new passphrase'
+          type: 'string'
+        reset_password_token:
+          description: 'From the emailed link.'
+          example: 'eyJhbGciOi…'
+          type: 'string'
+      required:
+        - 'reset_password_token'
+        - 'password'
+        - 'confirm_password'
+      type: 'object'
+    PasswordResetRequest:
+      properties:
+        captcha_response:
+          example: '0.AbCdEf…'
+          type: 'string'
+        email:
+          description: 'Always answers 2xx, whether or not an account exists — otherwise the endpoint enumerates registered addresses. Note that wallet-native and Apple private-relay addresses cannot receive the mail.'
+          example: 'alex@example.com'
+          type: 'string'
+      required:
+        - 'email'
+      type: 'object'
+    PasswordUpdateRequest:
+      properties:
+        new_password:
+          example: 'a new passphrase'
+          type: 'string'
+        old_password:
+          description: 'Verified against the stored hash before anything changes.'
+          example: 'correct horse battery staple'
+          type: 'string'
+      required:
+        - 'old_password'
+        - 'new_password'
+      type: 'object'
+    RegisterRequest:
+      properties:
+        captcha_response:
+          example: '0.AbCdEf…'
+          type: 'string'
+        data:
+          description: 'Free-form signup metadata, as a JSON *string*.'
+          example: '{"campaign":"launch"}'
+          type: 'string'
+        email:
+          example: 'alex@example.com'
+          type: 'string'
+        password:
+          example: 'correct horse battery staple'
+          type: 'string'
+        refid:
+          description: 'The referrer''s code, if the signup came through a referral link.'
+          example: 'CAL7X2QM'
+          type: 'string'
+      required:
+        - 'email'
+        - 'password'
+      type: 'object'
+    UserEntity:
+      properties:
+        advisor_id:
+          example: null
+          type:
+            - 'number'
+            - 'null'
+        advisory_id:
+          example: null
+          type:
+            - 'number'
+            - 'null'
+        aggregator_merchant_user_id:
+          example: null
+          type:
+            - 'string'
+            - 'null'
+        base_currency_id:
+          example: 'usdc'
+          type: 'string'
+        can_change_password:
+          description: 'Whether the old→new password change flow applies. False for wallet-native and social accounts, which carry a random password the holder never set.'
+          example: true
+          type: 'boolean'
+        can_link_wallet:
+          description: 'Whether no wallet is linked yet, so the connect flow should be offered.'
+          example: false
+          type: 'boolean'
+        created_at:
+          example: '2026-07-01T09:12:00Z'
+          type: 'string'
+        data:
+          additionalProperties:
+            type: 'string'
+          description: 'Free-form account data.'
+          example: {}
+          type: 'object'
+        email:
+          example: 'alex@example.com'
+          type: 'string'
+        entity_type:
+          enum:
+            - 'individual'
+            - 'business'
+          example: 'individual'
+          type: 'string'
+        level:
+          description: 'Verification level, 0–3. Trading gates are expressed against this.'
+          example: 2
+          type: 'number'
+        member_id:
+          description: 'The trading identity in atlas. Null until one is provisioned.'
+          example: 4821
+          type:
+            - 'number'
+            - 'null'
+        otp:
+          description: 'Whether 2FA is enabled. A boolean, not the secret.'
+          example: true
+          type: 'boolean'
+        parent_user_id:
+          example: null
+          type:
+            - 'number'
+            - 'null'
+        referral_code:
+          example: 'CAL7X2QM'
+          type:
+            - 'string'
+            - 'null'
+        referral_link:
+          example: 'https://calibri.io/?ref=CAL7X2QM'
+          type:
+            - 'string'
+            - 'null'
+        role:
+          example: 'member'
+          type: 'string'
+        state:
+          enum:
+            - 'pending'
+            - 'active'
+            - 'banned'
+            - 'deleted'
+          example: 'active'
+          type: 'string'
+        uid:
+          description: 'The public account identifier.'
+          example: 'ID1A2B3C4D5E'
+          type: 'string'
+        updated_at:
+          example: '2026-07-02T14:30:00Z'
+          type: 'string'
+        user_id:
+          example: 4821
+          type: 'number'
+        wallet_address:
+          description: 'The linked EOA, if any. Null for accounts that have not linked a wallet.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'email'
+        - 'uid'
+        - 'user_id'
+        - 'role'
+        - 'entity_type'
+        - 'base_currency_id'
+        - 'level'
+        - 'otp'
+        - 'state'
+        - 'can_change_password'
+        - 'can_link_wallet'
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
+    WalletLinkRequest:
+      properties:
+        message:
+          description: 'The signed SIWE message, exactly as returned by /sessions/web3/nonce.'
+          example: 'Sign in to Calibri: 8f21c4a9e0b7'
+          type: 'string'
+        signature:
+          description: 'The signature over `message`.'
+          example: '0x7b21…'
+          type: 'string'
+      required:
+        - 'message'
+        - 'signature'
+      type: 'object'
+    WalletLinkedEntity:
+      properties:
+        wallet_address:
+          description: 'The EOA now attached to the account. It is also written into the session, so the next request carries it as a JWT claim.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type: 'string'
+      required:
+        - 'wallet_address'
+      type: 'object'
+  securitySchemes:
+    apiKey:
+      description: 'HMAC-signed API key. Send X-Auth-Apikey, X-Auth-Nonce and X-Auth-Signature.'
+      in: 'header'
+      name: 'X-Auth-Apikey'
+      type: 'apiKey'
+info:
+  description: 'Account reads and wallet linking for machine integrations.
+
+
+    Browser sign-in, API-key minting, 2FA setup and KYC submission are
+
+    product-UI flows and are not published here. HMAC auth for private
+
+    requests is documented in the knowledge base. This service establishes
+
+    WHO you are — it does not hold funds and cannot move them.'
+  title: 'Calibri Identity'
+  version: '1.0.0'
+openapi: '3.1.0'
+paths:
+  /api/v2/persona/identity/users:
+    post:
+      description: 'Signs up with email and password. The account starts at level 0 in `pending` and receives a confirmation email — confirm before signing in to trade. Optional referral code is accepted at signup.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+          description: ''
+      security: []
+      summary: 'Create an account'
+      tags:
+        - 'Account'
+  /api/v2/persona/identity/users/email/confirm_code:
+    post:
+      description: 'Consumes the emailed confirmation token, stamps the email as verified, and moves the account to `active` so trading and verification steps can proceed.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailConfirmRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEntity'
+          description: ''
+      security: []
+      summary: 'Confirm an email address'
+      tags:
+        - 'Account'
+  /api/v2/persona/identity/users/email/generate_code:
+    post:
+      description: 'Issues a fresh confirmation link for an account that has not confirmed yet. Fails if the email is already verified.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEntity'
+          description: ''
+      security: []
+      summary: 'Resend the confirmation email'
+      tags:
+        - 'Account'
+  /api/v2/persona/identity/users/me:
+    get:
+      description: 'The signed-in member. Narrower than `/resource/users/me`, which additionally returns the verification checklist.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEntity'
+          description: ''
+      security: []
+      summary: 'Current account'
+      tags:
+        - 'Account'
+  /api/v2/persona/identity/users/password/confirm_code:
+    post:
+      description: 'Consumes the emailed one-time token and sets the new password. Tokens are single-use and expire; a reused or stale token returns a validation error.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEntity'
+          description: ''
+      security: []
+      summary: 'Confirm a password reset'
+      tags:
+        - 'Account'
+  /api/v2/persona/identity/users/password/generate_code:
+    post:
+      description: 'Emails a reset link. Answers 2xx whether or not the address is registered — a distinguishable response would enumerate accounts.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEntity'
+          description: ''
+      security: []
+      summary: 'Request a password reset'
+      tags:
+        - 'Account'
+  /api/v2/persona/resource/users/me:
+    get:
+      description: 'The signed-in member plus `kyc`, the eleven-step verification checklist, and the public labels it is computed from. This is the payload a client gates onboarding on.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserEntity'
+          description: ''
+      security: []
+      summary: 'Current account with verification status'
+      tags:
+        - 'Account'
+  /api/v2/persona/resource/users/password:
+    put:
+      description: 'Requires the current password. Only meaningful when `can_change_password` is true — wallet-native and social accounts carry a random password the holder never set.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordUpdateRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageEntity'
+          description: ''
+      security: []
+      summary: 'Change password'
+      tags:
+        - 'Account'
+  /api/v2/persona/resource/users/wallet:
+    post:
+      description: 'Attaches a verified EOA to the SIGNED-IN account, so an email or social member can trade non-custodially. Distinct from wallet login, which finds or creates an account for the wallet. Returns 409 if either the account or the wallet is already linked.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletLinkRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletLinkedEntity'
+          description: ''
+      security: []
+      summary: 'Link a wallet to this account'
+      tags:
+        - 'Account'
+security:
+  - apiKey: []
+servers:
+  - description: 'Production'
+    url: 'https://calibri.io'

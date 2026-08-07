@@ -1,0 +1,169 @@
+---
+title: "Terms of Use"
+description: "The rules that govern using Calibri — eligibility, custody, how markets settle, fees, and the limits of what Calibri is responsible for."
+---
+
+By opening an account or placing an order on Calibri you agree to these terms.
+If you do not agree, do not trade.
+
+<Note>
+  The full legal text is published at [calibri.io/hub/terms-of-use](https://calibri.io/hub/terms-of-use). This article covers the same ground in plain language; where the two differ, the published terms govern.
+</Note>
+
+## 1. What Calibri is
+
+Calibri is a **binary prediction-market exchange**. Each market asks one question
+with two outcomes, YES and NO. You buy shares in the outcome you believe in;
+prices sit between `0.01` and `0.99` and read as probabilities. At resolution the
+winning side pays **1.00 USDC per share** and the losing side pays **0**.
+
+Calibri operates the order book and reports outcomes. It does **not** take the
+other side of your trades, and it does not hold your money.
+
+## 2. Eligibility
+
+You must:
+
+- be of legal age in your jurisdiction;
+- be legally permitted to use a prediction-market exchange where you live;
+- open an account for yourself, not on anyone else's behalf;
+- complete any identity verification we are required to ask for.
+
+You are responsible for knowing whether trading here is lawful for you. Access
+may be restricted by jurisdiction, and an account may be suspended where we are
+required to do so or where these terms are breached.
+
+## 3. Your funds are yours
+
+Calibri is **fully self-custodial**. Your USDC sits in a **1-of-1 Gnosis Safe
+that only you control**, on-chain. Calibri never takes custody, never holds a
+balance for you, and cannot move your funds. Every order is a signature you
+produce; every transfer out of your Safe is a transaction you sign.
+
+The consequences of that are yours as well:
+
+<Warning>
+  **Calibri cannot recover your wallet.** If you lose your passkey, your device, or your wallet's keys, and you have no backup, your funds are unreachable — by you and by us. Nobody can reset it. See [Your wallet options](/non-custodial/wallets).
+</Warning>
+
+You are responsible for keeping your credentials, passkeys, API keys, and
+[session keys](/non-custodial/session-keys) secure, and for any activity
+conducted with them.
+
+## 4. Trading
+
+- Orders are matched by price and time. A match creates a **contract** jointly held by a YES holder and a NO holder.
+- You may cancel the unmatched remainder of a resting order at any time. Matched positions have already become contracts and are held to resolution.
+- Placing an order locks its collateral **and** a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees).
+- Markets stop accepting orders at their stated close time.
+- **Market prices are not advice.** A price is what other people are willing to pay. It is not a forecast Calibri endorses, and nothing on the platform is financial advice.
+
+You may lose the entire amount you stake. Only trade what you can afford to lose.
+
+## 5. Resolution and finality
+
+How each market is decided — and the specific data source it uses — is published
+on the market before you can trade it. See
+[How markets are resolved](/concepts/resolution-sources).
+
+The rules that matter most:
+
+- **The source named on the market decides it.** For crypto price markets that is Coinbase's own published data for the stated interval, read directly.
+- **Settlement is final.** A settled market is terminal. If the source later restates its data, or there was an outage, an unusual print, or any other issue at or around the deciding moment, **the settlement stands.** Calibri does not retroactively correct a settled market.
+- **Ties on up/down markets resolve up.** An interval closing exactly where it opened resolves YES.
+- **Manual settlements go through two-person review**, with escalation to a senior adjudicator where reviewers disagree.
+- **A market that cannot be resolved fairly is voided**, and voiding refunds every position's collateral and taker fee in full.
+
+Resolution is reported **on-chain**, and the escalation ladder that follows it is
+permissionless: if Calibri fails to report, anyone can escalate the question, and
+past a hard deadline anyone can force a 50/50 void so collateral is reclaimable
+directly from the contracts. See [Market resolution](/non-custodial/resolution).
+
+## 6. Winnings must be claimed
+
+Resolution makes your winning shares **redeemable**. It does **not** pay you
+automatically. You claim them yourself — the claim is gasless, but it is yours to
+make. See [Redeeming winnings](/non-custodial/redeeming-winnings).
+
+## 7. Fees
+
+Calibri charges a **single taker fee**, once, when your order fills. Makers pay
+nothing. There is no settlement fee and no redemption fee — a winning share pays
+the full 1.00 USDC.
+
+The fee is `rate × volume × P × (1 − P)`, where the rate depends on the market's
+category. The applicable rate is shown before you confirm an order, and is bound
+into the order you sign, so you always sign for the fee you will pay. See
+[Fees](/concepts/fees).
+
+Rates may change. Changes apply to future trades, never retroactively to trades
+already filled.
+
+## 8. Fair use
+
+Do not:
+
+- manipulate prices, spoof the book, or trade to move a market rather than to take a position;
+- use multiple accounts to evade limits, gain rewards, or trade against yourself;
+- abuse the rewards or referral programmes, including self-referral;
+- trade on a market you have non-public information about the outcome of;
+- attack, overload, or attempt to circumvent the platform's technical controls.
+
+Breaching this section may result in suspension, forfeiture of pending rewards,
+and reporting where we are legally required to.
+
+## 9. Availability
+
+We aim to keep the platform running continuously, but we do not guarantee it.
+Maintenance, upstream outages, and network congestion happen. Calibri is not
+liable for losses arising from downtime, delayed order entry, or a data feed
+being unavailable.
+
+**Your funds remain withdrawable regardless.** They sit in your own Safe, so an
+outage on our side does not lock them up, and the on-chain resolution ladder
+guarantees a market ultimately settles or refunds even if Calibri stops
+operating entirely.
+
+## 10. API and automated access
+
+API access is governed by the same terms. You are responsible for what your
+integration does. Rate limits apply, and keys may be revoked where a client
+degrades the service for others. See the
+[API overview](/api-reference/introduction).
+
+## 11. Changes to these terms
+
+We may update these terms. Material changes will be announced, and continuing to
+trade after they take effect is acceptance. The published legal terms carry the
+authoritative version and date.
+
+## 12. Your data
+
+What we collect, why, and how long we keep it is set out in the
+[Privacy policy](/privacy-policy), and in full at
+[calibri.io/hub/privacy-policy](https://calibri.io/hub/privacy-policy).
+
+## 13. Contact
+
+Questions about these terms: [support.calibri.io/contact](https://support.calibri.io/contact).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    The specific data source behind each market type.
+  </Card>
+  <Card title="Market resolution" href="/non-custodial/resolution">
+    The on-chain escalation ladder.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    What trading costs.
+  </Card>
+  <Card title="How self-custody works" href="/non-custodial/overview">
+    Why Calibri cannot hold your funds.
+  </Card>
+  <Card title="Privacy policy" href="/privacy-policy">
+    What data we collect and how it is handled.
+  </Card>
+</CardGroup>
+

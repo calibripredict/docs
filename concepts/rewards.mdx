@@ -1,0 +1,100 @@
+---
+title: "Rewards"
+description: "Two ways to earn on Calibri — market-maker rebates for providing liquidity and referral rewards for bringing traders. Both are a share of the taker fee, accrue live, and are paid by a daily sweep."
+---
+
+Calibri pays two kinds of reward, both funded out of the **taker fee** on a
+trade. They **accrue live** as you trade and are **paid out once a day** —
+independent of whether the market has resolved.
+
+- **Maker rebate** — When **your resting order gets filled**, you earn a share of the taker's fee. This is the reward for **providing liquidity** — quoting a price and waiting for someone to trade with you.
+- **Referral reward** — When someone **you referred trades as the taker**, **you (the referrer)** earn a share of the fee they paid. Tied to your referred members' taker activity.
+
+## Both are a share of the taker fee
+
+| Reward | Who earns it | Based on |
+|---|---|---|
+| **Maker rebate** | the **maker** — the resting (non-taker) side of the fill | a % of the taker fee on that fill |
+| **Referral reward** | the **taker's referrer** | a % of the taker fee on the referred taker's fill |
+
+Because both are a percentage **of the taker fee**, a trade that pays **no** fee
+(for example a very lopsided price, see [Fees](/concepts/fees)) generates **no**
+reward.
+
+<Note>
+  Rates are **operator-set per market category and may be zero.** This page describes the mechanism, not the numbers — any specific rebate or referral percentage is published in the rewards schedule and shown in-app, not fixed here.
+</Note>
+
+## How and when you get paid
+
+The reward flow is deliberately **decoupled from settlement** — you don't have to
+wait for a market to resolve to get paid.
+
+<Steps>
+  <Step title="Accrue at the trade">
+    When your trade creates a contract, a reward is recorded as a **pending**
+    entry. No money moves for the reward yet — only the taker fee moves at trade
+    time.
+  </Step>
+  <Step title="Watch it tick up live">
+    Pending rewards are readable in near-real-time via the **rewards / pending**
+    endpoint, so a market maker can watch their pending balance grow as they
+    quote. The response separates the two sources:
+  </Step>
+</Steps>
+
+```json
+{ "currency": "usdc", "total": "12.35", "maker": "10.00", "referral": "2.35" }
+```
+
+<Steps>
+  <Step title="Get paid daily">
+    A **daily sweep** pays out pending rewards — whether or not the market has
+    resolved. A reward earned today is paid the next day. This deliberately
+    rewards early and continuous quoting rather than waiting for markets to
+    settle.
+  </Step>
+  <Step title="Paid to your Safe">
+    Rewards are paid **on-chain to your Safe**. A member with no registered Safe
+    yet stays accrued until one exists — nothing is lost.
+  </Step>
+</Steps>
+
+## Minimums
+
+There is **no arbitrary payout floor**. Two real floors exist:
+
+- Sub-base-unit rewards round away at accrual.
+- An amount below the network **gas cost** of sending it stays pending and
+  rolls into the next sweep — it is never written off.
+
+## What happens if a market is voided
+
+If a market is **voided**, you get a **clean full refund** — your stake back and
+the taker fee back. For rewards:
+
+- Rewards still **pending** are simply removed.
+- Rewards already **paid** are **not clawed back** — you keep them.
+
+## In short
+
+> **Make markets, earn a rebate.** When your resting order gets filled, you earn
+> a share of the taker's fee. **Refer traders, earn a share** of the fees on
+> their trades. Rewards **accrue live** and are **paid out once a day**, whether
+> or not the market has settled, landing in your Safe once the amount clears
+> gas. Void a market and you get a full refund and keep any rewards already paid.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    The taker fee that funds every reward.
+  </Card>
+  <Card title="Referral program" href="/rewards-referral-program">
+    How to refer traders and track your referrals.
+  </Card>
+  <Card title="Rewards endpoints" href="/api-reference/introduction">
+    Pending rewards and referral earnings in the API Reference.
+  </Card>
+</CardGroup>
+

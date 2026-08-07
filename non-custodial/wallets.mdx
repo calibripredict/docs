@@ -1,0 +1,164 @@
+---
+title: "Your wallet options"
+description: "Two ways to hold your funds on Calibri — a passkey wallet or your own wallet — both fully self-custody, both trading the same order book."
+---
+
+**Calibri never holds your money.** Your USDC lives in a 1-of-1 Gnosis Safe that
+only you control, on-chain. You can withdraw from it even if Calibri is offline.
+
+There are two ways to set that up:
+
+| | What signs your orders | Setup |
+|---|---|---|
+| **Passkey wallet** | Face ID / Touch ID / device PIN | One tap — no app, no extension, no seed phrase |
+| **Your own wallet** | MetaMask, Coinbase Wallet, Rainbow, or any WalletConnect wallet | Connect a wallet you already use |
+
+Both end in the same place: your own Safe, holding your own USDC. They differ
+only in **what owns the Safe**. Either way the operator relays your signed
+orders and pays the gas.
+
+## Passkey wallet — no seed phrase, no extension
+
+A passkey wallet is the simplest way to hold your own funds. You approve a
+prompt with **Face ID, Touch ID, or your device PIN**, and that's the whole
+setup — no browser extension, no app to install, and **no seed phrase to write
+down**.
+
+**There is no private key.** Your Safe is owned by a *signer contract* derived
+from a WebAuthn credential that lives in your device's secure hardware. The
+credential can produce signatures but cannot be exported, and Calibri never
+holds a key for your account.
+
+**How it works when you enrol:**
+
+<Steps>
+  <Step title="Create the passkey">
+    Your device generates the credential and hands Calibri only the **public**
+    half. The private half never leaves your authenticator.
+  </Step>
+  <Step title="Your address is derived immediately">
+    Both the signer contract and your Safe address are computed
+    deterministically from that public key. Your deposit address exists the
+    moment you enrol, before anything is on-chain.
+  </Step>
+  <Step title="Nothing is deployed yet">
+    The contracts are only deployed when your **first deposit** arrives — and
+    the operator pays for that deployment, not you.
+  </Step>
+  <Step title="Trading">
+    Each order is signed by the passkey and verified on-chain against the signer
+    contract. To avoid a prompt on every order, unlock a
+    **[session key](/non-custodial/session-keys)** once and orders sign silently
+    after that — withdrawals and redemptions still require your passkey.
+  </Step>
+</Steps>
+
+<Warning>
+  Your passkey **is** your wallet. Calibri cannot recover it, reset it, or sign on your behalf — that is what makes the wallet yours. **Where your passkey is stored decides whether it survives losing your device.** Read the next section before you fund anything.
+</Warning>
+
+## Where your passkey actually lives
+
+This is the part that matters, and it is not the same on every platform. Your
+passkey is stored by your **operating system or password manager**, not by
+Calibri — so whether it syncs, and whether it survives a lost or broken device,
+is decided by which of these you enrol with.
+
+| Platform | Stored by | Syncs? | If you lose the device |
+|---|---|---|---|
+| **iPhone / iPad / Mac** (Safari, Chrome, Edge) | iCloud Keychain | **Yes** — across Apple devices on the same Apple Account | Sign in on another Apple device and the passkey is there |
+| **Android** (Chrome and most browsers) | Google Password Manager | **Yes** — across Android devices and Chrome on the same Google Account | Sign in on another Android device or in Chrome and the passkey is there |
+| **Windows** (Chrome, Edge) via **Windows Hello** | Windows Hello / the machine's TPM | **No — device-bound** | **The passkey is gone with the machine** |
+| **Any platform** via a password manager (1Password, Bitwarden, Dashlane, Microsoft Password Manager…) | That manager's vault | **Yes** — wherever the manager is installed | Sign in to the manager on a new device |
+| **Hardware security key** (YubiKey and similar) | The key itself | **No — device-bound** | The passkey is gone with the key |
+
+<Warning>
+  **Windows Hello passkeys do not sync.** They are bound to the machine that created them. If that is the only place your passkey exists and the machine is lost, stolen, reset, or dies, **your funds are unreachable — permanently, by you and by us.** On Windows, either enrol through a syncing password manager, or use the cross-device option below, or choose your own wallet instead.
+</Warning>
+
+### Using your phone to sign on a desktop
+
+Every major desktop browser supports signing with a passkey held on your
+**phone**: you scan a QR code, the phone verifies it is physically nearby over
+Bluetooth, and your phone's authenticator approves. The passkey never leaves the
+phone.
+
+This is the practical answer on Windows and on any shared or borrowed machine:
+enrol the passkey on your **phone**, where it syncs, and use it from the desktop
+when you need it.
+
+### Before you fund an account
+
+<Steps>
+  <Step title="Check your passkey syncs">
+    On iPhone or Android it does by default. On Windows Hello it does not —
+    enrol through a password manager or on your phone instead.
+  </Step>
+  <Step title="Make sure you can reach the account it syncs to">
+    Your Apple Account, Google Account, or password-manager vault is now what
+    stands between you and your funds. Make sure it has recovery set up and 2FA
+    you will not lose.
+  </Step>
+  <Step title="Enrol on a second device if you can">
+    A second passkey on a second device is the cheapest insurance available, and
+    there is no other kind for a self-custody wallet.
+  </Step>
+</Steps>
+
+Passkeys need a device with a platform authenticator and a browser supporting
+WebAuthn. Broadly: **iOS 16+**, **macOS 13+**, **Android 9+**, and current
+Chrome, Edge, Safari, or Firefox. If yours does not qualify, use your own wallet
+instead.
+
+## Your own wallet — bring an existing one
+
+If you already use a wallet, connect it and keep signing with what you know.
+Calibri supports **MetaMask**, **Coinbase Wallet**, **Rainbow**, and any wallet
+reachable over **WalletConnect** — including mobile wallets, by scanning a QR
+code.
+
+Here your Safe is owned by **your wallet's address**. You approve a signature
+request in your wallet for each order; the operator relays it and pays the gas,
+exactly as with a passkey.
+
+This path also gives you **Sign-In With Ethereum** — you can authenticate to
+Calibri with your wallet instead of an email and password.
+
+## Which should I choose?
+
+- **Never used a crypto wallet?** Use a **passkey wallet** — enrolled on your phone, or on a desktop through a password manager. You get the same on-chain guarantees without installing anything or learning wallet software.
+- **Already have MetaMask or a mobile wallet?** Connect it. You keep your existing signing habits and your existing backup, and you can sign in to Calibri with it too.
+- **Windows-only, no phone, no password manager?** Use your own wallet. A device-bound Windows Hello passkey is a single point of failure for funds nobody can restore.
+
+Both give you identical control over your funds on-chain. The difference that
+actually matters is **how each one is backed up**:
+
+| | Backed up by | Recoverable if you lose everything? |
+|---|---|---|
+| **Passkey wallet** | Your platform account or password manager | Only through that account — Calibri cannot help |
+| **Your own wallet** | Your wallet's own recovery phrase | Only through that phrase — Calibri cannot help |
+
+<Warning>
+  Neither path has a support ticket at the end of it. Self-custody means the backup is yours to keep, and it is the only copy.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Non-custodial overview" href="/non-custodial/overview">
+    The full self-custody model end to end.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    What the Safe is and how it is made trade-ready.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    How an order is authorised in each model.
+  </Card>
+  <Card title="Session keys" href="/non-custodial/session-keys">
+    Trade without a passkey prompt per order.
+  </Card>
+  <Card title="Funding your account" href="/wallet-deposits">
+    Getting USDC in.
+  </Card>
+</CardGroup>
+

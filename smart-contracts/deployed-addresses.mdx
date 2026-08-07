@@ -1,0 +1,116 @@
+---
+title: "Deployed Addresses"
+description: "Calibri's on-chain contract addresses — what is deployed, where to read the live values, and how to verify every one of them yourself on the block explorer."
+---
+
+Every contract Calibri trades against is public. You do not have to take custody
+claims on trust: read the code, check the balances, and confirm your own Safe
+holds what you think it holds.
+
+This page lists what is deployed and shows you how to verify each address for
+yourself.
+
+<Note>
+  The **API is the authoritative source** for every address on every network. The values below are for reference and verification — if this page and the API ever disagree, the API is right and this page is stale.
+</Note>
+
+## Polygon (mainnet)
+
+Calibri settles on **Polygon**, chain id **137**, collateralised in **native
+USDC**.
+
+| Contract | Address | Verify |
+|---|---|---|
+| **CTF Exchange** (Calibri) | `0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83` | [View on Polygonscan](https://polygonscan.com/address/0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83) |
+| **USDC** (collateral) | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | [View on Polygonscan](https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359) |
+| **ConditionalTokens** (Gnosis CTF) | read from `ctf/wallet` → `conditional_tokens_address` | `https://polygonscan.com/address/{address}` |
+| **CalibriResolver** (oracle) | read from the deployment | `https://polygonscan.com/address/{address}` |
+| **Your Safe** | read from `ctf/wallet` → `proxy_address` | `https://polygonscan.com/address/{address}` |
+
+The CTF Exchange was deployed on **2 August 2026** and carries Calibri's own
+EIP-712 domain name — it is not a shared or third-party exchange. That domain
+name is hashed into every order signature, which is why the app serves it rather
+than hard-coding it, and why signatures made against a different exchange cannot
+be replayed here.
+
+<Note>
+  **ConditionalTokens is not ours.** It is Gnosis' audited Conditional Token Framework, already deployed on Polygon and used by other prediction markets. Calibri deploys against the canonical instance rather than a fork — your collateral sits in a contract that predates us and is not under our control.
+</Note>
+
+## Reading the live values
+
+Signed in, these two endpoints return the exact addresses your account is
+trading against:
+
+```
+GET /api/v2/atlas/account/wallet
+GET /api/v2/atlas/account/wallet/markets/:id
+```
+
+The member-level call returns `chain_id`, `blockchain_key`, `usdc_address`,
+`conditional_tokens_address`, `exchange_address`, `domain_name`, your own
+`proxy_address` (your Safe), and `owner_address` (what owns it). The per-market
+call adds `condition_id`, `yes_token_id`, and `no_token_id` — the two ERC-1155
+outcome tokens for that market.
+
+<Warning>
+  **Never hard-code a contract address in your own client.** Addresses differ per network and per deployment, and a wrong one silently sends signatures somewhere they cannot settle. Read them from the API every time.
+</Warning>
+
+## Verifying it yourself
+
+<Steps>
+  <Step title="Check your Safe holds your money">
+    Take `proxy_address` from `ctf/wallet` and open it on Polygonscan. Its USDC
+    balance is your money, in a contract only you can authorise. Nothing about
+    that depends on Calibri being honest.
+  </Step>
+  <Step title="Check the exchange you are signing for">
+    Confirm `exchange_address` from the API matches the CTF Exchange above, and
+    that the contract has code at that address.
+  </Step>
+  <Step title="Check the collateral">
+    Confirm `usdc_address` is native USDC on Polygon — the address in the table
+    above — and not a look-alike token.
+  </Step>
+  <Step title="Check a specific market">
+    For any market, verify its `condition_id` and the `yes_token_id` /
+    `no_token_id` against ConditionalTokens. Those token ids are derived from the
+    resolver, the question and the collateral, so they name exactly one outcome
+    of one market and never change.
+  </Step>
+  <Step title="Watch a settlement land">
+    After a market resolves, the redemption that pays you is a transaction on
+    ConditionalTokens against your Safe. It is on the explorer like anything
+    else.
+  </Step>
+</Steps>
+
+## Other networks
+
+| Network | Chain id | Explorer |
+|---|---|---|
+| Polygon mainnet | 137 | `https://polygonscan.com/address/{address}` |
+| Polygon Amoy (testnet) | 80002 | `https://amoy.polygonscan.com/address/{address}` |
+
+Testnet deployments use test USDC and are redeployed freely — never treat a
+testnet address as canonical, and never send real funds to one. Local
+development addresses are regenerated on every run and are meaningless outside
+the machine that made them.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Smart Contracts" href="/smart-contracts/overview">
+    What each contract does and why self-custody is verifiable rather than promised.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    Your own Safe — the `proxy_address` in the config.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    The EIP-712 domain and order struct you sign.
+  </Card>
+  <Card title="Market resolution" href="/non-custodial/resolution">
+    What the resolver can and cannot do, and the permissionless fallbacks.
+  </Card>
+</CardGroup>

@@ -1,0 +1,124 @@
+---
+title: "Placing Orders"
+description: "Limit vs market orders, choosing YES or NO, and how a fill becomes a position."
+---
+
+An order is your instruction to trade a market. On Calibri you **buy the outcome
+you believe in** — there is no separate "buy" and "sell": you pick **YES** or
+**NO**, a price, and a size. This page covers how orders work in practice. For the
+underlying model see [Core Concepts](/concepts/core-concepts).
+
+## What you specify
+
+Every order has:
+
+| Field | Meaning |
+|---|---|
+| **Market** | The market (event) you are trading. |
+| **Side** | **`yes`** or **`no`** — the outcome you are buying. Not "buy/sell". |
+| **Order type** | **Limit** or **market**. |
+| **Volume** | Number of contracts. |
+| **Price** | Price per contract, `0.01`–`0.99` (limit orders only). |
+
+<Note>
+  On the API these map to the order fields `market`, `side` (`"yes"`/`"no"`), `ord_type` (`"limit"`/`"market"`), `volume`, and `price`. See the [API Overview](/api-reference/introduction) for the exact request shape.
+</Note>
+
+## Limit orders
+
+A **limit order** sets the exact price you're willing to pay and rests in the order
+book until someone trades against it (or you cancel it).
+
+```
+You place: BUY 100 YES, limit, price 0.60
+→ If there's a matching NO order at 0.40, you fill immediately.
+→ Otherwise your order rests in the book at 0.60 until it's matched or cancelled.
+```
+
+- **Pros:** exact price control, no slippage; a resting order can earn a
+  [maker rebate](/concepts/rewards) when it's the side that gets filled.
+- **Cons:** it may not fill if the price never reaches your limit.
+
+A `post_only` limit order is **rejected if it would immediately take liquidity** —
+use it when you only want to rest in the book and never cross the spread.
+
+## Market orders
+
+A **market order** fills right away against the best available prices, walking the
+book until your volume is filled.
+
+```
+Best resting liquidity for YES: 0.60, then 0.61, then 0.62 …
+You place: BUY 100 YES, market
+→ Fills against the cheapest available prices first.
+→ Larger orders may fill across several price levels (slippage).
+```
+
+- **Pros:** immediate execution.
+- **Cons:** you don't control the exact fill price; large orders can move the price.
+
+## The combined order book
+
+Calibri runs **one combined book** per market — there is no separate NO book. A
+trade happens when a YES buyer and a NO buyer are matched and their prices sum to
+`1.00`. So a resting YES bid at `0.60` is simultaneously offering the NO side at
+`0.40`; you never have to hunt for "the other side."
+
+## Fees
+
+You pay a single **taker fee** only when your order **takes** liquidity (a market
+order, or a limit order that crosses the spread and fills immediately). Resting
+orders that get filled are **makers** and pay no fee. The fee is charged **once,
+at the moment of the fill — never again at settlement**. It follows a
+price-dependent bell curve rather than a flat percentage; see
+[Fees](/concepts/fees) for the exact formula and how the applicable rate is shown
+for each market.
+
+## How your order reaches the market
+
+Every order is **EIP-712 signed** by your wallet — or by your passkey — and
+relayed on-chain via the orchestrator. **The operator pays the gas**, so signing
+costs you nothing.
+
+Signing is what authorises the order against your Safe; nothing can be placed on
+your behalf without it. See [Signed orders](/non-custodial/signed-orders) for the
+exact struct and [Your wallet options](/non-custodial/wallets) for what does the
+signing in each setup.
+
+## From fill to position
+
+Once an order fills:
+
+- A **contract** is created between your side and the matched counterparty. Your
+  **position** is the set of contract legs you hold (net YES, net NO, or flat).
+- You can **exit before resolution** by trading the opposite side — the price
+  difference is your profit or loss.
+- Open (unfilled) limit orders can be **cancelled** while the market is open; the
+  collateral they locked is released back to you.
+
+At resolution, winning contracts pay **1.00 USDC** per share and losing contracts
+pay **0**, with no settlement fee.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    How the taker fee is computed and shown per market.
+  </Card>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    What decides the market you are trading.
+  </Card>
+  <Card title="Terms of use" href="/terms-of-use">
+    The rules you accept by trading.
+  </Card>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Contracts, positions, and the market lifecycle.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    Build and sign an EIP-712 order.
+  </Card>
+  <Card title="API Overview" href="/api-reference/introduction">
+    The exact order request and response shapes.
+  </Card>
+</CardGroup>
+
