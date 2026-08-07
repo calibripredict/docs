@@ -1,0 +1,250 @@
+---
+title: "View, Track, and Manage Your Prediction Market Positions"
+sidebarTitle: "Manage Positions"
+description: "Learn how to view open positions, compute P&L, split and merge outcome tokens, and redeem winnings after market resolution on Calibri."
+---
+
+Every trade you make on Calibri creates or modifies a position in an outcome token. This guide explains how to read your current holdings, calculate profit and loss, use Calibri's gasless relayer to split and merge tokens, and redeem your winnings after a market resolves.
+
+## View Your Positions
+
+Fetch all current open positions for a wallet address:
+
+```bash
+GET https://clob.calibri.com/positions/{address}
+```
+
+**Example response:**
+
+```json
+[
+  {
+    "conditionId": "0x3d4e...",
+    "tokenId": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "outcomeIndex": 0,
+    "size": 250.0,
+    "avgPrice": 0.58,
+    "currentValue": 162.50,
+    "realizedPnl": 0.00,
+    "unrealizedPnl": 17.50
+  }
+]
+```
+
+| Field | Description |
+|---|---|
+| `conditionId` | The market identifier |
+| `tokenId` | The specific outcome token held |
+| `outcomeIndex` | `0` = Yes, `1` = No |
+| `size` | Number of tokens held |
+| `avgPrice` | Average purchase price per token |
+| `currentValue` | Current market value of the position |
+| `realizedPnl` | Profit/loss from closed portions of this position |
+| `unrealizedPnl` | Profit/loss on the open position at current prices |
+
+To retrieve positions you have fully exited:
+
+```bash
+GET https://clob.calibri.com/positions/closed/{address}
+```
+
+To get your total portfolio value across all positions:
+
+```bash
+GET https://clob.calibri.com/positions/value/{address}
+```
+
+<CodeGroup>
+
+```typescript TypeScript
+import { createSecureClient } from '@calibri/client';
+
+const client = createSecureClient({ apiKey, secret, passphrase, address });
+
+// Fetch all open positions
+const positions = await client.getPositions(address);
+
+// Fetch total portfolio value
+const portfolioValue = await client.getPortfolioValue(address);
+console.log(`Total portfolio value: $${portfolioValue.total}`);
+```
+
+```python Python
+from calibri import AsyncSecureClient
+
+client = AsyncSecureClient(
+    api_key=api_key,
+    secret=secret,
+    passphrase=passphrase,
+    address=address,
+)
+
+# Fetch all open positions
+positions = await client.get_positions(address)
+
+# Fetch total portfolio value
+portfolio_value = await client.get_portfolio_value(address)
+print(f"Total portfolio value: ${portfolio_value['total']}")
+```
+
+</CodeGroup>
+
+---
+
+## Calculate P&L
+
+Calibri tracks both unrealized and realized profit and loss for every position.
+
+**Unrealized P&L** measures the gain or loss on your current holdings at live market prices:
+
+```
+unrealized_pnl = (current_price - avg_price) × size
+```
+
+For example, if you hold 250 Yes tokens with an average entry of $0.58 and the current price is $0.65:
+
+```
+unrealized_pnl = (0.65 - 0.58) × 250 = $17.50
+```
+
+**Realized P&L** accumulates when you close part or all of a position by selling tokens or redeeming after resolution. Both values are returned directly in the position object — you do not need to calculate them manually unless you are building custom reporting.
+
+---
+
+## Split Tokens
+
+**Splitting** converts $1.00 of pUSD collateral into exactly 1 Yes token and 1 No token. You do this when you want to create both sides of a position, provide liquidity on both outcomes, or enter a market without crossing the spread.
+
+Calibri's relayer handles the on-chain transaction for you — no gas required.
+
+Submit a split request via the relayer:
+
+```bash
+POST https://relayer-v2.calibri.com/submit
+```
+
+```json
+{
+  "operationType": "split",
+  "conditionId": "0x3d4e...",
+  "amount": "100000000"
+}
+```
+
+The `amount` field is denominated in the ERC-20 base units of pUSD (6 decimals). After the transaction confirms, your wallet receives 100 Yes tokens and 100 No tokens in exchange for $100 pUSD.
+
+<Note>
+  Calibri's relayer covers all gas fees for split, merge, and redeem operations. You never need to hold MATIC or any native gas token to interact with the CTF contract.
+</Note>
+
+---
+
+## Merge Tokens
+
+**Merging** is the reverse of splitting: you combine 1 Yes token and 1 No token to reclaim $1.00 pUSD. Merge when you hold a balanced position and want to exit without selling on the order book.
+
+```bash
+POST https://relayer-v2.calibri.com/submit
+```
+
+```json
+{
+  "operationType": "merge",
+  "conditionId": "0x3d4e...",
+  "amount": "50000000"
+}
+```
+
+<Tip>
+  Merging equal quantities of Yes and No tokens gives you $1.00 per pair and avoids crossing the bid-ask spread. If you are long 100 Yes and also acquired 100 No, merging costs nothing in spread compared to selling each side separately on the book.
+</Tip>
+
+---
+
+## Redeem Winnings
+
+After a market resolves, winning outcome tokens are worth exactly $1.00 pUSD each. Submit a redeem transaction via the relayer to convert your winning tokens to pUSD:
+
+```bash
+POST https://relayer-v2.calibri.com/submit
+```
+
+```json
+{
+  "operationType": "redeem",
+  "conditionId": "0x3d4e...",
+  "amounts": ["250000000", "0"]
+}
+```
+
+The `amounts` array follows `[yesAmount, noAmount]` ordering. Set the losing side to `"0"`. Losing tokens are worth $0.00 and cannot be redeemed for collateral.
+
+<CodeGroup>
+
+```typescript TypeScript
+import { createRelayerClient } from '@calibri/client';
+
+const relayer = createRelayerClient();
+
+// Redeem 250 winning Yes tokens after market resolution
+await relayer.redeem({
+  conditionId: '0x3d4e...',
+  amounts: [250_000_000, 0], // Yes wins; No = 0
+});
+
+console.log('Redeemed: $250.00 pUSD credited to your account');
+```
+
+```python Python
+from calibri import RelayerClient
+
+relayer = RelayerClient()
+
+# Redeem 250 winning Yes tokens after market resolution
+await relayer.redeem(
+    condition_id='0x3d4e...',
+    amounts=[250_000_000, 0],  # Yes wins; No = 0
+)
+
+print('Redeemed: $250.00 pUSD credited to your account')
+```
+
+</CodeGroup>
+
+---
+
+## Track Trade History
+
+Review your full trade history using the trades endpoint:
+
+```bash
+GET https://clob.calibri.com/data/trades
+```
+
+Supported query parameters:
+
+| Parameter | Description |
+|---|---|
+| `market` | Filter by `conditionId` |
+| `maker_address` | Filter trades where you were the maker |
+| `taker_address` | Filter trades where you were the taker |
+| `limit` | Number of results to return (default: 100) |
+| `offset` | Pagination offset |
+
+**Example response:**
+
+```json
+[
+  {
+    "tradeId": "0xabc...",
+    "conditionId": "0x3d4e...",
+    "tokenId": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "side": "BUY",
+    "price": "0.65",
+    "size": "100",
+    "maker": "0xYourAddress",
+    "taker": "0xCounterparty",
+    "timestamp": "2024-04-01T12:01:00Z"
+  }
+]
+```

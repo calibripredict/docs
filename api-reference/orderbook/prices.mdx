@@ -1,0 +1,341 @@
+---
+title: "GET /price — Fetch Best Price for an Outcome Token"
+sidebarTitle: "Prices"
+description: "Fetch the best bid or ask price, the midpoint, and the last trade price for prediction market outcome tokens using Calibri's CLOB API."
+---
+
+Calibri exposes several price endpoints so you can quickly retrieve the most relevant price signal without pulling the entire order book. Whether you need the best available price on a specific side, the midpoint between bid and ask, or the price of the most recent execution, each endpoint is optimized for low-latency reads and supports both single-token and bulk queries.
+
+<Note>
+  All price endpoints are public. No authentication is required.
+</Note>
+
+---
+
+## Best Price — GET /price
+
+Fetch the best available price for a token on a specific side of the book. For `BUY`, this returns the lowest ask (the price you'd pay). For `SELL`, this returns the highest bid (the price you'd receive).
+
+```
+GET https://clob.calibri.com/price
+```
+
+### Query Parameters
+
+<ParamField query="token_id" type="string" required>
+  The unique identifier of the outcome token.
+</ParamField>
+
+<ParamField query="side" type="string" required>
+  The side of the book to query. Must be `BUY` (returns best ask) or `SELL` (returns best bid).
+</ParamField>
+
+### Response
+
+<ResponseField name="price" type="string">
+  The best available price on the requested side, as a decimal string (e.g., `"0.66"`).
+</ResponseField>
+
+### Example
+
+```json
+{ "price": "0.66" }
+```
+
+<CodeGroup>
+
+```bash cURL
+curl "https://clob.calibri.com/price?token_id=71321045679252212594626385532706912750332728571942532289631379312455583992563&side=BUY"
+```
+
+```typescript TypeScript
+const params = new URLSearchParams({
+  token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+  side: "BUY",
+});
+
+const res = await fetch(`https://clob.calibri.com/price?${params}`);
+const { price } = await res.json();
+console.log("Best ask:", price);
+```
+
+</CodeGroup>
+
+---
+
+## Bulk Best Prices — GET /prices
+
+Fetch best prices for multiple tokens and sides in a single request.
+
+```
+GET https://clob.calibri.com/prices
+```
+
+**Request body:**
+
+```json
+[
+  {
+    "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "side": "BUY"
+  },
+  {
+    "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "side": "SELL"
+  }
+]
+```
+
+**Response:**
+
+```json
+[
+  {
+    "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "price": "0.66"
+  },
+  {
+    "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "price": "0.38"
+  }
+]
+```
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://clob.calibri.com/prices" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563", "side": "BUY" },
+    { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201", "side": "SELL" }
+  ]'
+```
+
+```typescript TypeScript
+const res = await fetch("https://clob.calibri.com/prices", {
+  method: "GET",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify([
+    { token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563", side: "BUY" },
+    { token_id: "52108247361948573920614827193045826371948273645019283756102938471029384756201", side: "SELL" },
+  ]),
+});
+const prices = await res.json();
+```
+
+</CodeGroup>
+
+---
+
+## Midpoint Price — GET /midpoint
+
+Fetch the midpoint between the best bid and best ask for a token. The midpoint is the arithmetic average of the top-of-book bid and ask prices.
+
+<Tip>
+  The midpoint is typically the most stable price indicator for probability estimates. It represents the market consensus without the directional bias introduced by choosing a single side.
+</Tip>
+
+```
+GET https://clob.calibri.com/midpoint
+```
+
+### Query Parameters
+
+<ParamField query="token_id" type="string" required>
+  The unique identifier of the outcome token.
+</ParamField>
+
+### Response
+
+<ResponseField name="mid" type="string">
+  The midpoint price as a decimal string (e.g., `"0.65"`).
+</ResponseField>
+
+### Example
+
+```json
+{ "mid": "0.65" }
+```
+
+<CodeGroup>
+
+```bash cURL
+curl "https://clob.calibri.com/midpoint?token_id=71321045679252212594626385532706912750332728571942532289631379312455583992563"
+```
+
+```typescript TypeScript
+const params = new URLSearchParams({
+  token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+});
+
+const res = await fetch(`https://clob.calibri.com/midpoint?${params}`);
+const { mid } = await res.json();
+console.log("Midpoint:", mid);
+```
+
+</CodeGroup>
+
+---
+
+## Bulk Midpoints — GET /midpoints
+
+Fetch midpoint prices for multiple tokens at once.
+
+```
+GET https://clob.calibri.com/midpoints
+```
+
+**Request body:**
+
+```json
+[
+  { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+  { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+]
+```
+
+**Response:**
+
+```json
+[
+  {
+    "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "mid": "0.65"
+  },
+  {
+    "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "mid": "0.39"
+  }
+]
+```
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://clob.calibri.com/midpoints" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+  ]'
+```
+
+```typescript TypeScript
+const res = await fetch("https://clob.calibri.com/midpoints", {
+  method: "GET",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify([
+    { token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { token_id: "52108247361948573920614827193045826371948273645019283756102938471029384756201" },
+  ]),
+});
+const midpoints = await res.json();
+```
+
+</CodeGroup>
+
+---
+
+## Last Trade Price — GET /last-trade-price
+
+Fetch the price at which the most recent trade for a token was executed.
+
+```
+GET https://clob.calibri.com/last-trade-price
+```
+
+### Query Parameters
+
+<ParamField query="token_id" type="string" required>
+  The unique identifier of the outcome token.
+</ParamField>
+
+### Response
+
+<ResponseField name="price" type="string">
+  The last executed trade price as a decimal string (e.g., `"0.65"`).
+</ResponseField>
+
+### Example
+
+```json
+{ "price": "0.65" }
+```
+
+<CodeGroup>
+
+```bash cURL
+curl "https://clob.calibri.com/last-trade-price?token_id=71321045679252212594626385532706912750332728571942532289631379312455583992563"
+```
+
+```typescript TypeScript
+const params = new URLSearchParams({
+  token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+});
+
+const res = await fetch(`https://clob.calibri.com/last-trade-price?${params}`);
+const { price } = await res.json();
+console.log("Last trade price:", price);
+```
+
+</CodeGroup>
+
+---
+
+## Bulk Last Trade Prices — GET /last-trade-prices
+
+Fetch last trade prices for multiple tokens. This endpoint supports up to **500 tokens** per request.
+
+```
+GET https://clob.calibri.com/last-trade-prices
+```
+
+**Request body:**
+
+```json
+[
+  { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+  { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+]
+```
+
+**Response:**
+
+```json
+[
+  {
+    "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "price": "0.65"
+  },
+  {
+    "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "price": "0.39"
+  }
+]
+```
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://clob.calibri.com/last-trade-prices" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+  ]'
+```
+
+```typescript TypeScript
+const res = await fetch("https://clob.calibri.com/last-trade-prices", {
+  method: "GET",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify([
+    { token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { token_id: "52108247361948573920614827193045826371948273645019283756102938471029384756201" },
+  ]),
+});
+const lastPrices = await res.json();
+```
+
+</CodeGroup>

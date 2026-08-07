@@ -1,0 +1,174 @@
+---
+title: "Market Making, Rebates, and Liquidity Rewards on Calibri"
+sidebarTitle: "Market Making"
+description: "Learn how to provide liquidity on Calibri's CLOB as a market maker, earn rebates, and use the dead man's switch to protect your orders."
+---
+
+Market makers play a central role on Calibri — by posting resting limit orders on both sides of the book you narrow the spread, improve price discovery, and earn maker rebates on every trade that fills against your orders. This guide covers how to post maker orders, collect rewards, protect your inventory with the dead man's switch, and scale your operation as your volume grows.
+
+## Market Maker Overview
+
+When you place a **resting** order (one that sits on the book rather than crossing the spread immediately), you act as the maker in any resulting trade. Calibri's fee model rewards makers with a rebate — a small credit per notional dollar traded — while takers pay a fee. Over a high volume of fills, maker rebates compound into a meaningful income stream.
+
+Beyond the per-trade rebate, Calibri runs a liquidity rewards programme that distributes daily pUSD earnings to market makers proportional to their **open interest** (OI) contribution. The more liquidity you post relative to other makers, the larger your share of the daily reward pool.
+
+---
+
+## Post Orders as Maker
+
+Set `postOnly: true` on any order to guarantee it rests on the book. If the order would immediately cross the spread and fill as a taker, Calibri rejects it rather than routing it as a taker order — protecting you from accidental taker fees.
+
+```bash
+POST https://clob.calibri.com/order
+```
+
+```json
+{
+  "order": {
+    "maker": "0xYourWalletAddress",
+    "signer": "0xYourSignerAddress",
+    "tokenId": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "makerAmount": "65000000",
+    "takerAmount": "100000000",
+    "side": "BUY",
+    "expiration": "0",
+    "timestamp": "1712000000000",
+    "signature": "0xabc123...",
+    "salt": "84543234532",
+    "signatureType": 0
+  },
+  "owner": "your-api-key-uuid",
+  "orderType": "GTC",
+  "postOnly": true
+}
+```
+
+A typical market-making loop posts a bid slightly below the mid-price and an ask slightly above it, refreshing both quotes as the market moves.
+
+---
+
+## Rebates and Rewards
+
+### Maker Rebates
+
+Every time a taker fills your resting order, you earn a maker rebate credited in pUSD at the end of each settlement period. Rebate rates vary by market tier — consult the rewards configuration to see current rates.
+
+### Liquidity Rewards
+
+Calibri distributes additional liquidity rewards daily, targeting approximately **6% APR** for active makers. Your share depends on your OI relative to the total OI posted across all makers in that market.
+
+**Check current reward configurations:**
+
+```bash
+GET https://clob.calibri.com/rewards/config
+```
+
+```json
+{
+  "rewardProgramId": "lp-season-3",
+  "makerRebateBps": 10,
+  "liquidityRewardPool": "5000.00",
+  "periodStartUtc": "2024-04-01T00:00:00Z",
+  "periodEndUtc": "2024-04-30T23:59:59Z"
+}
+```
+
+**View your daily earnings:**
+
+```bash
+GET https://clob.calibri.com/rewards/earnings/{address}/{date}
+```
+
+Replace `{date}` with an ISO date string such as `2024-04-01`.
+
+```json
+{
+  "address": "0xYourAddress",
+  "date": "2024-04-01",
+  "makerRebates": "12.54",
+  "liquidityRewards": "8.31",
+  "totalEarnings": "20.85",
+  "currency": "pUSD"
+}
+```
+
+**Check your reward share percentages:**
+
+```bash
+GET https://clob.calibri.com/rewards/percentages/{address}
+```
+
+---
+
+## Dead Man's Switch
+
+If your trading system crashes or loses network connectivity, stale resting orders can fill at unfavourable prices. The **dead man's switch** solves this: you configure a timeout, and Calibri automatically cancels all your open orders if it does not receive a heartbeat within that window.
+
+### Set the Auto-Cancel Timeout
+
+```bash
+POST https://clob.calibri.com/auto-cancel
+```
+
+```json
+{
+  "cancelAfter": 60
+}
+```
+
+`cancelAfter` is specified in **seconds**. All your open orders cancel automatically if Calibri does not receive a heartbeat from your API key within this window.
+
+### Send Heartbeats
+
+```bash
+POST https://clob.calibri.com/heartbeat
+```
+
+Send this request on a regular interval — every 15–30 seconds is recommended. The dead man's switch resets each time a valid heartbeat arrives.
+
+```typescript
+import { CalibriClient } from '@calibri/client';
+
+// Set dead man's switch — cancel all if no heartbeat for 60 seconds
+await client.setAutoCancel({ cancelAfter: 60 });
+
+// Heartbeat loop — keep the session alive
+async function maintainSession(client: CalibriClient) {
+  while (true) {
+    await client.sendHeartbeat();
+    await new Promise(resolve => setTimeout(resolve, 15_000)); // every 15s
+  }
+}
+
+maintainSession(client).catch(console.error);
+```
+
+<Warning>
+  Start your heartbeat loop **before** you post any orders. If you configure the auto-cancel timeout and then experience a delay before the first heartbeat, your orders may be cancelled immediately.
+</Warning>
+
+---
+
+## Rate Limits and Throughput
+
+Calibri enforces rate limits on order submission and API requests to protect system stability. All accounts start at the standard tier, which supports the order-per-second and request-per-minute rates documented in the [API reference](/api-reference). If your strategy requires higher throughput — for example, institutional quoting across many markets simultaneously — contact the Calibri team to discuss elevated limits for your account.
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+
+<Accordion title="How do I avoid taker fills?">
+  Always set `postOnly: true` on your market-making orders. When `postOnly` is enabled, Calibri rejects any order that would immediately cross the spread — it will never be routed as a taker order. Your bot should handle the rejection gracefully (typically by repricing and resubmitting) rather than retrying the same order.
+</Accordion>
+
+<Accordion title="How do I manage inventory risk?">
+  Monitor the balance between your Yes and No token holdings. A large imbalance in one direction exposes you to directional risk if the market moves against you. When your Yes and No positions are roughly equal, use the **merge** operation to convert them back to pUSD collateral — this locks in your spread earnings without selling on the book or incurring taker fees. See the [Manage Positions guide](/guides/manage-positions) for details on merging.
+</Accordion>
+
+<Accordion title="How do I monitor my reward share?">
+  Call `GET /rewards/percentages/{address}` periodically to see what fraction of the liquidity reward pool your posted OI entitles you to. If your share drops significantly, your quotes may have moved off the inside of the book or been cancelled — refresh your orders to stay competitive. You can also use `GET /rewards/earnings/{address}/{date}` to reconcile daily payouts against your expected share.
+</Accordion>
+
+</AccordionGroup>

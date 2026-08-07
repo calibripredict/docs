@@ -1,0 +1,182 @@
+---
+title: "GET /markets/{id}/prices-history — Historical Price Data"
+sidebarTitle: "Price History"
+description: "Fetch historical price data for a prediction market token on Calibri. Filter by time interval, start and end time, and data point fidelity."
+---
+
+The price history endpoints let you retrieve time-series price data for any prediction market on Calibri. You can specify a time interval, restrict the window to a custom date range, and control how many data points you receive. Use the single-market endpoint for one market at a time, or the batch endpoint to pull history for multiple markets in a single request — useful when building charts, backtesting models, or computing time-weighted metrics.
+
+## Endpoints
+
+```http
+GET https://gamma-api.calibri.com/markets/{id}/prices-history
+```
+
+```http
+GET https://gamma-api.calibri.com/markets/batch-prices-history
+```
+
+<Note>
+  Both endpoints are public — no authentication is required to access price history data.
+</Note>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique market ID for which you want price history. Required for the single-market endpoint only.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="interval" type="string">
+  The time resolution for each data point. Supported values:
+
+  | Value | Description |
+  |-------|-------------|
+  | `1m`  | One data point per minute |
+  | `5m`  | One data point per 5 minutes |
+  | `1h`  | One data point per hour |
+  | `6h`  | One data point per 6 hours |
+  | `1d`  | One data point per day |
+
+  If you omit `interval`, the API selects a resolution based on the requested time window.
+</ParamField>
+
+<ParamField query="start" type="string">
+  ISO 8601 datetime representing the start of the time window (e.g. `2025-06-01T00:00:00Z`). If omitted, the API returns data from the market's start date.
+</ParamField>
+
+<ParamField query="end" type="string">
+  ISO 8601 datetime representing the end of the time window. If omitted, the API returns data up to the current time (or the market's close time if the market is closed).
+</ParamField>
+
+<ParamField query="fidelity" type="integer">
+  The approximate number of data points to return. When specified, the API automatically selects an interval that yields close to this many points within the requested window. Useful when you want a fixed number of points for a chart regardless of the time range. Takes precedence over `interval` if both are provided.
+</ParamField>
+
+## Response
+
+The response contains a `history` array of price snapshots. Each snapshot includes a Unix timestamp and the price at that moment.
+
+<ResponseField name="history" type="object[]">
+  Array of price snapshots, ordered chronologically.
+
+  <Expandable title="Snapshot fields">
+    <ResponseField name="t" type="integer">
+      Unix timestamp (seconds) of the price snapshot.
+    </ResponseField>
+
+    <ResponseField name="p" type="number">
+      Price at this timestamp, expressed as a decimal between `0.0` and `1.0`. This represents the probability-equivalent price — `0.65` means the outcome is trading at 65 cents, implying a 65% probability.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "history": [
+    { "t": 1700000000, "p": 0.62 },
+    { "t": 1700003600, "p": 0.65 },
+    { "t": 1700007200, "p": 0.67 },
+    { "t": 1700010800, "p": 0.64 },
+    { "t": 1700014400, "p": 0.70 }
+  ]
+}
+```
+
+## Batch Endpoint
+
+To fetch price history for multiple markets in a single request, use `GET /markets/batch-prices-history`. The `ids` parameter accepts a comma-separated list of market IDs. All other query parameters (`interval`, `start`, `end`, `fidelity`) apply identically to every market in the batch.
+
+<ParamField query="ids" type="string" required>
+  Comma-separated list of market IDs to fetch price history for. For example: `ids=0xabc...,0xdef...,0x123...`
+</ParamField>
+
+The response is a map from market ID to its `history` array:
+
+```json
+{
+  "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b": [
+    { "t": 1700000000, "p": 0.62 },
+    { "t": 1700003600, "p": 0.65 }
+  ],
+  "0x2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c": [
+    { "t": 1700000000, "p": 0.41 },
+    { "t": 1700003600, "p": 0.44 }
+  ]
+}
+```
+
+## Example: Fetch and Chart Price History
+
+The following TypeScript example fetches hourly price history for a single market over the past 7 days and logs a simple ASCII price series.
+
+```typescript TypeScript
+interface PriceSnapshot {
+  t: number; // Unix timestamp (seconds)
+  p: number; // Price (0.0–1.0)
+}
+
+interface PriceHistoryResponse {
+  history: PriceSnapshot[];
+}
+
+async function fetchPriceHistory(
+  marketId: string,
+  intervalDays = 7
+): Promise<PriceSnapshot[]> {
+  const end = new Date();
+  const start = new Date(end.getTime() - intervalDays * 24 * 60 * 60 * 1000);
+
+  const params = new URLSearchParams({
+    interval: "1h",
+    start: start.toISOString(),
+    end: end.toISOString(),
+  });
+
+  const response = await fetch(
+    `https://gamma-api.calibri.com/markets/${marketId}/prices-history?${params.toString()}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Failed to fetch price history: ${error.error}`);
+  }
+
+  const data: PriceHistoryResponse = await response.json();
+  return data.history;
+}
+
+async function main() {
+  const marketId = "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b";
+  const history = await fetchPriceHistory(marketId, 7);
+
+  console.log(`Retrieved ${history.length} hourly data points\n`);
+
+  // Print a simple price log
+  for (const snapshot of history) {
+    const date = new Date(snapshot.t * 1000).toISOString();
+    const pct = (snapshot.p * 100).toFixed(1);
+    const bar = "█".repeat(Math.round(snapshot.p * 30));
+    console.log(`${date}  ${pct.padStart(5)}%  ${bar}`);
+  }
+
+  // Compute basic stats
+  const prices = history.map((s) => s.p);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+  console.log(`\nMin: ${(min * 100).toFixed(1)}%`);
+  console.log(`Max: ${(max * 100).toFixed(1)}%`);
+  console.log(`Avg: ${(avg * 100).toFixed(1)}%`);
+}
+
+main().catch(console.error);
+```
+
+<Tip>
+  If you're building a chart with a fixed pixel width, use the `fidelity` parameter instead of `interval`. Set `fidelity` equal to the number of pixels or data slots in your chart, and the API will return exactly that many evenly-spaced points regardless of the time window you choose.
+</Tip>

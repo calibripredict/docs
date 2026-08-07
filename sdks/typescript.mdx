@@ -1,0 +1,501 @@
+---
+title: "Calibri TypeScript SDK: Install, Configure, and Trade"
+sidebarTitle: "TypeScript SDK"
+description: "Install and use the Calibri TypeScript SDK to query markets, place orders, and subscribe to real-time data in your JavaScript or TypeScript app."
+---
+
+The `@calibri/client` package gives you a fully typed interface to every Calibri API — market data, CLOB trading, and real-time WebSocket feeds — in a single dependency. The SDK ships with EIP-712 order signing built in, WebSocket helpers that manage reconnection and message dispatch for you, and TypeScript types for every request and response object so your editor catches mistakes before runtime.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @calibri/client
+```
+
+```bash yarn
+yarn add @calibri/client
+```
+
+```bash pnpm
+pnpm add @calibri/client
+```
+
+</CodeGroup>
+
+## Quick start
+
+Import the factory functions and create a client. Use `createPublicClient` when you only need to read market data, and `createSecureClient` when you also want to trade.
+
+```typescript
+import {
+  createPublicClient,
+  createSecureClient,
+  OrderSide,
+  OrderType,
+} from '@calibri/client';
+
+// Read-only — no credentials required
+const publicClient = createPublicClient();
+
+// Authenticated — required for placing and managing orders
+const client = createSecureClient({
+  apiKey: process.env.CALIBRI_API_KEY!,
+  secret: process.env.CALIBRI_SECRET!,
+  passphrase: process.env.CALIBRI_PASSPHRASE!,
+  address: process.env.CALIBRI_ADDRESS!,
+});
+
+// Fetch active markets and place a limit order
+const markets = await client.listMarkets({ active: true, limit: 10 });
+const [market] = markets;
+const [yesTokenId] = market.clobTokenIds;
+
+const order = await client.placeLimitOrder({
+  tokenId: yesTokenId,
+  side: OrderSide.BUY,
+  price: '0.62',
+  size: '50',
+});
+
+console.log(`Order placed: ${order.orderId} — status: ${order.status}`);
+```
+
+<Tip>
+  You can use `createPublicClient()` for any read-only use case — browsing markets, displaying prices, or building analytics dashboards — without needing API credentials at all.
+</Tip>
+
+---
+
+## Public client
+
+`createPublicClient()` returns an unauthenticated client that connects to the Calibri market-data and CLOB APIs. All methods return typed response objects and throw `CalibrError` on failure.
+
+### `listMarkets(params?)`
+
+Fetch a paginated list of markets. Pass an optional filter object to narrow the results.
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `active` | `boolean` | Return only active markets |
+| `closed` | `boolean` | Return only closed markets |
+| `limit` | `number` | Maximum number of results (default `100`) |
+| `offset` | `number` | Pagination offset |
+| `tag` | `string` | Filter by market tag |
+
+```typescript
+const client = createPublicClient();
+
+// List the 20 most recent active markets tagged "politics"
+const markets = await client.listMarkets({
+  active: true,
+  limit: 20,
+  tag: 'politics',
+});
+
+for (const market of markets) {
+  const [yesPrice, noPrice] = market.outcomePrices;
+  console.log(`${market.question}`);
+  console.log(`  Yes: ${yesPrice}  No: ${noPrice}`);
+}
+```
+
+### `fetchMarket(id)`
+
+Fetch a single market by its ID or human-readable slug.
+
+```typescript
+// By ID
+const byId = await client.fetchMarket('0x1234abcd...');
+
+// By slug
+const bySlug = await client.fetchMarket('will-btc-hit-100k-by-dec-2025');
+
+console.log(bySlug.question);        // "Will BTC hit $100K by Dec 2025?"
+console.log(bySlug.clobTokenIds);    // ["71321045...", "98234567..."]
+```
+
+### `fetchOrderBook(tokenId)`
+
+Fetch the full order book for a token. The response contains sorted arrays of price levels for both sides.
+
+```typescript
+const book = await client.fetchOrderBook(
+  '71321045679252212594626385532706912750332728571942532289631379312455583992563'
+);
+
+console.log(`Bids: ${book.bids.length} levels`);
+console.log(`Asks: ${book.asks.length} levels`);
+
+// Each level: { price: string, size: string }
+const [bestBid] = book.bids;
+const [bestAsk] = book.asks;
+console.log(`Best bid: ${bestBid.price} × ${bestBid.size}`);
+console.log(`Best ask: ${bestAsk.price} × ${bestAsk.size}`);
+```
+
+### `fetchPrice(tokenId, side)`
+
+Fetch the current best bid or ask price for a token.
+
+```typescript
+import { OrderSide } from '@calibri/client';
+
+const tokenId = '71321045679252212594626385532706912750332728571942532289631379312455583992563';
+
+const bidPrice = await client.fetchPrice(tokenId, OrderSide.BUY);
+const askPrice = await client.fetchPrice(tokenId, OrderSide.SELL);
+
+console.log(`Bid: ${bidPrice}  Ask: ${askPrice}`);
+```
+
+### `fetchMidpoint(tokenId)` and `fetchSpread(tokenId)`
+
+Fetch the midpoint price (average of best bid and ask) or the bid-ask spread for a token.
+
+```typescript
+const tokenId = '71321045679252212594626385532706912750332728571942532289631379312455583992563';
+
+const midpoint = await client.fetchMidpoint(tokenId);
+const spread   = await client.fetchSpread(tokenId);
+
+console.log(`Midpoint: ${midpoint}`);   // e.g. "0.635"
+console.log(`Spread:   ${spread}`);     // e.g. "0.01"
+```
+
+### `fetchLastTradePrice(tokenId)`
+
+Fetch the price at which the most recent trade executed.
+
+```typescript
+const lastPrice = await client.fetchLastTradePrice(tokenId);
+console.log(`Last trade: ${lastPrice}`);
+```
+
+---
+
+## Secure client
+
+`createSecureClient(credentials)` returns a client that includes all public methods plus authenticated endpoints for order management, position tracking, and session control. You must supply your API key, secret, passphrase, and wallet address.
+
+```typescript
+const client = createSecureClient({
+  apiKey:     process.env.CALIBRI_API_KEY!,
+  secret:     process.env.CALIBRI_SECRET!,
+  passphrase: process.env.CALIBRI_PASSPHRASE!,
+  address:    process.env.CALIBRI_ADDRESS!,   // Your EVM wallet address
+});
+```
+
+<Note>
+  The SDK uses your `secret` to sign orders with EIP-712 before submitting them to the CLOB. Your secret never leaves the client — Calibri only receives the resulting signature.
+</Note>
+
+### `placeLimitOrder(params)`
+
+Place a resting limit order on the CLOB. The order sits in the book until it is filled, cancelled, or expires.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `tokenId` | `string` | ✓ | CLOB token ID for the outcome |
+| `side` | `OrderSide` | ✓ | `OrderSide.BUY` or `OrderSide.SELL` |
+| `price` | `string` | ✓ | Limit price between `0` and `1` |
+| `size` | `string` | ✓ | Order size in USDC |
+| `orderType` | `OrderType` | | `GTC` (default) or `GTD` |
+| `postOnly` | `boolean` | | Reject if order would immediately fill |
+| `expiration` | `number` | | Unix timestamp for GTD orders |
+
+```typescript
+import { OrderSide, OrderType } from '@calibri/client';
+
+// Good-till-cancelled limit buy
+const gtcOrder = await client.placeLimitOrder({
+  tokenId:  '71321045679252212594626385532706912750332728571942532289631379312455583992563',
+  side:     OrderSide.BUY,
+  price:    '0.65',
+  size:     '100',
+  postOnly: true,          // Reject if it would cross the spread immediately
+});
+
+// Good-till-date limit sell expiring in one hour
+const gtdOrder = await client.placeLimitOrder({
+  tokenId:    '71321045679252212594626385532706912750332728571942532289631379312455583992563',
+  side:       OrderSide.SELL,
+  price:      '0.72',
+  size:       '50',
+  orderType:  OrderType.GTD,
+  expiration: Math.floor(Date.now() / 1000) + 3600,
+});
+
+console.log(`GTC order: ${gtcOrder.orderId}`);
+console.log(`GTD order: ${gtdOrder.orderId}`);
+```
+
+### `placeMarketOrder(params)`
+
+Place a Fill-or-Kill market order. The order fills immediately at the best available price or is cancelled in full — no resting on the book.
+
+```typescript
+// Buy $200 worth at market — fills immediately or cancels
+const marketOrder = await client.placeMarketOrder({
+  tokenId: '71321045679252212594626385532706912750332728571942532289631379312455583992563',
+  side:    OrderSide.BUY,
+  size:    '200',
+});
+
+console.log(`Status: ${marketOrder.status}`);       // "matched" or "unmatched"
+console.log(`Filled: ${marketOrder.filledSize}`);
+```
+
+<Warning>
+  Market orders are Fill-or-Kill. If there is not enough liquidity to fill the entire order at the moment of submission, the order is cancelled and no partial fill occurs.
+</Warning>
+
+### `cancelOrder(orderId)`, `cancelOrders(orderIds)`, and `cancelAllOrders()`
+
+Cancel a single order by ID, a batch of orders by ID array, or every open order at once.
+
+```typescript
+// Cancel one order
+await client.cancelOrder('order_abc123');
+
+// Cancel a specific set of orders in a single request
+await client.cancelOrders(['order_abc123', 'order_def456', 'order_ghi789']);
+
+// Cancel every open order (useful for risk management)
+await client.cancelAllOrders();
+```
+
+### `listOpenOrders(params?)`
+
+List all open orders, optionally filtered by market or token.
+
+```typescript
+// All open orders
+const allOpen = await client.listOpenOrders();
+
+// Open orders for a specific market
+const marketOrders = await client.listOpenOrders({
+  marketId: '0x1234abcd...',
+});
+
+for (const order of marketOrders) {
+  console.log(`${order.side} ${order.size} @ ${order.price} — ${order.status}`);
+}
+```
+
+### `fetchOrder(orderId)`
+
+Fetch the current state of a specific order by its ID.
+
+```typescript
+const order = await client.fetchOrder('order_abc123');
+
+console.log(`Status:      ${order.status}`);
+console.log(`Filled:      ${order.filledSize} / ${order.size}`);
+console.log(`Created at:  ${order.createdAt}`);
+```
+
+### `listTrades(params?)`
+
+Fetch your trade history with optional filters.
+
+```typescript
+const trades = await client.listTrades({ limit: 50 });
+
+for (const trade of trades) {
+  console.log(`${trade.side} ${trade.size} @ ${trade.price}`);
+}
+```
+
+### `fetchPositions(address)`
+
+Fetch all open positions for a wallet address. Use this to build portfolio views or calculate exposure.
+
+```typescript
+const positions = await client.fetchPositions('0xYourWalletAddress');
+
+for (const pos of positions) {
+  console.log(`Token:       ${pos.tokenId}`);
+  console.log(`Size:        ${pos.size}`);
+  console.log(`Avg price:   ${pos.avgPrice}`);
+  console.log(`Unrealized:  ${pos.unrealizedPnl}`);
+  console.log(`Realized:    ${pos.realizedPnl}`);
+  console.log('---');
+}
+```
+
+### `fetchBalances()`
+
+Fetch your current USDC and collateral balances.
+
+```typescript
+const balances = await client.fetchBalances();
+console.log(balances);
+// { usdc: "1500.00", lockedUsdc: "250.00" }
+```
+
+### `sendHeartbeat()` and `setAutoCancel(params)`
+
+Send a heartbeat to keep your session alive, or configure a dead man's switch that automatically cancels all open orders if the switch is not refreshed within the specified window.
+
+```typescript
+// Keep session alive — call this periodically
+await client.sendHeartbeat();
+
+// Cancel all orders if no heartbeat within 60 seconds
+await client.setAutoCancel({ cancelAfter: 60 });
+
+// Disable the dead man's switch
+await client.setAutoCancel({ cancelAfter: 0 });
+```
+
+<Tip>
+  Use `setAutoCancel` in automated trading systems to protect against connectivity failures. If your process crashes or loses network access, Calibri will cancel your open orders after the configured window.
+</Tip>
+
+---
+
+## Real-time subscriptions
+
+The secure client exposes a `subscribe(tokenId, handlers)` method that opens a WebSocket connection to the Calibri feed and dispatches typed events to your handler functions. The SDK manages the connection lifecycle, including reconnection on disconnect.
+
+```typescript
+const tokenId = '71321045679252212594626385532706912750332728571942532289631379312455583992563';
+
+const unsubscribe = await client.subscribe(tokenId, {
+  // Full order book snapshot — emitted on connect and after reconnect
+  onBook: (book) => {
+    console.log('Snapshot:', book.bids.length, 'bids');
+    console.log('Top bid:', book.bids[0]?.price);
+  },
+
+  // Emitted whenever the best bid or ask price changes
+  onPriceChange: (e) => {
+    console.log(`Price update: ${e.price} (${e.side})`);
+  },
+
+  // Emitted after each trade executes
+  onLastTradePrice: (e) => {
+    console.log(`Last trade: ${e.price}`);
+  },
+
+  // Emitted when the market resolves
+  onResolved: (e) => {
+    console.log('Market resolved:', e.outcome);
+  },
+});
+
+// Unsubscribe and close the WebSocket channel when you are done
+unsubscribe();
+```
+
+You can subscribe to multiple tokens simultaneously by calling `subscribe` once per token. Each call returns its own `unsubscribe` function.
+
+```typescript
+const tokenIds = market.clobTokenIds;   // ["yes_token_id", "no_token_id"]
+
+const unsubs = await Promise.all(
+  tokenIds.map((id) =>
+    client.subscribe(id, {
+      onPriceChange: (e) => console.log(`${id.slice(0, 8)}: ${e.price}`),
+    })
+  )
+);
+
+// Tear down all subscriptions at once
+unsubs.forEach((unsub) => unsub());
+```
+
+---
+
+## Error handling
+
+Every client method throws a `CalibrError` if the request fails. The error object includes a machine-readable `code`, a human-readable `message`, and the HTTP `statusCode` (where applicable).
+
+```typescript
+import { CalibrError } from '@calibri/client';
+
+try {
+  const order = await client.placeLimitOrder({
+    tokenId: '71321045...',
+    side:    OrderSide.BUY,
+    price:   '0.65',
+    size:    '100',
+  });
+} catch (err) {
+  if (err instanceof CalibrError) {
+    console.error(`Calibri error [${err.code}]: ${err.message}`);
+    console.error(`HTTP status: ${err.statusCode}`);
+
+    // Handle specific codes
+    if (err.code === 'INSUFFICIENT_FUNDS') {
+      console.error('Top up your USDC balance and retry.');
+    }
+  } else {
+    // Unexpected / network error
+    throw err;
+  }
+}
+```
+
+---
+
+## TypeScript types
+
+The SDK exports the following interfaces. All properties are read-only at runtime.
+
+### `Market`
+
+Represents a prediction market on Calibri.
+
+```typescript
+interface Market {
+  id: string;           // Unique market ID (hex condition ID)
+  question: string;     // Human-readable market question
+  conditionId: string;  // On-chain condition ID
+  slug: string;         // URL-friendly identifier
+  outcomes: string[];   // Outcome labels e.g. ["Yes", "No"]
+  outcomePrices: string[]; // Current implied probabilities per outcome
+  clobTokenIds: string[];  // CLOB token IDs, one per outcome
+  volume: string;       // Total traded volume in USDC
+  active: boolean;      // Accepting orders
+  closed: boolean;      // Trading has ended
+  endDate: string;      // ISO 8601 resolution date
+}
+```
+
+### `Order`
+
+Represents a single CLOB order.
+
+```typescript
+interface Order {
+  orderId: string;
+  status: 'live' | 'matched' | 'delayed' | 'unmatched';
+  tokenId: string;
+  side: 'BUY' | 'SELL';
+  price: string;       // Limit price
+  size: string;        // Total order size in USDC
+  filledSize: string;  // Amount filled so far
+  createdAt: string;   // ISO 8601 timestamp
+}
+```
+
+### `Position`
+
+Represents a wallet's exposure in a single outcome.
+
+```typescript
+interface Position {
+  conditionId: string;   // Market condition ID
+  tokenId: string;       // Outcome token ID
+  outcomeIndex: number;  // Index into market.outcomes[]
+  size: string;          // Number of shares held
+  avgPrice: string;      // Volume-weighted average entry price
+  currentValue: string;  // Mark-to-market value in USDC
+  unrealizedPnl: string; // Open P&L in USDC
+  realizedPnl: string;   // Closed P&L in USDC
+}
+```

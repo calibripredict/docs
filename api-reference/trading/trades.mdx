@@ -1,0 +1,197 @@
+---
+title: "GET /data/trades — Fetch Your Trade History on Calibri"
+sidebarTitle: "Trades"
+description: "Retrieve your confirmed and pending trade history on Calibri, filterable by market, maker, and taker address. Includes transaction hashes and fill prices."
+---
+
+The trades endpoint returns a paginated list of executions on Calibri's CLOB, including the fill price, quantity, settlement status, and on-chain transaction hash for each trade. You can filter by market, maker address, or taker address to scope results to a specific context. Use this data to reconcile your P&L, verify settlement, and audit your trading activity.
+
+## Endpoint
+
+```
+GET https://clob.calibri.com/data/trades
+```
+
+<Note>
+  This endpoint requires L2 authentication. By default, it returns trades associated with your authenticated account. Include the `POLY_ADDRESS`, `POLY_API_KEY`, `POLY_PASSPHRASE`, `POLY_SIGNATURE`, and `POLY_TIMESTAMP` headers with every request.
+</Note>
+
+## Query Parameters
+
+<ParamField query="market" type="string">
+  Filter trades to a specific market by condition ID.
+</ParamField>
+
+<ParamField query="maker_address" type="string">
+  Filter trades where the specified wallet address was the maker (the resting order side).
+</ParamField>
+
+<ParamField query="taker_address" type="string">
+  Filter trades where the specified wallet address was the taker (the aggressing order side).
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Maximum number of trades to return per page. Defaults to `100`.
+</ParamField>
+
+<ParamField query="offset" type="integer">
+  Number of trades to skip for pagination. Use in combination with `limit` to page through large result sets.
+</ParamField>
+
+## Response Fields
+
+The response is an array of trade objects. Each object contains:
+
+<ResponseField name="id" type="string">
+  A unique UUID identifying this trade.
+</ResponseField>
+
+<ResponseField name="taker_order_id" type="string">
+  The order ID of the taker order that initiated this trade.
+</ResponseField>
+
+<ResponseField name="market" type="string">
+  The condition ID of the prediction market where this trade occurred.
+</ResponseField>
+
+<ResponseField name="asset_id" type="string">
+  The outcome token ID that was traded.
+</ResponseField>
+
+<ResponseField name="side" type="string">
+  The taker's side of the trade: `"BUY"` or `"SELL"`.
+</ResponseField>
+
+<ResponseField name="size" type="string">
+  The number of shares exchanged in this trade.
+</ResponseField>
+
+<ResponseField name="price" type="string">
+  The price at which this trade was executed, as a decimal string.
+</ResponseField>
+
+<ResponseField name="outcome" type="string">
+  The outcome label of the token traded (e.g., `"Yes"` or `"No"`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current settlement status of the trade. See [Trade Status Lifecycle](#trade-status-lifecycle) below.
+</ResponseField>
+
+<ResponseField name="trader_side" type="string">
+  Whether you were the `"maker"` (resting order) or `"taker"` (aggressing order) in this trade.
+</ResponseField>
+
+<ResponseField name="transaction_hash" type="string">
+  The on-chain transaction hash for this trade's settlement. Use this to verify the trade on a block explorer.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix timestamp (in seconds) when the trade was created.
+</ResponseField>
+
+## Example Response
+
+```json
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "taker_order_id": "0x1234abcd...",
+    "market": "0xabc123def456789...",
+    "asset_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "side": "BUY",
+    "size": "25",
+    "price": "0.65",
+    "outcome": "Yes",
+    "status": "CONFIRMED",
+    "trader_side": "taker",
+    "transaction_hash": "0xdeadbeef1234abcd...",
+    "created_at": 1700000000
+  },
+  {
+    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "taker_order_id": "0x5678efgh...",
+    "market": "0xabc123def456789...",
+    "asset_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "side": "BUY",
+    "size": "50",
+    "price": "0.64",
+    "outcome": "Yes",
+    "status": "MINED",
+    "trader_side": "maker",
+    "transaction_hash": "0xcafebabe5678efgh...",
+    "created_at": 1700000120
+  }
+]
+```
+
+<CodeGroup>
+
+```bash cURL
+# Fetch recent trades for a market
+curl "https://clob.calibri.com/data/trades?market=0xabc123def456789...&limit=50" \
+  -H "POLY_ADDRESS: 0xabc123..." \
+  -H "POLY_API_KEY: your-api-key" \
+  -H "POLY_PASSPHRASE: your-passphrase" \
+  -H "POLY_SIGNATURE: hmac-signature" \
+  -H "POLY_TIMESTAMP: 1700000000"
+```
+
+```typescript TypeScript
+const timestamp = Math.floor(Date.now() / 1000).toString();
+
+const params = new URLSearchParams({
+  market: "0xabc123def456789...",
+  limit: "50",
+  offset: "0",
+});
+
+const res = await fetch(`https://clob.calibri.com/data/trades?${params}`, {
+  headers: {
+    POLY_ADDRESS: "0xabc123...",
+    POLY_API_KEY: "your-api-key",
+    POLY_PASSPHRASE: "your-passphrase",
+    POLY_SIGNATURE: computeHmacSignature(timestamp),
+    POLY_TIMESTAMP: timestamp,
+  },
+});
+
+const trades = await res.json();
+
+// Separate confirmed vs. pending trades
+const confirmed = trades.filter((t) => t.status === "CONFIRMED");
+const pending = trades.filter((t) => ["MATCHED", "MINED", "RETRYING"].includes(t.status));
+
+console.log(`${confirmed.length} confirmed, ${pending.length} pending`);
+```
+
+</CodeGroup>
+
+---
+
+## Trade Status Lifecycle
+
+Every trade moves through a sequence of statuses from initial matching to final on-chain settlement. The normal happy path is:
+
+```
+MATCHED → MINED → CONFIRMED
+```
+
+If on-chain submission encounters issues, the trade may enter a retry loop before ultimately succeeding or failing:
+
+```
+MATCHED → MINED → RETRYING → CONFIRMED
+                           → FAILED
+```
+
+| Status      | Description                                                                                                               |
+|-------------|---------------------------------------------------------------------------------------------------------------------------|
+| `MATCHED`   | The trade has been matched by the off-chain engine. Settlement transaction has not yet been submitted to the blockchain.   |
+| `MINED`     | The settlement transaction has been submitted and included in a block, but not yet confirmed to sufficient depth.          |
+| `CONFIRMED` | The settlement transaction has reached sufficient block confirmations. The trade is final.                                 |
+| `RETRYING`  | The settlement transaction failed or was dropped and is being resubmitted. Your position is not at risk during retries.   |
+| `FAILED`    | The settlement transaction failed after all retry attempts. Contact Calibri support if a trade is stuck in this state.    |
+
+<Tip>
+  Use the `transaction_hash` field to independently verify trade settlement on-chain. You can paste the hash into [Polygonscan](https://polygonscan.com) to confirm the transaction status, block number, and exact transfer amounts — giving you full auditability of every fill without relying solely on the Calibri API.
+</Tip>

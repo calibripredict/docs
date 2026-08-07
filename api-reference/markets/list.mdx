@@ -1,0 +1,238 @@
+---
+title: "GET /markets — List and Filter All Prediction Markets"
+sidebarTitle: "List Markets"
+description: "Fetch a filtered, paginated list of prediction markets on Calibri. Filter by status, volume, liquidity, date range, category, or market ID."
+---
+
+The `GET /markets` endpoint is your starting point for discovering prediction markets on Calibri. You can retrieve the full catalog or narrow results using any combination of filters — by status, liquidity range, volume, date window, category tag, or specific market IDs. Results are paginated and sortable, making it straightforward to build market browsers, dashboards, or automated screening tools.
+
+## Endpoint
+
+```http
+GET https://gamma-api.calibri.com/markets
+```
+
+<Note>
+  This is a public endpoint — no authentication is required. You can call it directly from a browser, server, or any HTTP client.
+</Note>
+
+## Query Parameters
+
+### Filtering
+
+<ParamField query="id" type="string">
+  Filter results to a specific market by its unique market ID. Returns an array containing only that market if found.
+</ParamField>
+
+<ParamField query="slug" type="string">
+  Filter by the market's URL-friendly slug identifier (e.g. `us-election-2026-senate`).
+</ParamField>
+
+<ParamField query="clob_token_ids" type="string[]">
+  Filter by one or more CLOB token IDs. Pass multiple values as repeated query parameters or a comma-separated string depending on your client.
+</ParamField>
+
+<ParamField query="condition_ids" type="string[]">
+  Filter by onchain condition IDs. Useful when you need to correlate markets with on-chain settlement data.
+</ParamField>
+
+<ParamField query="liquidity_num_min" type="number">
+  Return only markets with liquidity greater than or equal to this value.
+</ParamField>
+
+<ParamField query="liquidity_num_max" type="number">
+  Return only markets with liquidity less than or equal to this value.
+</ParamField>
+
+<ParamField query="volume_num_min" type="number">
+  Return only markets with total trading volume greater than or equal to this value.
+</ParamField>
+
+<ParamField query="volume_num_max" type="number">
+  Return only markets with total trading volume less than or equal to this value.
+</ParamField>
+
+<ParamField query="start_date_min" type="string">
+  ISO 8601 datetime. Return only markets that started on or after this date (e.g. `2025-01-01T00:00:00Z`).
+</ParamField>
+
+<ParamField query="start_date_max" type="string">
+  ISO 8601 datetime. Return only markets that started on or before this date.
+</ParamField>
+
+<ParamField query="end_date_min" type="string">
+  ISO 8601 datetime. Return only markets that close on or after this date.
+</ParamField>
+
+<ParamField query="end_date_max" type="string">
+  ISO 8601 datetime. Return only markets that close on or before this date.
+</ParamField>
+
+<ParamField query="tag_id" type="string">
+  Filter markets by a specific tag ID (e.g. `politics`, `crypto`, `sports`).
+</ParamField>
+
+<ParamField query="closed" type="boolean">
+  When `true`, include markets that have already closed. Defaults to returning only open markets.
+</ParamField>
+
+### Pagination
+
+<ParamField query="limit" type="integer" default="100">
+  Number of markets to return per page. Maximum value is `500`.
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of markets to skip before returning results. Use in combination with `limit` to page through large result sets.
+</ParamField>
+
+### Sorting
+
+<ParamField query="order" type="string">
+  Field to sort results by. Supported values include `volume`, `liquidity`, and `end_date`.
+</ParamField>
+
+<ParamField query="ascending" type="boolean" default="false">
+  When `true`, results are sorted in ascending order. Defaults to descending.
+</ParamField>
+
+## Response
+
+A successful request returns an array of **Market** objects.
+
+```json
+[
+  {
+    "id": "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+    "question": "Will the Federal Reserve cut rates before July 2026?",
+    "conditionId": "0xabc123def456abc123def456abc123def456abc1",
+    "slug": "fed-rate-cut-july-2026",
+    "description": "This market resolves YES if the Federal Reserve announces a federal funds rate cut at any FOMC meeting scheduled before July 1, 2026.",
+    "resolutionSource": "Federal Reserve press releases at federalreserve.gov",
+    "startDate": "2025-01-15T00:00:00Z",
+    "endDate": "2026-07-01T00:00:00Z",
+    "outcomes": ["Yes", "No"],
+    "outcomePrices": ["0.62", "0.38"],
+    "volume": "1482350.00",
+    "liquidity": "84200.00",
+    "active": true,
+    "closed": false,
+    "closedTime": null,
+    "clobTokenIds": [
+      "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+      "52114319501245915516055106046884209969926127482827954674443846427813813222426"
+    ],
+    "orderPriceMinTickSize": "0.01",
+    "orderMinSize": "5",
+    "enableOrderBook": true,
+    "category": "Economics",
+    "tags": [
+      { "id": "economics", "label": "Economics" },
+      { "id": "fed", "label": "Federal Reserve" }
+    ]
+  },
+  {
+    "id": "0x2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c",
+    "question": "Will Bitcoin exceed $150,000 by end of 2025?",
+    "conditionId": "0xdef456abc123def456abc123def456abc123def4",
+    "slug": "btc-150k-2025",
+    "description": "This market resolves YES if the Bitcoin spot price on any major exchange exceeds $150,000 USD at any point before January 1, 2026.",
+    "resolutionSource": "CoinGecko BTC/USD price feed",
+    "startDate": "2025-02-01T00:00:00Z",
+    "endDate": "2025-12-31T23:59:59Z",
+    "outcomes": ["Yes", "No"],
+    "outcomePrices": ["0.41", "0.59"],
+    "volume": "3971200.00",
+    "liquidity": "210500.00",
+    "active": true,
+    "closed": false,
+    "closedTime": null,
+    "clobTokenIds": [
+      "93847561029384756102938475610293847561029384756102938475610293847561029384756",
+      "10293847561029384756102938475610293847561029384756102938475610293847561029384"
+    ],
+    "orderPriceMinTickSize": "0.01",
+    "orderMinSize": "5",
+    "enableOrderBook": true,
+    "category": "Crypto",
+    "tags": [
+      { "id": "crypto", "label": "Crypto" },
+      { "id": "bitcoin", "label": "Bitcoin" }
+    ]
+  }
+]
+```
+
+## Pagination
+
+By default, the endpoint returns up to `100` markets per page. Use `limit` and `offset` to page through the full catalog:
+
+```http
+# First page
+GET /markets?limit=50&offset=0
+
+# Second page
+GET /markets?limit=50&offset=50
+
+# Third page
+GET /markets?limit=50&offset=100
+```
+
+You've reached the last page when the response array contains fewer items than your `limit` value.
+
+For large result sets where you need to scan the entire catalog efficiently, use the cursor-based alternative:
+
+```http
+GET https://gamma-api.calibri.com/markets/keyset
+```
+
+Cursor-based pagination avoids the stale-data problem that can cause duplicates or skipped records when new markets are created between page requests.
+
+## Example Requests
+
+<CodeGroup>
+
+```bash cURL
+curl 'https://gamma-api.calibri.com/markets?closed=false&limit=10&order=volume'
+```
+
+```typescript TypeScript
+const params = new URLSearchParams({
+  closed: "false",
+  limit: "10",
+  order: "volume",
+});
+
+const response = await fetch(
+  `https://gamma-api.calibri.com/markets?${params.toString()}`
+);
+
+if (!response.ok) {
+  const error = await response.json();
+  throw new Error(`Failed to fetch markets: ${error.error}`);
+}
+
+const markets = await response.json();
+console.log(`Fetched ${markets.length} markets`);
+```
+
+```python Python
+import httpx
+
+params = {
+    "closed": "false",
+    "limit": 10,
+    "order": "volume",
+}
+
+response = httpx.get(
+    "https://gamma-api.calibri.com/markets",
+    params=params,
+)
+response.raise_for_status()
+
+markets = response.json()
+print(f"Fetched {len(markets)} markets")
+```
+
+</CodeGroup>

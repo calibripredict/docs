@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "Calibri",
+  "theme": "luma",
+  "colors": {
+    "primary": "#ef7025",
+    "light": "#eec9bc",
+    "dark": "#4fa1ab"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/markets",
+              "concepts/orderbook",
+              "concepts/orders",
+              "concepts/positions",
+              "concepts/resolution"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/place-order",
+              "guides/manage-positions",
+              "guides/market-making",
+              "guides/websocket-streams",
+              "guides/settlement"
+            ]
+          },
+          {
+            "group": "SDKs",
+            "pages": [
+              "sdks/typescript",
+              "sdks/python"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/rate-limits"
+            ]
+          },
+          {
+            "group": "Markets",
+            "pages": [
+              "api-reference/markets/list",
+              "api-reference/markets/get",
+              "api-reference/markets/prices"
+            ]
+          },
+          {
+            "group": "Orderbook",
+            "pages": [
+              "api-reference/orderbook/book",
+              "api-reference/orderbook/prices",
+              "api-reference/orderbook/spread"
+            ]
+          },
+          {
+            "group": "Trading",
+            "pages": [
+              "api-reference/trading/place-order",
+              "api-reference/trading/cancel-order",
+              "api-reference/trading/orders",
+              "api-reference/trading/trades"
+            ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "api-reference/account/balances",
+              "api-reference/account/positions",
+              "api-reference/account/rewards"
+            ]
+          },
+          {
+            "group": "WebSockets",
+            "pages": [
+              "api-reference/websockets/market-channel",
+              "api-reference/websockets/user-channel"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "/quickstart"
+    }
+  },
+  "footer": {
+    "socials": {}
+  }
+}

@@ -1,0 +1,226 @@
+---
+title: "GET /data/orders — List Your Open Orders on Calibri"
+sidebarTitle: "List Orders"
+description: "Fetch your open and active orders on Calibri's CLOB, filterable by market, token, and owner. Returns full order details including fill status."
+---
+
+The orders endpoints let you query the current state of your resting orders on the book. You can list all open orders for your account, filter by market or token, or retrieve a single order by ID to check its fill progress. These endpoints are the primary way to reconcile your local order state with what is live on the exchange.
+
+## Endpoints
+
+| Method | Path                                          | Description                        |
+|--------|-----------------------------------------------|------------------------------------|
+| `GET`  | `https://clob.calibri.com/data/orders`        | List open orders (filterable)      |
+| `GET`  | `https://clob.calibri.com/data/order/{id}`    | Fetch a single order by ID         |
+
+<Note>
+  Both endpoints require L2 authentication. Include the `POLY_ADDRESS`, `POLY_API_KEY`, `POLY_PASSPHRASE`, `POLY_SIGNATURE`, and `POLY_TIMESTAMP` headers with every request.
+</Note>
+
+---
+
+## List Open Orders — GET /data/orders
+
+Fetch all of your currently open orders. Narrow the results using the optional query parameters below.
+
+```
+GET https://clob.calibri.com/data/orders
+```
+
+### Query Parameters
+
+<ParamField query="market" type="string">
+  Filter results to orders in a specific market, identified by its condition ID.
+</ParamField>
+
+<ParamField query="asset_id" type="string">
+  Filter results to orders on a specific outcome token, identified by its token ID.
+</ParamField>
+
+<ParamField query="owner" type="string">
+  Filter results to orders owned by a specific API key UUID. Useful when managing multiple sub-accounts under the same wallet.
+</ParamField>
+
+### Response Fields
+
+The response is an array of order objects. Each object contains:
+
+<ResponseField name="id" type="string">
+  The unique order ID. Use this to cancel or look up the order.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the order. See [Order Status Values](#order-status-values) below.
+</ResponseField>
+
+<ResponseField name="owner" type="string">
+  The API key UUID that owns this order.
+</ResponseField>
+
+<ResponseField name="maker" type="string">
+  The wallet address of the order creator.
+</ResponseField>
+
+<ResponseField name="tokenId" type="string">
+  The outcome token ID this order is for.
+</ResponseField>
+
+<ResponseField name="side" type="string">
+  The order direction: `"BUY"` or `"SELL"`.
+</ResponseField>
+
+<ResponseField name="price" type="string">
+  The limit price at which this order rests on the book.
+</ResponseField>
+
+<ResponseField name="originalSize" type="string">
+  The total number of shares in the order when it was first placed.
+</ResponseField>
+
+<ResponseField name="remainingSize" type="string">
+  The number of shares still unfilled. `originalSize - remainingSize` gives you the amount already matched.
+</ResponseField>
+
+<ResponseField name="created_at" type="integer">
+  Unix timestamp (in seconds) when the order was created.
+</ResponseField>
+
+### Example Response
+
+```json
+[
+  {
+    "id": "0x1234abcd...",
+    "status": "live",
+    "owner": "550e8400-e29b-41d4-a716-446655440000",
+    "maker": "0xabc123...",
+    "tokenId": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "side": "BUY",
+    "price": "0.65",
+    "originalSize": "100",
+    "remainingSize": "75",
+    "created_at": 1700000000
+  },
+  {
+    "id": "0x5678efgh...",
+    "status": "live",
+    "owner": "550e8400-e29b-41d4-a716-446655440000",
+    "maker": "0xabc123...",
+    "tokenId": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "side": "SELL",
+    "price": "0.40",
+    "originalSize": "200",
+    "remainingSize": "200",
+    "created_at": 1700000100
+  }
+]
+```
+
+<CodeGroup>
+
+```bash cURL
+# All open orders
+curl "https://clob.calibri.com/data/orders" \
+  -H "POLY_ADDRESS: 0xabc123..." \
+  -H "POLY_API_KEY: your-api-key" \
+  -H "POLY_PASSPHRASE: your-passphrase" \
+  -H "POLY_SIGNATURE: hmac-signature" \
+  -H "POLY_TIMESTAMP: 1700000000"
+
+# Filter by market
+curl "https://clob.calibri.com/data/orders?market=0xabc123def456789..." \
+  -H "POLY_ADDRESS: 0xabc123..." \
+  -H "POLY_API_KEY: your-api-key" \
+  -H "POLY_PASSPHRASE: your-passphrase" \
+  -H "POLY_SIGNATURE: hmac-signature" \
+  -H "POLY_TIMESTAMP: 1700000000"
+```
+
+```typescript TypeScript
+const timestamp = Math.floor(Date.now() / 1000).toString();
+
+// List all open orders
+const res = await fetch("https://clob.calibri.com/data/orders", {
+  headers: {
+    POLY_ADDRESS: "0xabc123...",
+    POLY_API_KEY: "your-api-key",
+    POLY_PASSPHRASE: "your-passphrase",
+    POLY_SIGNATURE: computeHmacSignature(timestamp),
+    POLY_TIMESTAMP: timestamp,
+  },
+});
+
+const orders = await res.json();
+
+// Calculate fill progress for each order
+orders.forEach((order) => {
+  const filled = parseFloat(order.originalSize) - parseFloat(order.remainingSize);
+  const pct = ((filled / parseFloat(order.originalSize)) * 100).toFixed(1);
+  console.log(`Order ${order.id}: ${pct}% filled @ ${order.price}`);
+});
+```
+
+</CodeGroup>
+
+---
+
+## Get a Single Order — GET /data/order/{id}
+
+Fetch the full details and current fill status of one specific order.
+
+```
+GET https://clob.calibri.com/data/order/{id}
+```
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The order ID to look up. This is the `orderId` value returned when the order was placed.
+</ParamField>
+
+### Response
+
+Returns a single order object with the same fields as the list response above.
+
+<CodeGroup>
+
+```bash cURL
+curl "https://clob.calibri.com/data/order/0x1234abcd..." \
+  -H "POLY_ADDRESS: 0xabc123..." \
+  -H "POLY_API_KEY: your-api-key" \
+  -H "POLY_PASSPHRASE: your-passphrase" \
+  -H "POLY_SIGNATURE: hmac-signature" \
+  -H "POLY_TIMESTAMP: 1700000000"
+```
+
+```typescript TypeScript
+const orderId = "0x1234abcd...";
+const timestamp = Math.floor(Date.now() / 1000).toString();
+
+const res = await fetch(`https://clob.calibri.com/data/order/${orderId}`, {
+  headers: {
+    POLY_ADDRESS: "0xabc123...",
+    POLY_API_KEY: "your-api-key",
+    POLY_PASSPHRASE: "your-passphrase",
+    POLY_SIGNATURE: computeHmacSignature(timestamp),
+    POLY_TIMESTAMP: timestamp,
+  },
+});
+
+const order = await res.json();
+console.log("Remaining size:", order.remainingSize);
+console.log("Status:", order.status);
+```
+
+</CodeGroup>
+
+---
+
+## Order Status Values
+
+| Status      | Description                                                                                                        |
+|-------------|--------------------------------------------------------------------------------------------------------------------|
+| `live`      | The order is active and resting on the order book, waiting to be matched.                                          |
+| `matched`   | The order has been fully or partially filled by the matching engine.                                               |
+| `delayed`   | The order is in a temporary delay window before it becomes visible on the book (anti-manipulation hold).           |
+| `unmatched` | The order was not matched and has been removed from the book (applies to FOK/FAK orders that expired unfilled).    |
