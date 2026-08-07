@@ -1,0 +1,194 @@
+---
+title: "GET /book — Fetch the Full Order Book for a Token ID"
+sidebarTitle: "Order Book"
+description: "Fetch the full order book for a prediction market outcome token, including bids, asks, last trade price, tick size, and minimum order size."
+---
+
+The order book endpoint returns a real-time snapshot of all resting bids and asks for a given outcome token on Calibri's central limit order book (CLOB). Use this data to assess market depth, identify price levels with significant liquidity, and inform your trading strategy before placing an order.
+
+## Endpoint
+
+```
+GET https://clob.calibri.com/book
+```
+
+<Note>
+  This is a public endpoint. No authentication is required to fetch order book data.
+</Note>
+
+## Query Parameters
+
+<ParamField query="token_id" type="string" required>
+  The unique identifier of the outcome token whose order book you want to fetch. You can find token IDs in the market's CLOB parameters via [`GET /clob-markets/{condition_id}`](/api-reference/orderbook/spread#get-clob-markets-condition_id).
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="market" type="string">
+  The condition ID of the prediction market this token belongs to.
+</ResponseField>
+
+<ResponseField name="asset_id" type="string">
+  The token ID you queried — echoed back for confirmation.
+</ResponseField>
+
+<ResponseField name="bids" type="array">
+  Ordered list of active buy orders, sorted from highest price to lowest.
+
+  <Expandable title="Bid object fields">
+    <ResponseField name="price" type="string">
+      The bid price as a decimal string (e.g., `"0.64"`). Represents the probability-implied price between `0` and `1`.
+    </ResponseField>
+
+    <ResponseField name="size" type="string">
+      The total quantity available at this price level, in shares.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="asks" type="array">
+  Ordered list of active sell orders, sorted from lowest price to highest.
+
+  <Expandable title="Ask object fields">
+    <ResponseField name="price" type="string">
+      The ask price as a decimal string (e.g., `"0.66"`).
+    </ResponseField>
+
+    <ResponseField name="size" type="string">
+      The total quantity available at this price level, in shares.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="last_trade_price" type="string">
+  The price at which the most recent trade for this token was executed.
+</ResponseField>
+
+<ResponseField name="tick_size" type="string">
+  The minimum price increment for this token (e.g., `"0.01"`). All order prices must be multiples of this value.
+</ResponseField>
+
+<ResponseField name="min_order_size" type="string">
+  The minimum order size in shares. Orders below this threshold are rejected.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "market": "0xabc123def456...",
+  "asset_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+  "bids": [
+    { "price": "0.64", "size": "100" },
+    { "price": "0.63", "size": "250" }
+  ],
+  "asks": [
+    { "price": "0.66", "size": "75" },
+    { "price": "0.67", "size": "150" }
+  ],
+  "last_trade_price": "0.65",
+  "tick_size": "0.01",
+  "min_order_size": "5.0"
+}
+```
+
+---
+
+## Bulk Endpoint — GET /books
+
+If you need to fetch order books for multiple tokens in a single request, use the bulk endpoint. Send a JSON array of token ID objects in the request body.
+
+```
+GET https://clob.calibri.com/books
+```
+
+**Request body:**
+
+```json
+[
+  { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+  { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+]
+```
+
+**Response:** An array of order book objects, each in the same format as the single `/book` response.
+
+```json
+[
+  {
+    "market": "0xabc123def456...",
+    "asset_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "bids": [{ "price": "0.64", "size": "100" }],
+    "asks": [{ "price": "0.66", "size": "75" }],
+    "last_trade_price": "0.65",
+    "tick_size": "0.01",
+    "min_order_size": "5.0"
+  },
+  {
+    "market": "0xdef456abc123...",
+    "asset_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201",
+    "bids": [{ "price": "0.38", "size": "500" }],
+    "asks": [{ "price": "0.40", "size": "300" }],
+    "last_trade_price": "0.39",
+    "tick_size": "0.01",
+    "min_order_size": "5.0"
+  }
+]
+```
+
+---
+
+## Example Requests
+
+### Single Order Book
+
+<CodeGroup>
+
+```bash cURL
+curl "https://clob.calibri.com/book?token_id=71321045679252212594626385532706912750332728571942532289631379312455583992563"
+```
+
+```typescript TypeScript
+const response = await fetch(
+  "https://clob.calibri.com/book?token_id=71321045679252212594626385532706912750332728571942532289631379312455583992563"
+);
+
+const book = await response.json();
+
+console.log("Best bid:", book.bids[0]?.price);
+console.log("Best ask:", book.asks[0]?.price);
+console.log("Last trade:", book.last_trade_price);
+```
+
+</CodeGroup>
+
+### Bulk Order Books
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://clob.calibri.com/books" \
+  -H "Content-Type: application/json" \
+  -d '[
+    { "token_id": "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { "token_id": "52108247361948573920614827193045826371948273645019283756102938471029384756201" }
+  ]'
+```
+
+```typescript TypeScript
+const response = await fetch("https://clob.calibri.com/books", {
+  method: "GET",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify([
+    { token_id: "71321045679252212594626385532706912750332728571942532289631379312455583992563" },
+    { token_id: "52108247361948573920614827193045826371948273645019283756102938471029384756201" },
+  ]),
+});
+
+const books = await response.json();
+books.forEach((book) => {
+  console.log(`Token ${book.asset_id}: best bid ${book.bids[0]?.price}, best ask ${book.asks[0]?.price}`);
+});
+```
+
+</CodeGroup>

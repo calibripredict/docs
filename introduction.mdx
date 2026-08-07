@@ -1,0 +1,72 @@
+---
+title: "Calibri: Prediction Market Engine for Traders and Builders"
+sidebarTitle: "Introduction"
+description: "Calibri is a prediction market engine with a CLOB trading engine, real-time WebSocket streams, and REST APIs for binary and multi-outcome markets."
+---
+
+Calibri is a prediction market engine that lets you trade, build, and analyze markets on real-world events — elections, economic indicators, sports outcomes, and more. At its core, Calibri runs a Central Limit Order Book (CLOB) for peer-to-peer trading of binary and multi-outcome markets, backed by fully collateralized ERC-1155 outcome tokens and resolved through the UMA Optimistic Oracle. Whether you're a trader looking for programmatic order execution, a developer integrating market data into a product, or a market maker running automated liquidity strategies, Calibri gives you the infrastructure to do it.
+
+## What you can build
+
+<CardGroup cols={2}>
+  <Card title="Trading Applications" icon="chart-line">
+    Build interfaces that let users discover markets, stream live prices, and execute orders with full support for GTC, GTD, FOK, FAK, and Post-Only order types.
+  </Card>
+  <Card title="Market Making Bots" icon="robot">
+    Run automated liquidity strategies using the CLOB API and WebSocket price feeds, and earn maker rewards for providing two-sided quotes.
+  </Card>
+  <Card title="Analytics Dashboards" icon="chart-bar">
+    Query the Data API for historical trade data, volume metrics, and market resolution history to power research tools and probability trackers.
+  </Card>
+  <Card title="Embedded Markets" icon="puzzle-piece">
+    Embed live prediction market widgets or full trading experiences directly into your application using the REST APIs and TypeScript SDK.
+  </Card>
+</CardGroup>
+
+## Key concepts
+
+Understanding these four concepts will help you navigate the Calibri platform and its APIs.
+
+**Markets & Events**
+A market represents a question about a future event with one or more possible outcomes (e.g., "Will Candidate A win the election?"). Markets are created with an expiry, a resolution source, and a set of outcome tokens. Multi-outcome markets use Calibri's negative risk model so positions net against each other efficiently.
+
+**Outcome Tokens**
+Every market position is represented as a fully collateralized ERC-1155 outcome token. You can split USDC collateral into YES/NO token pairs, merge them back, or redeem winning tokens for collateral after resolution. Token balances are on-chain and non-custodial.
+
+**Order Book (CLOB)**
+Calibri's Central Limit Order Book matches buy and sell orders peer-to-peer in price-time priority. You submit orders through the CLOB API, which supports limit and market orders across all supported order types. A gasless transaction relayer handles on-chain settlement so you don't pay gas directly on each trade.
+
+**Resolution**
+Markets resolve through the UMA Optimistic Oracle. Once an event outcome is known, a proposer submits the result on-chain. After the dispute window passes without a successful challenge, the market settles and winning token holders can redeem their collateral.
+
+## API surfaces
+
+Calibri exposes four API surfaces depending on what you're doing.
+
+| Surface | Base URL | Purpose |
+|---|---|---|
+| Market API | `https://gamma-api.calibri.com` | Market discovery, event metadata, and live pricing |
+| CLOB API | `https://clob.calibri.com` | Order placement, cancellation, and fill history |
+| Data API | `https://data-api.calibri.com` | Historical trades, volume analytics, and resolution data |
+| WebSocket | `wss://ws-subscriptions-clob.calibri.com/ws/` | Real-time order book updates and trade streams |
+
+<Note>
+  The CLOB API and all order management endpoints require L2 authentication. Market discovery and public pricing endpoints on the Market API are accessible without credentials.
+</Note>
+
+## Quick links
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="bolt" href="/quickstart">
+    Go from zero to your first trade in five minutes.
+  </Card>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Set up your wallet credentials and learn how to sign requests.
+  </Card>
+  <Card title="Core Concepts" icon="graduation-cap" href="/concepts/orders">
+    Dive deeper into order types, token mechanics, and market resolution.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Browse the full endpoint reference with live request examples.
+  </Card>
+</CardGroup>

@@ -1,0 +1,129 @@
+---
+title: "GET /markets/{id} — Fetch a Single Market by ID or Slug"
+sidebarTitle: "Get Market"
+description: "Fetch a single prediction market by its ID or slug. Returns full market metadata including outcome prices, token IDs, and resolution status."
+---
+
+When you need full details about a specific prediction market — its outcome prices, CLOB token IDs, resolution source, order constraints, or current trading status — use the single-market endpoints. You can look up a market by its unique ID or its human-readable slug. Both return the same Market object with identical fields.
+
+## Endpoints
+
+```http
+GET https://gamma-api.calibri.com/markets/{id}
+```
+
+```http
+GET https://gamma-api.calibri.com/markets/slug/{slug}
+```
+
+<Note>
+  Both endpoints are public — no authentication is required to fetch market metadata.
+</Note>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique market ID. This is the hex string assigned to the market at creation (e.g. `0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b`).
+</ParamField>
+
+<ParamField path="slug" type="string" required>
+  The URL-friendly slug for the market (e.g. `fed-rate-cut-july-2026`). Use this variant when you have a slug from a URL or a user-facing reference rather than a raw ID.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="id" type="string">
+  The unique identifier for this market.
+</ResponseField>
+
+<ResponseField name="question" type="string">
+  The human-readable question this market resolves. For example: `"Will the Federal Reserve cut rates before July 2026?"`.
+</ResponseField>
+
+<ResponseField name="conditionId" type="string">
+  The onchain condition ID used for settlement. You'll need this when interacting with Calibri's smart contracts directly.
+</ResponseField>
+
+<ResponseField name="slug" type="string">
+  The URL-friendly identifier for this market. Stable for the lifetime of the market.
+</ResponseField>
+
+<ResponseField name="outcomes" type="string[]">
+  The list of possible outcomes. Binary markets use `["Yes", "No"]`. Multi-outcome markets list each candidate or option.
+</ResponseField>
+
+<ResponseField name="outcomePrices" type="string[]">
+  The current mid-market price for each outcome, expressed as decimal probabilities. Prices correspond index-for-index with `outcomes`. For example, `["0.65", "0.35"]` means Yes is trading at 65 cents (65% implied probability).
+</ResponseField>
+
+<ResponseField name="clobTokenIds" type="string[]">
+  The CLOB token IDs for each outcome, in the same order as `outcomes`. You use these IDs when placing orders on the CLOB API — each token ID uniquely identifies a tradeable outcome share.
+</ResponseField>
+
+<ResponseField name="active" type="boolean">
+  Whether the market is currently active and accepting orders. A market can be inactive if it's paused or pending resolution.
+</ResponseField>
+
+<ResponseField name="closed" type="boolean">
+  Whether the market has closed. Once closed, no new orders can be placed.
+</ResponseField>
+
+<ResponseField name="endDate" type="string">
+  ISO 8601 datetime at which the market closes for trading.
+</ResponseField>
+
+<ResponseField name="volume" type="string">
+  The total trading volume across all outcomes since market creation, expressed as a decimal string in USD.
+</ResponseField>
+
+<ResponseField name="liquidity" type="string">
+  The current liquidity available in the market's orderbook, expressed as a decimal string in USD.
+</ResponseField>
+
+## Example Response
+
+```json
+{
+  "id": "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+  "question": "Will the Federal Reserve cut rates before July 2026?",
+  "conditionId": "0xabc123def456abc123def456abc123def456abc1",
+  "slug": "fed-rate-cut-july-2026",
+  "description": "This market resolves YES if the Federal Reserve announces a federal funds rate cut at any FOMC meeting scheduled before July 1, 2026.",
+  "resolutionSource": "Federal Reserve press releases at federalreserve.gov",
+  "startDate": "2025-01-15T00:00:00Z",
+  "endDate": "2026-07-01T00:00:00Z",
+  "outcomes": ["Yes", "No"],
+  "outcomePrices": ["0.62", "0.38"],
+  "volume": "1482350.00",
+  "liquidity": "84200.00",
+  "active": true,
+  "closed": false,
+  "closedTime": null,
+  "clobTokenIds": [
+    "71321045679252212594626385532706912750332728571942532289631379312455583992563",
+    "52114319501245915516055106046884209969926127482827954674443846427813813222426"
+  ],
+  "orderPriceMinTickSize": "0.01",
+  "orderMinSize": "5",
+  "enableOrderBook": true,
+  "category": "Economics",
+  "tags": [
+    { "id": "economics", "label": "Economics" },
+    { "id": "fed", "label": "Federal Reserve" }
+  ]
+}
+```
+
+## Example Requests
+
+**Fetch by market ID:**
+
+```bash cURL
+curl 'https://gamma-api.calibri.com/markets/0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b'
+```
+
+**Fetch by slug:**
+
+```bash cURL
+curl 'https://gamma-api.calibri.com/markets/slug/fed-rate-cut-july-2026'
+```

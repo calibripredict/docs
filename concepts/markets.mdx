@@ -1,0 +1,120 @@
+---
+title: "Calibri Markets: Structure, Lifecycle, and Token Model"
+sidebarTitle: "Markets"
+description: "Understand how Calibri structures prediction markets and events, how outcome tokens are priced, and how markets move from active trading to resolution."
+---
+
+Calibri organizes all tradable content into a two-level hierarchy: **events** and **markets**. An event groups one or more related questions under a single topic, while a market is the atomic unit you actually trade — a binary Yes/No question with a defined resolution date. Understanding this structure helps you navigate the platform, interpret prices, and build integrations against the API.
+
+## Events and Markets
+
+An **event** is a container that groups one or more thematically related markets. For example, an event titled "2024 U.S. Presidential Election" might contain individual markets for each candidate: "Will Trump win?", "Will Harris win?", and so on.
+
+A **market** is the tradable unit: a single binary question whose answer will eventually be Yes or No. Every market belongs to exactly one event.
+
+Below is an example of a market object returned by the Calibri API:
+
+```json
+{
+  "id": "0xabc123",
+  "question": "Will Trump win the 2024 U.S. Presidential Election?",
+  "conditionId": "0xdeadbeef00000000000000000000000000000000000000000000000000000001",
+  "slug": "will-trump-win-2024-election",
+  "outcomes": ["Yes", "No"],
+  "outcomePrices": ["0.65", "0.35"],
+  "volume": "1250000.00",
+  "active": true,
+  "closed": false,
+  "endDate": "2024-11-05T23:59:59Z",
+  "clobTokenIds": [
+    "52114319501245915516055106046884209969926127482827954674443846427813813222426",
+    "52114319501245915516055106046884209969926127482827954674443846427813813222427"
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `id` | Unique identifier for this market |
+| `question` | The human-readable binary question |
+| `conditionId` | Onchain identifier for the market's condition contract |
+| `slug` | URL-friendly identifier (see tip below) |
+| `outcomes` | Array of outcome labels — always `["Yes", "No"]` for binary markets |
+| `outcomePrices` | Current mid-prices for each outcome token, in USD |
+| `volume` | Cumulative trading volume in pUSD |
+| `active` | `true` while the market is open for trading |
+| `closed` | `true` after trading ends but before resolution |
+| `endDate` | ISO 8601 timestamp when the market closes |
+| `clobTokenIds` | ERC-1155 token IDs used for CLOB trading — index 0 = Yes, index 1 = No |
+
+<Tip>
+  Use a market's `slug` whenever you need a stable, human-readable reference — for example, in URLs or logging. Slugs are unique per market and never change after creation: `fed-decision-in-october`.
+</Tip>
+
+## Market Lifecycle
+
+Every market moves through four distinct states from creation to final settlement.
+
+<Steps>
+  <Step title="Created">
+    The market is defined onchain and indexed by Calibri. It is not yet open for trading. Parameters such as `endDate`, `conditionId`, and `clobTokenIds` are fixed at this stage.
+  </Step>
+  <Step title="Active">
+    Trading is open. `active: true` and `closed: false`. You can place orders, split tokens, and manage positions freely. Prices move in real time based on order book activity.
+  </Step>
+  <Step title="Closed">
+    The `endDate` has passed (or an admin has closed the market early). `active: false` and `closed: true`. No new orders are accepted. Existing positions are frozen until resolution.
+  </Step>
+  <Step title="Resolved">
+    The UMA Optimistic Oracle has confirmed the outcome. Winning token holders can redeem $1.00 pUSD per token. Losing tokens expire worthless at $0.00.
+  </Step>
+</Steps>
+
+## Outcome Tokens
+
+Every Calibri market has exactly two outcome tokens: **Yes** and **No**. These are ERC-1155 tokens whose IDs are listed in the `clobTokenIds` field.
+
+**Prices represent probability.** A Yes token trading at $0.65 means the market collectively assigns a 65% probability to that outcome occurring. Prices always sit between $0.00 and $1.00, and the Yes price plus the No price always sum to approximately $1.00 (minus any spread).
+
+**Full collateralization.** Every Yes/No token pair is backed by exactly $1.00 pUSD locked in the Calibri contract. You can always:
+
+- **Split**: deposit $1.00 pUSD and receive 1 Yes token + 1 No token
+- **Merge**: return 1 Yes token + 1 No token and receive $1.00 pUSD
+- **Redeem**: after resolution, exchange each winning token for $1.00 pUSD (losing tokens are worth $0.00)
+
+This collateralization guarantee means no token can trade above $1.00 — arbitrageurs will immediately split $1.00 worth of pUSD and sell both tokens if combined prices exceed $1.00.
+
+## Negative Risk Markets
+
+When an event contains **mutually exclusive** outcomes — where exactly one market can resolve Yes — Calibri designates those markets as a **negative risk group**. Examples include "Who wins the championship?" with one market per team.
+
+In a negative risk group, holding a No token in one market is economically equivalent to holding a Yes token in every other market. Calibri's contracts express this relationship directly: 1 No token in market A converts to 1 Yes token in each of the other markets in the group.
+
+This makes negative risk markets highly **capital efficient**:
+
+- You can express a view on the full field without buying every Yes token individually.
+- Market makers can hedge across the entire group from a single position.
+- Collateral requirements are reduced because the contract recognizes that not all outcomes can win simultaneously.
+
+Use negative risk markets any time you want to trade against a field of mutually exclusive outcomes rather than a single binary event.
+
+## Market Data Fields
+
+The table below summarizes every key field you'll encounter when working with market objects from the Calibri API.
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | `string` | Unique market identifier |
+| `question` | `string` | The binary question being resolved |
+| `conditionId` | `string` | Onchain condition ID (hex) |
+| `slug` | `string` | URL-friendly identifier, e.g. `fed-decision-in-october` |
+| `outcomes` | `string[]` | Outcome labels, always `["Yes", "No"]` |
+| `outcomePrices` | `string[]` | Current mid-prices per outcome in USD |
+| `volume` | `string` | Total lifetime volume in pUSD |
+| `liquidity` | `string` | Current open interest in pUSD |
+| `active` | `boolean` | `true` when open for trading |
+| `closed` | `boolean` | `true` when trading has ended |
+| `endDate` | `string` | ISO 8601 close timestamp |
+| `clobTokenIds` | `string[]` | ERC-1155 token IDs for CLOB — `[yesTokenId, noTokenId]` |
+| `negRisk` | `boolean` | `true` if this market belongs to a negative risk group |
+| `negRiskMarketId` | `string` | ID of the parent negative risk event, if applicable |
