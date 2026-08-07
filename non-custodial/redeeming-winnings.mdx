@@ -1,0 +1,104 @@
+---
+title: "Redeeming winnings"
+description: "Self-custody winners are not auto-paid — sign a redeemPositions call, relay it gaslessly, and withdraw USDC from your Safe."
+---
+
+Winnings are **claimed, not delivered**. Because your funds and outcome tokens
+live in your own Safe, resolving a market only makes your winning token
+**redeemable** — it does not push USDC to you.
+
+You call `redeemPositions` yourself (relayed, gasless), the USDC lands in your
+Safe, and then you withdraw.
+
+## Full 1.00 per share — no settlement fee
+
+<Warning>
+  A winning share redeems for the **full 1.00 USDC** — there is **no fee at settlement or redemption**. The platform (taker) fee was already charged **once, at trade time**. Disregard any older wording that says winners redeem "1.00 minus a settlement fee".
+</Warning>
+
+## Redemption, step by step
+
+The operator does not pull funds into your Safe for you — the redemption is
+authorised by you and relayed on your behalf.
+
+<Steps>
+  <Step title="Market resolves on-chain">
+    The operator reports the outcome. Your winning outcome token becomes
+    redeemable for 1.00 USDC/share; the losing token is worth 0.
+  </Step>
+  <Step title="Build the redeemPositions call">
+    Encode
+    `redeemPositions(address collateralToken, bytes32 parentCollectionId, bytes32 conditionId, uint256[] indexSets)`
+    with:
+    - `collateralToken` = `usdc_address`
+    - `parentCollectionId` = `0x0000…0000` (32 zero bytes)
+    - `conditionId` = `condition_id` (from the market's ctf-config)
+    - `indexSets` = `[1, 2]` — sweeps **both** outcome positions in one
+    transaction (the winning side pays out, the losing side is 0)
+  </Step>
+  <Step title="Sign it as a Safe SafeTx">
+    Wrap the calldata in a Safe `SafeTx` EIP-712 (the same structure as setup
+    approvals) with `to` = `conditional_tokens_address`, and sign with your EOA.
+  </Step>
+  <Step title="Relay it (gasless)">
+    POST it to the relay endpoint. The operator executes
+    `Safe.execTransaction` and pays gas.
+  </Step>
+  <Step title="USDC lands in your Safe">
+    The redeemed USDC is transferred **into your Safe** and mirrored to your
+    off-chain [`balance_safe`](/non-custodial/balances).
+  </Step>
+  <Step title="Withdraw">
+    Move the USDC from your Safe to an external wallet (see below).
+  </Step>
+</Steps>
+
+### Relay the redemption
+
+**`POST /api/v2/atlas/account/wallet/relay`**
+
+Submits a signed Safe transaction; the operator executes it and pays gas.
+
+```json
+{
+  "safe": "0x… (your Safe)",
+  "to": "0x… (ConditionalTokens address)",
+  "value": "0",
+  "data": "0x… (encoded redeemPositions call)",
+  "operation": 0,
+  "signature": "0x… (your EOA SafeTx signature)"
+}
+```
+
+Atlas rejects with `400 safe does not belong to this member` unless `safe` is
+your own derived Safe. Response:
+
+```json
+{ "tx": "0x… (submitted tx hash, or null)" }
+```
+
+## Withdrawing from the Safe
+
+Because funds live in your own Safe, a withdrawal is a **member-controlled
+on-chain USDC transfer out of the Safe** — a Safe `SafeTx` executing
+`USDC.transfer(to, amount)`, relayed gaslessly through the same
+`ctf/relay` endpoint used for redemption.
+
+When funds leave the Safe on-chain, Calibri's watcher reconciles the off-chain
+mirror: it debits `balance_safe` and cancels any resting orders those funds
+collateralised.
+
+<Note>
+  Withdrawals are done through the generic `ctf/relay` USDC-transfer path described above. Confirm in the Wallet UI whether a dedicated one-click "withdraw from Safe" flow is available for your deployment.
+</Note>
+
+## Void
+
+If a contract is voided, the resolution unwinds the position on-chain — a 50/50
+unwind of the minted set — returning each side its own collateral.
+
+## Related
+
+- [The Safe](/non-custodial/the-safe) — the relay endpoint and SafeTx structure
+- [Balances](/non-custodial/balances) — where redeemed USDC appears (`balance_safe`)
+- [Self-custody](/non-custodial/overview) — the full model end to end

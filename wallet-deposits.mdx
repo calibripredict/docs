@@ -1,0 +1,63 @@
+---
+title: "Funding Your Account"
+description: "How funding works — USDC, and getting it into the Safe only you control."
+---
+
+Calibri settles everything in **USDC**, a US-dollar stablecoin with **6 decimals**
+(one base unit = `0.000001` USDC). Stakes, fees, winnings, and rewards are all
+denominated in USDC.
+
+## Funding your Safe
+
+Your funds live in **your own on-chain Safe**. Funding is simply sending USDC to
+its address:
+
+- The Safe is a **1-of-1 Gnosis Safe** owned solely by you — by your wallet, or
+  by the signer contract derived from your passkey. The operator deploys it and
+  relays your signed orders, but **can never move funds without your signature**.
+- You fund it by holding **USDC** in the Safe on the relevant network.
+- As part of Safe setup, the Safe **pre-approves** the operator to pull the taker
+  fee at settlement, up to a capped amount — so you only ever *sign*; the
+  operator pays gas. See [The Safe](/non-custodial/the-safe) and
+  [Balances](/non-custodial/balances) for details.
+
+How you get USDC in depends on which wallet you use
+([your options](/non-custodial/wallets)):
+
+- **Passkey wallet** — send USDC straight to your Safe address, from an exchange
+  or any wallet. There is nothing else to do, and you never pay gas.
+- **Your own wallet** — move USDC from your wallet into your Safe in the app.
+  That transfer comes from your own wallet, so it needs a small amount of the
+  network's gas token (POL on Polygon). It is the only transaction you ever pay
+  for — everything after it is relayed by the operator.
+
+Because the funds are on-chain and controlled by your wallet, they remain
+withdrawable and redeemable even if the operator is offline.
+
+<Note>
+  The live contract and token addresses for your network (USDC, the Conditional Token Framework, the exchange) are served by the app's CTF-config API — the app reads them per network rather than hard-coding them. See [Deployed addresses](/smart-contracts/deployed-addresses).
+</Note>
+
+## After funding
+
+Once your Safe is funded you're ready to trade. Winning contracts pay **1.00 USDC per share** at
+resolution, with **no fee at settlement** — your only trading cost is the taker
+fee at the moment your order fills.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Placing orders" href="/trading-placing-orders">
+    Choose YES or NO and place your first order.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    How the single taker fee is computed.
+  </Card>
+  <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
+    How winners claim their payout on-chain.
+  </Card>
+  <Card title="Your wallet options" href="/non-custodial/wallets">
+    Passkey or your own wallet.
+  </Card>
+</CardGroup>
+

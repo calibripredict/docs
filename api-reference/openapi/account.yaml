@@ -1,0 +1,1891 @@
+components:
+  schemas:
+    BalanceEntity:
+      properties:
+        address_eoa:
+          description: 'The linked wallet address the balance above belongs to.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+        balance:
+          description: 'Operator-held pool. Calibri does not operate one, so this is always `"0"`; retained for schema stability. There is no `total` field — earlier docs claimed one, and the serializer has never emitted it.'
+          example: '0'
+          type: 'string'
+        balance_eoa:
+          description: 'Raw on-chain balance of the linked wallet, when the scanner has seen it. OMITTED rather than zeroed when unknown — the funding panel shows a dash for "no reading yet", which is not the same as an empty wallet.'
+          example: '42.10'
+          type: 'string'
+        balance_safe:
+          description: 'Available balance — the off-chain mirror of the USDC in your on-chain Safe. This is the figure that matters.'
+          example: '1250.00'
+          type: 'string'
+        currency:
+          description: 'Currency code, e.g. `usdc`.'
+          example: 'usdc'
+          type: 'string'
+        locked:
+          description: 'Operator-held pool. Always `"0"`.'
+          example: '0'
+          type: 'string'
+        locked_safe:
+          description: 'Reserved by resting signed orders and their taker-fee reserve. Released when an order fills, rests, or is cancelled.'
+          example: '61.68'
+          type: 'string'
+      required:
+        - 'currency'
+        - 'balance_safe'
+        - 'locked_safe'
+        - 'balance'
+        - 'locked'
+      type: 'object'
+    ContractEntity:
+      properties:
+        avg_price:
+          description: 'Volume-weighted average across fills.'
+          example: 0.6
+          type: 'number'
+        created_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        custody:
+          description: 'Always `self` — stamped from your session, never from a request field.'
+          enum:
+            - 'self'
+          example: 'self'
+          type: 'string'
+        funds_spent:
+          description: 'Collateral committed.'
+          example: 60
+          type: 'number'
+        id:
+          example: 'usdc'
+          type: 'number'
+        market_id:
+          description: 'The market this position is in.'
+          example: '12'
+          type: 'string'
+        market_title:
+          example: 'Will BTC close above its open?'
+          type: 'string'
+        price:
+          description: 'Fill price, a probability in (0,1).'
+          example: 0.6
+          type: 'number'
+        quote_currency:
+          example: 'usdc'
+          type: 'string'
+        settled_at:
+          description: 'When the market resolved. Null while the contract is open.'
+          example: '2026-08-08T00:00:00Z'
+          type:
+            - 'string'
+            - 'null'
+        settlement_status:
+          description: 'The on-chain mint badge: `pending` until confirmed, `reversed` if the market voided.'
+          enum:
+            - 'pending'
+            - 'confirmed'
+            - 'reversed'
+          example: 'confirmed'
+          type:
+            - 'string'
+            - 'null'
+        settlement_status_raw:
+          description: 'The internal state-machine value behind the badge.'
+          example: 'matched'
+          type: 'string'
+        side:
+          description: 'Your side of the contract.'
+          enum:
+            - 'yes'
+            - 'no'
+          example: 'yes'
+          type: 'string'
+        state:
+          description: 'Lifecycle. A settled contract names the winning side.'
+          enum:
+            - 'active'
+            - 'settled_yes'
+            - 'settled_no'
+            - 'voided'
+          example: 'active'
+          type: 'string'
+        taker_fee_amount:
+          description: 'The taker fee charged at trade time. Nothing further is taken at settlement — a winning share pays the full 1.00.'
+          example: '0.17'
+          type: 'string'
+        taker_fee_refunded:
+          description: 'True when the market voided and the fee was returned.'
+          example: false
+          type: 'boolean'
+        volume:
+          description: 'Shares held.'
+          example: 100
+          type: 'number'
+      required:
+        - 'id'
+        - 'market_id'
+        - 'market_title'
+        - 'quote_currency'
+        - 'side'
+        - 'price'
+        - 'avg_price'
+        - 'volume'
+        - 'funds_spent'
+        - 'taker_fee_amount'
+        - 'taker_fee_refunded'
+        - 'custody'
+        - 'state'
+        - 'created_at'
+      type: 'object'
+    CreateOrderRequest:
+      properties:
+        market:
+          description: 'Market id.'
+          example: '12'
+          type: 'string'
+        ord_type:
+          enum:
+            - 'limit'
+            - 'market'
+          example: 'limit'
+          type: 'string'
+        post_only:
+          description: 'Reject the order if it would take liquidity. A post-only order reserves no taker fee, because it can only ever rest as a maker.'
+          example: false
+          type: 'boolean'
+        price:
+          description: 'Limit price, `0.01`–`0.99`. Required for a limit order.'
+          example: '0.60'
+          type: 'string'
+        side:
+          description: 'The outcome you are buying.'
+          enum:
+            - 'yes'
+            - 'no'
+          example: 'yes'
+          type: 'string'
+        signed_order:
+          $ref: '#/components/schemas/SignedOrderEntity'
+          description: 'The EIP-712-signed order. Validated before anything is placed — a signature the server cannot verify is rejected, never rested.'
+        volume:
+          description: 'Number of shares.'
+          example: '100'
+          type: 'string'
+      required:
+        - 'market'
+        - 'side'
+        - 'ord_type'
+        - 'volume'
+        - 'signed_order'
+      type: 'object'
+    CtfConfigEntity:
+      properties:
+        blockchain_key:
+          example: 'polygon-mainnet'
+          type: 'string'
+        chain_id:
+          example: 137
+          type: 'number'
+        condition_id:
+          description: 'The market''s on-chain condition.'
+          example: '0x8f3a…'
+          type: 'string'
+        conditional_tokens_address:
+          description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
+          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          type: 'string'
+        domain_name:
+          description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
+          example: 'Calibri CTF Prediction Markets'
+          type: 'string'
+        exchange_address:
+          description: 'This deployment''s CTF Exchange.'
+          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          type: 'string'
+        no_token_id:
+          description: 'The same for the NO leg.'
+          example: '451…'
+          type: 'string'
+        owner_address:
+          description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+        proxy_address:
+          description: 'Your Safe — the deposit destination and the maker on your orders.'
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type:
+            - 'string'
+            - 'null'
+        safe_setup:
+          $ref: '#/components/schemas/SafeSetupEntity'
+        safe_status:
+          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          enum:
+            - 'ready'
+            - 'setup_required'
+            - 'error'
+            - 'unavailable'
+            - 'unlinked'
+          example: 'ready'
+          type: 'string'
+        session_keys_enabled:
+          description: 'Whether this deployment has session trading keys switched on.'
+          example: true
+          type: 'boolean'
+        signature_type:
+          description: '`2` = POLY_GNOSIS_SAFE (wallet-owned), `3` = POLY_1271 (passkey-owned), `0` = EOA.'
+          enum:
+            - 0
+            - 2
+            - 3
+          example: 2
+          type: 'number'
+        usdc_address:
+          description: 'The collateral token.'
+          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: 'string'
+        yes_token_id:
+          description: 'The ERC-1155 position id for the YES leg. A token id IS the market-and-outcome identifier, which is why a signed order carries one and no market field.'
+          example: '713…'
+          type: 'string'
+      required:
+        - 'exchange_address'
+        - 'conditional_tokens_address'
+        - 'usdc_address'
+        - 'chain_id'
+        - 'blockchain_key'
+        - 'domain_name'
+        - 'proxy_address'
+        - 'owner_address'
+        - 'signature_type'
+        - 'session_keys_enabled'
+        - 'safe_status'
+        - 'condition_id'
+        - 'yes_token_id'
+        - 'no_token_id'
+      type: 'object'
+    CtfWalletEntity:
+      properties:
+        blockchain_key:
+          example: 'polygon-mainnet'
+          type: 'string'
+        chain_id:
+          example: 137
+          type: 'number'
+        conditional_tokens_address:
+          description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
+          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          type: 'string'
+        domain_name:
+          description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
+          example: 'Calibri CTF Prediction Markets'
+          type: 'string'
+        exchange_address:
+          description: 'This deployment''s CTF Exchange.'
+          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          type: 'string'
+        owner_address:
+          description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+        proxy_address:
+          description: 'Your Safe — the deposit destination and the maker on your orders.'
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type:
+            - 'string'
+            - 'null'
+        safe_setup:
+          $ref: '#/components/schemas/SafeSetupEntity'
+        safe_status:
+          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          enum:
+            - 'ready'
+            - 'setup_required'
+            - 'error'
+            - 'unavailable'
+            - 'unlinked'
+          example: 'ready'
+          type: 'string'
+        session_keys_enabled:
+          description: 'Whether this deployment has session trading keys switched on.'
+          example: true
+          type: 'boolean'
+        signature_type:
+          description: '`2` = POLY_GNOSIS_SAFE (wallet-owned), `3` = POLY_1271 (passkey-owned), `0` = EOA.'
+          enum:
+            - 0
+            - 2
+            - 3
+          example: 2
+          type: 'number'
+        usdc_address:
+          description: 'The collateral token.'
+          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: 'string'
+      required:
+        - 'exchange_address'
+        - 'conditional_tokens_address'
+        - 'usdc_address'
+        - 'chain_id'
+        - 'blockchain_key'
+        - 'domain_name'
+        - 'proxy_address'
+        - 'owner_address'
+        - 'signature_type'
+        - 'session_keys_enabled'
+        - 'safe_status'
+      type: 'object'
+    CurrencyEntity:
+      properties:
+        base_factor:
+          description: 'Base factor used for on-chain amount conversion.'
+          example: 1000000
+          type: 'number'
+        blockchain_key:
+          description: 'The chain this currency lives on.'
+          example: 'polygon-mainnet'
+          type: 'string'
+        code:
+          description: 'Ticker code.'
+          example: 'usdc'
+          type: 'string'
+        created_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        deposit_enabled:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: false
+          type: 'boolean'
+        deposit_fee:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        description:
+          example: 'US-dollar stablecoin.'
+          type: 'string'
+        homepage:
+          example: 'https://www.circle.com/usdc'
+          type: 'string'
+        icon_url:
+          example: 'https://cdn.calibri.io/usdc.svg'
+          type: 'string'
+        id:
+          example: 'usdc'
+          type: 'string'
+        min_collection_amount:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        min_confirmations:
+          description: 'Confirmations before an on-chain credit is final.'
+          example: 12
+          type: 'number'
+        min_deposit_amount:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        min_withdraw_amount:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        name:
+          example: 'USD Coin'
+          type: 'string'
+        options:
+          additionalProperties:
+            type: 'string'
+          description: 'Free-form per-currency configuration.'
+          example:
+            erc20_contract_address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: 'object'
+        parent_id:
+          description: 'Parent currency, for tokens on a host chain.'
+          example: 'polygon'
+          type: 'string'
+        position:
+          description: 'Display order.'
+          example: 1
+          type: 'number'
+        precision:
+          description: 'Decimal places. USDC is 6.'
+          example: 6
+          type: 'number'
+        subunit_to_unit:
+          description: 'Smallest unit per whole unit — 1e6 for USDC.'
+          example: 1000000
+          type: 'number'
+        symbol:
+          example: 'USDC'
+          type: 'string'
+        type:
+          description: '`coin` or `fiat`.'
+          example: 'coin'
+          type: 'string'
+        updated_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:05:00Z'
+          type: 'string'
+        visible:
+          description: 'Whether the currency is shown at all.'
+          example: true
+          type: 'boolean'
+        withdraw_fee:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        withdrawal_enabled:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: false
+          type: 'boolean'
+      required:
+        - 'id'
+        - 'code'
+        - 'name'
+        - 'precision'
+      type: 'object'
+    ErrorEntity:
+      properties:
+        errors:
+          description: 'Match on the code, not the HTTP status or the human text.'
+          example:
+            - 'account.custody.deposits_disabled'
+          items:
+            type: 'string'
+          type: 'array'
+      required:
+        - 'errors'
+      type: 'object'
+    FundingMethodLimitEntity:
+      properties:
+        blockchain_key:
+          description: 'The chain this limit applies to, where it is chain-specific.'
+          example: 'polygon-mainnet'
+          type: 'string'
+        created_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        currency:
+          example: 'usdc'
+          type: 'string'
+        day:
+          description: 'Rolling 24-hour ceiling.'
+          example: '25000.00'
+          type: 'string'
+        month:
+          description: 'Rolling 30-day ceiling.'
+          example: '250000.00'
+          type: 'string'
+        reference_id:
+          example: 90231
+          type: 'number'
+        reference_type:
+          description: 'What the limit is attached to.'
+          example: 'Order'
+          type: 'string'
+        remaining:
+          additionalProperties:
+            type: 'string'
+          description: 'How much of each window is left. Present only when `with_remaining` is requested — absent is not zero.'
+          example:
+            day: '18500.00'
+            month: '240000.00'
+            week: '92000.00'
+          type: 'object'
+        transaction_max:
+          description: 'Ceiling for a single transaction.'
+          example: '10000.00'
+          type: 'string'
+        updated_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:05:00Z'
+          type: 'string'
+        verification_available:
+          description: 'Whether a higher tier is reachable by verifying further.'
+          example: false
+          type: 'boolean'
+        verified:
+          description: 'Whether this limit tier applies at your current verification level.'
+          example: true
+          type: 'boolean'
+        week:
+          description: 'Rolling 7-day ceiling.'
+          example: '100000.00'
+          type: 'string'
+        year_to_date:
+          description: 'Ceiling for the calendar year to date.'
+          example: '1000000.00'
+          type: 'string'
+      required:
+        - 'currency'
+        - 'transaction_max'
+        - 'day'
+        - 'week'
+        - 'month'
+        - 'year_to_date'
+        - 'verified'
+        - 'verification_available'
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
+    GlobalLimitEntity:
+      properties:
+        created_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        currency:
+          example: 'usdc'
+          type: 'string'
+        day:
+          description: 'Rolling 24-hour ceiling.'
+          example: '25000.00'
+          type: 'string'
+        month:
+          description: 'Rolling 30-day ceiling.'
+          example: '250000.00'
+          type: 'string'
+        reference_type:
+          description: 'What the limit is attached to.'
+          example: 'Order'
+          type: 'string'
+        remaining:
+          additionalProperties:
+            type: 'string'
+          description: 'How much of each window is left. Present only when `with_remaining` is requested.'
+          example:
+            day: '18500.00'
+            month: '240000.00'
+            week: '92000.00'
+          type: 'object'
+        updated_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:05:00Z'
+          type: 'string'
+        verification_available:
+          description: 'Whether a higher tier is reachable by verifying further.'
+          example: false
+          type: 'boolean'
+        verified:
+          description: 'Whether this tier applies at your current verification level.'
+          example: true
+          type: 'boolean'
+        week:
+          description: 'Rolling 7-day ceiling.'
+          example: '100000.00'
+          type: 'string'
+        year_to_date:
+          description: 'Ceiling for the calendar year to date.'
+          example: '1000000.00'
+          type: 'string'
+      required:
+        - 'currency'
+        - 'reference_type'
+        - 'day'
+        - 'week'
+        - 'month'
+        - 'year_to_date'
+        - 'verified'
+        - 'verification_available'
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
+    HealthEntity:
+      properties:
+        status:
+          description: 'Whether the engine is accepting traffic.'
+          example: 'ok'
+          type: 'string'
+      required:
+        - 'status'
+      type: 'object'
+    LimitsEntity:
+      properties:
+        funding_method_limits:
+          description: 'Limits that apply per funding method, one entry per currency and method.'
+          items:
+            $ref: '#/components/schemas/FundingMethodLimitEntity'
+          type: 'array'
+        global_limits:
+          description: 'Account-wide limits, independent of funding method.'
+          items:
+            $ref: '#/components/schemas/GlobalLimitEntity'
+          type: 'array'
+      required:
+        - 'funding_method_limits'
+        - 'global_limits'
+      type: 'object'
+    OrderEntity:
+      properties:
+        contracts_count:
+          description: 'Contracts formed from this order.'
+          example: 1
+          type: 'number'
+        created_at:
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        filled_volume:
+          example: '60'
+          type: 'string'
+        id:
+          example: 'usdc'
+          type: 'number'
+        locked:
+          description: 'Collateral locked. A separate taker-fee reserve is held alongside it and released when unused.'
+          example: '61.68'
+          type: 'string'
+        market:
+          description: 'Market id.'
+          example: '12'
+          type: 'string'
+        ord_type:
+          enum:
+            - 'limit'
+            - 'market'
+          example: 'limit'
+          type: 'string'
+        origin_volume:
+          example: '100'
+          type: 'string'
+        price:
+          description: 'Limit price, `0.01`–`0.99`.'
+          example: '0.60'
+          type: 'string'
+        remaining_volume:
+          description: 'Unmatched remainder.'
+          example: '40'
+          type: 'string'
+        side:
+          enum:
+            - 'yes'
+            - 'no'
+          example: 'yes'
+          type: 'string'
+        state:
+          enum:
+            - 'pending'
+            - 'wait'
+            - 'done'
+            - 'cancel'
+            - 'reject'
+          example: 'active'
+          type: 'string'
+        updated_at:
+          example: '2026-08-07T10:05:00Z'
+          type: 'string'
+      required:
+        - 'id'
+        - 'market'
+        - 'side'
+        - 'ord_type'
+        - 'state'
+        - 'origin_volume'
+        - 'remaining_volume'
+        - 'locked'
+        - 'contracts_count'
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
+    PasskeyEnrolRequest:
+      properties:
+        x:
+          description: 'P-256 public key X coordinate, from the WebAuthn credential.'
+          example: '0x2f9a…'
+          type: 'string'
+        y:
+          description: 'P-256 public key Y coordinate.'
+          example: '0x8c41…'
+          type: 'string'
+      required:
+        - 'x'
+        - 'y'
+      type: 'object'
+    PendingRewardsEntity:
+      properties:
+        currency:
+          example: 'usdc'
+          type: 'string'
+        maker:
+          description: 'Earned by your resting orders being filled.'
+          example: '2.00'
+          type: 'string'
+        referral:
+          description: 'Earned when someone you referred traded as the taker.'
+          example: '1.20'
+          type: 'string'
+        total:
+          description: 'Accrued but not yet swept — `maker + referral`.'
+          example: '3.20'
+          type: 'string'
+      required:
+        - 'currency'
+        - 'total'
+        - 'maker'
+        - 'referral'
+      type: 'object'
+    PnlCapitalEntity:
+      properties:
+        currency_id:
+          example: 'usdc'
+          type: 'string'
+        deposits:
+          description: 'Credited deposits, net of deposit fees.'
+          example: '1000.00'
+          type: 'string'
+        net_deposits:
+          description: 'deposits − withdrawals. The money the member put in, as opposed to earned.'
+          example: '750.00'
+          type: 'string'
+        withdrawals:
+          description: 'Succeeded withdrawals, including fees.'
+          example: '250.00'
+          type: 'string'
+      required:
+        - 'currency_id'
+        - 'deposits'
+        - 'withdrawals'
+        - 'net_deposits'
+      type: 'object'
+    PnlEntity:
+      properties:
+        by_currency:
+          description: 'Realized totals, one block per collateral currency the member has traded in.'
+          items:
+            $ref: '#/components/schemas/PnlRealizedEntity'
+          type: 'array'
+        by_market:
+          description: 'Realized PnL per market.'
+          items:
+            $ref: '#/components/schemas/PnlMarketEntity'
+          type: 'array'
+        capital:
+          description: 'Money in versus out, per currency. Deliberately separate from PnL so growth from deposits is never mistaken for performance.'
+          items:
+            $ref: '#/components/schemas/PnlCapitalEntity'
+          type: 'array'
+      required:
+        - 'by_currency'
+        - 'by_market'
+        - 'capital'
+      type: 'object'
+    PnlMarketEntity:
+      properties:
+        legs:
+          example: 4
+          type: 'number'
+        market_id:
+          example: '12'
+          type: 'string'
+        pnl:
+          description: 'Realized PnL from settled legs in this market.'
+          example: '40.00'
+          type: 'string'
+        quote_currency:
+          example: 'usdc'
+          type: 'string'
+        title:
+          example: 'Will BTC close above $100k on 31 Dec?'
+          type: 'string'
+      required:
+        - 'market_id'
+        - 'quote_currency'
+        - 'legs'
+        - 'pnl'
+      type: 'object'
+    PnlPointEntity:
+      properties:
+        at:
+          description: 'Start of the bucket.'
+          example: '2026-08-01T00:00:00Z'
+          type: 'string'
+        net_deposits:
+          description: 'Cumulative deposits minus withdrawals as at this point. Subtract it from portfolio value to isolate trading performance from money paid in. Excludes adjustments and internal transfers, so it is not a full balance reconciliation.'
+          example: '1000.00'
+          type: 'string'
+        realized_pnl:
+          description: 'Cumulative realized PnL as at this point. A flat stretch means nothing settled in that period.'
+          example: '65.50'
+          type: 'string'
+        settled_legs:
+          description: 'Settled legs counted into the curve so far.'
+          example: 12
+          type: 'number'
+      required:
+        - 'at'
+        - 'realized_pnl'
+        - 'settled_legs'
+      type: 'object'
+    PnlRealizedEntity:
+      properties:
+        fees:
+          description: 'Taker fees paid at match time.'
+          example: '4.50'
+          type: 'string'
+        legs:
+          description: 'Settled contract legs behind these figures.'
+          example: 12
+          type: 'number'
+        pnl:
+          description: 'returned − staked − fees. Positive is profit.'
+          example: '65.50'
+          type: 'string'
+        quote_currency:
+          description: 'The market''s collateral currency. Figures are never summed across currencies.'
+          example: 'usdc'
+          type: 'string'
+        returned:
+          description: 'Total returned — the whole collateral pool on winning legs, zero on losing ones.'
+          example: '520.00'
+          type: 'string'
+        staked:
+          description: 'Total staked on those legs.'
+          example: '450.00'
+          type: 'string'
+      required:
+        - 'quote_currency'
+        - 'legs'
+        - 'staked'
+        - 'returned'
+        - 'fees'
+        - 'pnl'
+      type: 'object'
+    PreferencesEntity:
+      properties:
+        leaderboard_opt_out:
+          description: 'Opt out of the public leaderboard. Your masked display name stops appearing; settled contracts still count toward your own stats.'
+          example: false
+          type: 'boolean'
+      type: 'object'
+    PreferencesUpdateRequest:
+      properties:
+        leaderboard_opt_out:
+          description: 'Opt out of the public leaderboard. Your settled contracts still count toward your own stats.'
+          example: false
+          type: 'boolean'
+      type: 'object'
+    ReferralEarningsEntity:
+      properties:
+        by_referred:
+          description: 'The same, broken down per referred member.'
+          items:
+            $ref: '#/components/schemas/ReferredMemberEntity'
+          type: 'array'
+        total_earned_by_currency:
+          additionalProperties:
+            type: 'string'
+          description: 'Total earned, keyed by currency.'
+          example:
+            usdc: '12.50'
+          type: 'object'
+      required:
+        - 'total_earned_by_currency'
+        - 'by_referred'
+      type: 'object'
+    ReferredMemberEntity:
+      properties:
+        earned_by_currency:
+          additionalProperties:
+            type: 'string'
+          description: 'What this referred member has earned you, keyed by currency.'
+          example:
+            usdc: '5.00'
+          type: 'object'
+        last_trade_at:
+          description: 'When they last traded. ISO-8601.'
+          example: '2026-08-06T18:22:00Z'
+          type:
+            - 'string'
+            - 'null'
+        member_id:
+          description: 'The referred member. An internal id, not a UID — it identifies the row, and is not a handle you can look anyone up by.'
+          example: 42
+          type: 'number'
+      required:
+        - 'member_id'
+        - 'earned_by_currency'
+      type: 'object'
+    RelayRequest:
+      properties:
+        data:
+          description: 'ABI-encoded calldata for the action.'
+          example: '0x095ea7b3…'
+          type: 'string'
+        operation:
+          description: '`0` CALL (default), `1` DELEGATECALL for a MultiSend batch.'
+          example: 0
+          type: 'number'
+        safe:
+          description: 'Your own Safe. The server rejects a Safe registered to anyone else.'
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+        signature:
+          description: 'Your SafeTx signature. Without it the operator can do nothing.'
+          example: '0x7b21…'
+          type: 'string'
+        to:
+          description: 'Target contract — the exchange for approvals, ConditionalTokens for a redeem, USDC for a transfer out.'
+          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: 'string'
+        value:
+          description: 'Wei value. Defaults to `"0"`.'
+          example: '0'
+          type: 'string'
+      required:
+        - 'safe'
+        - 'to'
+        - 'data'
+        - 'signature'
+      type: 'object'
+    RelayResultEntity:
+      properties:
+        tx:
+          description: 'The submitted transaction hash, or null if nothing needed submitting.'
+          example: '0x7d1e…'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'tx'
+      type: 'object'
+    SafeSetupCallEntity:
+      properties:
+        data:
+          description: 'ABI-encoded calldata.'
+          example: '0x095ea7b3…'
+          type: 'string'
+        hash:
+          description: 'The SafeTx hash to sign.'
+          example: '0x9ab1…'
+          type: 'string'
+        nonce:
+          description: 'The Safe''s nonce for this call. Relay in order.'
+          example: 4
+          type: 'number'
+        operation:
+          description: '`0` = CALL, `1` = DELEGATECALL (a MultiSend batch).'
+          example: 0
+          type: 'number'
+        to:
+          description: 'Target contract.'
+          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: 'string'
+      required:
+        - 'to'
+        - 'data'
+        - 'operation'
+        - 'nonce'
+        - 'hash'
+      type: 'object'
+    SafeSetupEntity:
+      properties:
+        calls:
+          description: 'Calls to sign and relay. Empty when ready.'
+          items:
+            $ref: '#/components/schemas/SafeSetupCallEntity'
+          type: 'array'
+        ready:
+          description: 'True when no approvals are outstanding.'
+          example: true
+          type: 'boolean'
+      required:
+        - 'ready'
+        - 'calls'
+      type: 'object'
+    SessionKeyPrepareEntity:
+      properties:
+        calls:
+          description: 'Sign and relay these to authorise the key.'
+          items:
+            $ref: '#/components/schemas/SafeSetupCallEntity'
+          type: 'array'
+        expires_at:
+          description: 'The granted expiry, clamped DOWN to product policy.'
+          example: 1797600000
+          type: 'number'
+        handler_installed:
+          example: true
+          type: 'boolean'
+        safe:
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+      required:
+        - 'safe'
+        - 'handler_installed'
+        - 'expires_at'
+        - 'calls'
+      type: 'object'
+    SessionKeyPrepareRequest:
+      properties:
+        expires_at:
+          description: 'Requested expiry, Unix seconds. Clamped DOWN to policy — asking for longer returns the ceiling rather than an error.'
+          example: 1797600000
+          type: 'number'
+        x:
+          description: 'P-256 public key X coordinate of the browser-held key.'
+          example: '0x2f9a…'
+          type: 'string'
+        y:
+          description: 'P-256 public key Y coordinate.'
+          example: '0x8c41…'
+          type: 'string'
+      required:
+        - 'x'
+        - 'y'
+      type: 'object'
+    SessionKeyRevokeEntity:
+      properties:
+        all:
+          description: 'True when revoking every outstanding grant rather than one.'
+          example: true
+          type: 'boolean'
+        calls:
+          items:
+            $ref: '#/components/schemas/SafeSetupCallEntity'
+          type: 'array'
+        safe:
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+      required:
+        - 'safe'
+        - 'all'
+        - 'calls'
+      type: 'object'
+    SessionKeyRevokeRequest:
+      properties:
+        key_id:
+          description: 'Revoke one grant. Omit to revoke EVERY outstanding grant — which is constant gas however many exist, because it is the emergency path.'
+          example: '7'
+          type: 'string'
+      type: 'object'
+    SessionKeyStatusEntity:
+      properties:
+        default_ttl:
+          description: 'The grant length this deployment actually hands out.'
+          example: 2592000
+          type: 'number'
+        enabled:
+          description: 'False when the deployment has no session contracts, the service is unreachable, or the member has no passkey wallet. Not an error — the caller falls back to prompting the passkey per order.'
+          example: true
+          type: 'boolean'
+        handler_installed:
+          description: 'Whether the Safe''s session-aware fallback handler is installed.'
+          example: true
+          type: 'boolean'
+        idle_lock_seconds:
+          description: 'How long a device may hold an unlocked key without placing an order. Served rather than compiled into the client — a missing value must never be read as "no lock".'
+          example: 900
+          type: 'number'
+        last_key_id:
+          description: 'Highest grant id issued. Every order signature carries it, so read this after relaying an authorisation.'
+          example: '7'
+          type: 'string'
+        max_ttl:
+          description: 'The registry''s immutable on-chain ceiling, in seconds.'
+          example: 15552000
+          type: 'number'
+        safe:
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+      required:
+        - 'enabled'
+      type: 'object'
+    SignedOrderEntity:
+      properties:
+        expiration:
+          description: 'Unix seconds. Must be non-zero, unexpired, and within 365 days.'
+          example: '1797600000'
+          type: 'string'
+        fee_rate_bps:
+          description: 'Must be `"0"`. The taker fee is collected separately on-chain from your Safe, not through this field.'
+          example: '0'
+          type: 'string'
+        maker:
+          description: 'Your Safe — the address the collateral comes from. For signature type 3 this equals `signer`.'
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+        maker_amount:
+          description: 'USDC in, 6-decimal base units. `round(price × volume × 1e6)`.'
+          example: '60000000'
+          type: 'string'
+        nonce:
+          description: 'Exchange nonce.'
+          example: '0'
+          type: 'string'
+        salt:
+          description: 'Random per-order value. Two orders with identical terms must not share one.'
+          example: '5821094412'
+          type: 'string'
+        side:
+          description: 'Always `0` (BUY). Both YES and NO legs are buys that mint — the side you are taking is carried by `token_id` alone.'
+          enum:
+            - 0
+          example: 0
+          type: 'number'
+        signature:
+          description: 'The EIP-712 signature. For a session-signed order this is `abi.encode(keyId, r, s)` — exactly 96 bytes — which is how the server tells a session key from a passkey.'
+          example: '0x4f2a…'
+          type: 'string'
+        signature_type:
+          description: '`2` POLY_GNOSIS_SAFE (wallet-owned Safe), `3` POLY_1271 (passkey-owned), `0` EOA. Take it from `safe_status`/`signature_type` on the wallet config rather than assuming.'
+          enum:
+            - 0
+            - 2
+            - 3
+          example: 2
+          type: 'number'
+        signer:
+          description: 'Whoever signed. Your wallet EOA for types 0 and 2; the Safe itself for type 3, where a passkey or session key produced the signature.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type: 'string'
+        taker:
+          description: 'The zero address — the order is public and anyone may match it.'
+          example: '0x0000000000000000000000000000000000000000'
+          type: 'string'
+        taker_amount:
+          description: 'Outcome tokens out, 6-decimal. `round(volume × 1e6)`.'
+          example: '100000000'
+          type: 'string'
+        token_id:
+          description: 'The ERC-1155 position id for YOUR side. This is what says which market and which outcome — a signed order carries no market field.'
+          example: '7138104...'
+          type: 'string'
+      required:
+        - 'salt'
+        - 'maker'
+        - 'signer'
+        - 'taker'
+        - 'token_id'
+        - 'maker_amount'
+        - 'taker_amount'
+        - 'expiration'
+        - 'nonce'
+        - 'fee_rate_bps'
+        - 'side'
+        - 'signature_type'
+        - 'signature'
+      type: 'object'
+    TransactionEntity:
+      properties:
+        address:
+          description: 'Address involved, for an on-chain row.'
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type: 'string'
+        beneficiary_id:
+          description: 'Custodial funding only — not used on Calibri.'
+          example: 12
+          type: 'number'
+        blockchain_key:
+          example: 'polygon-mainnet'
+          type: 'string'
+        blockchain_name:
+          example: 'Polygon'
+          type: 'string'
+        change_voucher_amount:
+          description: 'Voucher flow — not used on Calibri.'
+          example: '0'
+          type: 'string'
+        change_voucher_expiry:
+          description: 'Voucher flow — not used on Calibri.'
+          example: '2026-09-01T00:00:00Z'
+          type: 'string'
+        change_voucher_pin:
+          description: 'Voucher flow — not used on Calibri.'
+          example: '—'
+          type: 'string'
+        created_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:00:00Z'
+          type: 'string'
+        credit_amount:
+          example: '40.00'
+          type: 'string'
+        credit_currency:
+          description: 'Currency received.'
+          example: 'usdc'
+          type: 'string'
+        debit_amount:
+          example: '60.00'
+          type: 'string'
+        debit_currency:
+          description: 'Currency sent.'
+          example: 'usdc'
+          type: 'string'
+        description:
+          description: 'System-generated summary.'
+          example: 'Bought 100 YES @ 0.60'
+          type: 'string'
+        event_id:
+          example: 45
+          type: 'number'
+        event_image_url:
+          example: 'https://cdn.calibri.io/events/btc.png'
+          type: 'string'
+        event_title:
+          example: 'Bitcoin 5-minute'
+          type: 'string'
+        executor_address:
+          description: 'The address that submitted the transaction.'
+          example: '0x7830c87c02e56aff27fa8ab1241711331fa86f43'
+          type: 'string'
+        expires_at:
+          description: 'ISO-8601.'
+          example: '2026-08-08T00:00:00Z'
+          type: 'string'
+        fee:
+          description: 'The taker fee on this fill.'
+          example: '0.17'
+          type: 'string'
+        fee_currency:
+          example: 'usdc'
+          type: 'string'
+        id:
+          example: 90231
+          type: 'number'
+        initiated_from:
+          description: 'Where the movement originated.'
+          example: 'web'
+          type: 'string'
+        market_id:
+          description: 'Market this row belongs to.'
+          example: '12'
+          type: 'string'
+        market_title:
+          example: 'Will BTC close above its open?'
+          type: 'string'
+        member_description:
+          description: 'Your own note against this row.'
+          example: 'my hedge'
+          type: 'string'
+        on_chain:
+          description: 'Whether the row corresponds to an on-chain movement.'
+          example: true
+          type: 'boolean'
+        order_id:
+          example: 90231
+          type: 'string'
+        origin_volume:
+          description: 'Original order volume.'
+          example: '100'
+          type: 'string'
+        paid_at:
+          description: 'When the movement completed. ISO-8601.'
+          example: '2026-08-07T10:00:05Z'
+          type: 'string'
+        payment_method_icon_url:
+          description: 'Payment-provider flow — not used on Calibri.'
+          example: '—'
+          type: 'string'
+        payment_method_name:
+          description: 'Payment-provider flow — not used on Calibri.'
+          example: '—'
+          type: 'string'
+        payment_method_precision:
+          description: 'Payment-provider flow — not used on Calibri.'
+          example: 2
+          type: 'number'
+        payment_method_provider:
+          description: 'Payment-provider flow — not used on Calibri.'
+          example: '—'
+          type: 'string'
+        price:
+          description: 'Fill price.'
+          example: '0.60'
+          type: 'string'
+        quote_currency:
+          description: 'Settlement currency for the market.'
+          example: 'usdc'
+          type: 'string'
+        receiver:
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+        reference_id:
+          example: 90231
+          type: 'number'
+        reference_type:
+          description: 'Related entity type.'
+          example: 'Order'
+          type: 'string'
+        sender:
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type: 'string'
+        settlement_status:
+          description: 'On-chain mint badge, where the row came from a contract.'
+          example: 'confirmed'
+          type: 'string'
+        side:
+          description: 'Which leg, for a trade.'
+          enum:
+            - 'yes'
+            - 'no'
+          example: 'yes'
+          type: 'string'
+        state:
+          example: 'active'
+          type: 'string'
+        txid:
+          description: 'Blockchain txid or internal reference.'
+          example: '0x9f2c…'
+          type: 'string'
+        type:
+          description: 'One of `trade`, `referral`, `maker_reward`.'
+          example: 'trade'
+          type: 'string'
+        updated_at:
+          description: 'ISO-8601.'
+          example: '2026-08-07T10:05:00Z'
+          type: 'string'
+        voucher_pin:
+          description: 'Voucher flow — not used on Calibri.'
+          example: '—'
+          type: 'string'
+      required:
+        - 'id'
+        - 'type'
+        - 'created_at'
+      type: 'object'
+  securitySchemes:
+    apiKey:
+      description: 'HMAC-signed API key. Send X-Auth-Apikey, X-Auth-Nonce and X-Auth-Signature.'
+      in: 'header'
+      name: 'X-Auth-Apikey'
+      type: 'apiKey'
+info:
+  description: 'The authenticated member surface: balances, signed-order placement,
+
+    contracts, rewards, and the self-custody wallet endpoints.
+
+
+    Calibri holds no funds. Every order carries your own EIP-712 signature,
+
+    and every transfer out of your Safe is a transaction you sign, so
+
+    authenticating here proves who you are — it does not authorise the
+
+    movement of money.'
+  title: 'Calibri Account & Trading'
+  version: '1.0.0'
+openapi: '3.1.0'
+paths:
+  /api/v2/atlas/account/balances:
+    get:
+      description: 'Your balances per currency. `balance_safe` (available) and `locked_safe` (reserved) are the mirror of the USDC in your own on-chain Safe — those are the figures that matter. `balance` / `locked` / `total` are the operator-held pool, which Calibri does not operate, so they are always "0".'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BalanceEntity'
+                type: 'array'
+          description: ''
+      security: []
+      summary: 'All balances'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/balances/{currency}:
+    get:
+      description: 'One currency''s balance. Same shape as a list element — prefer `balance_safe` / `locked_safe` over the always-zero operator pool fields.'
+      parameters:
+        - in: 'path'
+          name: 'currency'
+          required: true
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceEntity'
+          description: ''
+      security: []
+      summary: 'Balance by currency'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/contracts:
+    get:
+      description: 'Your matched positions. A winning contract settles to the full 1.00 per share — the fee was taken at trade time — but winnings are NOT auto-paid: you redeem them yourself.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ContractEntity'
+                type: 'array'
+          description: ''
+      security: []
+      summary: 'Your contracts'
+      tags:
+        - 'Positions'
+  /api/v2/atlas/account/contracts/{id}:
+    get:
+      description: 'One matched position, only if you are a party to it. Same object as a list element — useful when following a fill or settlement deep-link.'
+      parameters:
+        - in: 'path'
+          name: 'id'
+          required: true
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContractEntity'
+          description: ''
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: ''
+      security: []
+      summary: 'Contract by id'
+      tags:
+        - 'Positions'
+  /api/v2/atlas/account/limits:
+    get:
+      description: 'Funding-method and global limits for your account. Use before submitting a deposit or withdrawal so you fail client-side instead of on the wire. Pass `with_remaining` to include how much of each limit is left; filter with `currency` and `reference_type`.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LimitsEntity'
+          description: ''
+      security: []
+      summary: 'Account limits'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/orders:
+    post:
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderEntity'
+          description: ''
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: 'Signature or validation failure'
+      security: []
+      summary: 'Place a signed order'
+      tags:
+        - 'Trade'
+  /api/v2/atlas/account/preferences:
+    get:
+      description: 'Your display preferences. Today: `leaderboard_opt_out` — whether your username appears on the public PnL leaderboard.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesEntity'
+          description: ''
+      security: []
+      summary: 'Read preferences'
+      tags:
+        - 'Account'
+    put:
+      description: 'Partial update — send only the fields to change. Unknown keys are ignored. Returns the full preferences object after apply.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreferencesUpdateRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreferencesEntity'
+          description: ''
+      security: []
+      summary: 'Update preferences'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/referrals/earnings:
+    get:
+      description: 'Lifetime commission from members you referred: totals by currency, plus a per-referred-member breakdown with last fee-paying trade time. Funded from the taker fee they paid on fills.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralEarningsEntity'
+          description: ''
+      security: []
+      summary: 'Referral earnings'
+      tags:
+        - 'Rewards'
+  /api/v2/atlas/account/rewards/pending:
+    get:
+      description: 'Maker rebates and referral rewards accrued but not yet swept. Rewards accrue the moment a trade fills and are paid on a daily sweep, so this ticks up between payouts. Reaching 0 after a sweep is expected, not an error.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingRewardsEntity'
+          description: ''
+      security: []
+      summary: 'Pending rewards'
+      tags:
+        - 'Rewards'
+  /api/v2/atlas/account/stats/pnl:
+    get:
+      description: 'Realized PnL from settled contracts, per-market breakdown, and capital in/out. Open positions are not valued here — mark them client-side against the live price feed. `pnl_currency` narrows the response to a single collateral currency.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PnlEntity'
+          description: ''
+      security: []
+      summary: 'Prediction PnL'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/stats/pnl/history:
+    get:
+      description: 'Cumulative realized PnL over time, plus cumulative net deposits. Defaults to the last 30 days in daily buckets. Open positions are not valued — a member holding only open positions sees a flat line until their markets settle.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PnlPointEntity'
+                type: 'array'
+          description: ''
+      security: []
+      summary: 'Prediction PnL history'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/transactions:
+    get:
+      description: 'Your ledger across deposits, withdrawals, trades, internal transfers, referral earnings and maker rewards. Filter with `currency`, `type`, and time bounds; paginate with `page` and `limit` — totals land in the `Page` / `Per-Page` / `Total` response headers.'
+      parameters:
+        - description: 'Entries per page, 1–1000. Defaults to 50.'
+          example: 50
+          in: 'query'
+          name: 'limit'
+          required: false
+          schema:
+            default: 50
+            maximum: 1000
+            minimum: 1
+            type: 'integer'
+        - description: 'Page number, from 1. Read `Total` off the response headers.'
+          example: 1
+          in: 'query'
+          name: 'page'
+          required: false
+          schema:
+            default: 1
+            minimum: 1
+            type: 'integer'
+        - description: 'Sort direction on the entry timestamp. Defaults to `desc`.'
+          example: 'desc'
+          in: 'query'
+          name: 'order_by'
+          required: false
+          schema:
+            default: 'desc'
+            enum:
+              - 'asc'
+              - 'desc'
+            type: 'string'
+        - description: 'Upper bound, Unix SECONDS.'
+          example: 1725148800
+          in: 'query'
+          name: 'time_to'
+          required: false
+          schema:
+            type: 'number'
+        - description: 'Lower bound, Unix SECONDS — not milliseconds, and not ISO-8601. A millisecond value lands far in the future and returns nothing rather than erroring.'
+          example: 1722470400
+          in: 'query'
+          name: 'time_from'
+          required: false
+          schema:
+            type: 'number'
+        - description: 'Find the entry for one on-chain transaction.'
+          example: '0x9f2c…'
+          in: 'query'
+          name: 'txid'
+          required: false
+          schema:
+            type: 'string'
+        - description: 'Filter by what produced the entry.'
+          example: 'trade'
+          in: 'query'
+          name: 'type'
+          required: false
+          schema:
+            enum:
+              - 'deposit'
+              - 'withdraw'
+              - 'internal_transfer'
+              - 'trade'
+              - 'referral'
+              - 'maker_reward'
+            type: 'string'
+        - description: 'Filter to one asset. Matches either side of the entry, credit or debit.'
+          example: 'usdc'
+          in: 'query'
+          name: 'currency'
+          required: false
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TransactionEntity'
+                type: 'array'
+          description: ''
+      security: []
+      summary: 'Transaction history'
+      tags:
+        - 'Account'
+  /api/v2/atlas/account/wallet:
+    get:
+      description: 'The same funding config without the market fields — your Safe (the deposit destination), its owner, and any outstanding setup. For a wallet page that is not tied to a market.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtfWalletEntity'
+          description: ''
+      security: []
+      summary: 'CTF wallet'
+      tags:
+        - 'Wallet'
+  /api/v2/atlas/account/wallet/markets/{id}:
+    get:
+      description: 'Everything needed to build and sign an order for one market. Check `safe_status` first: on `setup_required` an order will rest and then fail to settle.'
+      parameters:
+        - in: 'path'
+          name: 'id'
+          required: true
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtfConfigEntity'
+          description: ''
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: 'Market is not CTF-registered'
+      security: []
+      summary: 'CTF config for a market'
+      tags:
+        - 'Wallet'
+  /api/v2/atlas/account/wallet/passkey:
+    post:
+      description: 'Registers the PUBLIC half of a WebAuthn credential and derives the signer contract and Safe address from it. The private half never leaves your authenticator, so Calibri holds no key and cannot recover the account — enrol on a platform whose passkeys sync, or the wallet dies with the device.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasskeyEnrolRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtfWalletEntity'
+          description: ''
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: ''
+      security: []
+      summary: 'Enrol a passkey wallet'
+      tags:
+        - 'Wallet'
+  /api/v2/atlas/account/wallet/relay:
+    post:
+      description: 'Gasless relay for any Safe transaction you have signed — setup approvals, redeeming winnings, or moving USDC out. The operator executes and pays the gas; it cannot act without your signature. The Safe must be your own.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RelayRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelayResultEntity'
+          description: ''
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: ''
+      security: []
+      summary: 'Relay a Safe transaction'
+      tags:
+        - 'Wallet'
+  /api/v2/atlas/account/wallet/session-key:
+    delete:
+      description: 'Returns the Safe call to revoke one grant, or every outstanding grant when `key_id` is omitted. Revocation takes effect the moment it is relayed and does kill resting orders that key signed.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionKeyRevokeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionKeyRevokeEntity'
+          description: ''
+      security: []
+      summary: 'Revoke a session key'
+      tags:
+        - 'Wallet'
+    get:
+      description: 'Whether session keys are usable, the highest grant id issued, and the policy TTLs. Returns `enabled: false` rather than an error where the deployment has no session contracts — the caller then falls back to prompting the passkey per order.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionKeyStatusEntity'
+          description: ''
+      security: []
+      summary: 'Session key status'
+      tags:
+        - 'Wallet'
+    post:
+      description: 'Returns the Safe calls that authorise a browser-held P-256 key to sign orders. Nothing is authorised until you sign and relay them. `expires_at` is clamped DOWN to policy. The key is never a Safe owner, so withdraw and redeem stay passkey-only.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionKeyPrepareRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionKeyPrepareEntity'
+          description: ''
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: ''
+      security: []
+      summary: 'Authorise a session key'
+      tags:
+        - 'Wallet'
+  /api/v2/atlas/public/currencies:
+    get:
+      description: 'Visible currencies in the registry. Collateral is USDC (6-decimal) on the chain named by `blockchain_key`. Fields describing operator-custodied funding — deposit and withdrawal fees, minimums, enabled flags — are retained for schema stability and do not apply: funding happens on your own Safe.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CurrencyEntity'
+                type: 'array'
+          description: ''
+      security: []
+      summary: 'List currencies'
+      tags:
+        - 'Currencies'
+  /api/v2/atlas/public/currencies/{id}:
+    get:
+      description: 'One currency from the registry, by code (e.g. `usdc`). Same object as a list element; only visible currencies resolve.'
+      parameters:
+        - in: 'path'
+          name: 'id'
+          required: true
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrencyEntity'
+          description: ''
+      security: []
+      summary: 'Currency by id'
+      tags:
+        - 'Currencies'
+  /api/v2/atlas/public/health/alive:
+    get:
+      description: 'Liveness probe for the Atlas process. Returns plain-text `200` when the process is up — not a dependency check, and not a trading-engine readiness signal.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthEntity'
+          description: ''
+      security: []
+      summary: 'Health check'
+      tags:
+        - 'Health'
+security:
+  - apiKey: []
+servers:
+  - description: 'Production'
+    url: 'https://calibri.io'

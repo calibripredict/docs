@@ -1,117 +1,150 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
   "name": "Calibri",
-  "theme": "luma",
   "colors": {
-    "primary": "#ef7025",
-    "light": "#eec9bc",
-    "dark": "#4fa1ab"
+    "primary": "#16305E",
+    "light": "#5A8AE6",
+    "dark": "#5A8AE6"
+  },
+  "fonts": {
+    "family": "Manrope"
   },
   "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "background": {
+    "color": {
+      "light": "#FBFBF9",
+      "dark": "#0A142E"
+    }
+  },
   "navigation": {
     "tabs": [
       {
         "tab": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "pages": [
               "introduction",
-              "quickstart",
-              "authentication"
+              "getting-started/overview",
+              "how-prediction-markets-work",
+              "account-kyc",
+              "wallet-deposits",
+              "trading-placing-orders"
             ]
           },
           {
             "group": "Core Concepts",
             "pages": [
-              "concepts/markets",
-              "concepts/orderbook",
-              "concepts/orders",
-              "concepts/positions",
-              "concepts/resolution"
+              "concepts/core-concepts",
+              "concepts/recurring-markets",
+              "concepts/resolution-sources",
+              "concepts/fees",
+              "concepts/rewards",
+              "rewards-referral-program"
             ]
           },
           {
-            "group": "Guides",
+            "group": "Self-Custody",
             "pages": [
-              "guides/place-order",
-              "guides/manage-positions",
-              "guides/market-making",
-              "guides/websocket-streams",
-              "guides/settlement"
+              "non-custodial/overview",
+              "non-custodial/wallets",
+              "non-custodial/balances",
+              "non-custodial/the-safe",
+              "non-custodial/signed-orders",
+              "non-custodial/session-keys",
+              "non-custodial/redeeming-winnings",
+              "non-custodial/resolution"
             ]
           },
           {
-            "group": "SDKs",
+            "group": "Smart Contracts",
             "pages": [
-              "sdks/typescript",
-              "sdks/python"
+              "smart-contracts/overview",
+              "smart-contracts/deployed-addresses"
+            ]
+          },
+          {
+            "group": "Legal",
+            "pages": [
+              "terms-of-use",
+              "privacy-policy"
             ]
           }
         ]
       },
       {
         "tab": "API Reference",
+        "icon": "code",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Getting Started",
             "pages": [
-              "api-reference/overview",
+              "api-reference/introduction",
+              "api-reference/authentication",
+              "api-reference/errors",
               "api-reference/rate-limits"
             ]
           },
           {
-            "group": "Markets",
+            "group": "Streaming",
             "pages": [
-              "api-reference/markets/list",
-              "api-reference/markets/get",
-              "api-reference/markets/prices"
+              "api-reference/websockets"
             ]
           },
           {
-            "group": "Orderbook",
-            "pages": [
-              "api-reference/orderbook/book",
-              "api-reference/orderbook/prices",
-              "api-reference/orderbook/spread"
-            ]
+            "group": "Endpoints",
+            "openapi": {
+              "source": "/api-reference/openapi/calibri.yaml",
+              "directory": "api-reference/endpoints"
+            }
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Status",
+          "href": "https://status.calibri.io",
+          "icon": "heart"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "https://support.calibri.io/contact"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Start Trading",
+      "href": "https://calibri.io"
+    }
+  },
+  "footer": {
+    "links": [
+      {
+        "header": "Calibri",
+        "items": [
+          {
+            "label": "Terms of use",
+            "href": "https://calibri.io/hub/terms-of-use"
           },
           {
-            "group": "Trading",
-            "pages": [
-              "api-reference/trading/place-order",
-              "api-reference/trading/cancel-order",
-              "api-reference/trading/orders",
-              "api-reference/trading/trades"
-            ]
-          },
-          {
-            "group": "Account",
-            "pages": [
-              "api-reference/account/balances",
-              "api-reference/account/positions",
-              "api-reference/account/rewards"
-            ]
-          },
-          {
-            "group": "WebSockets",
-            "pages": [
-              "api-reference/websockets/market-channel",
-              "api-reference/websockets/user-channel"
-            ]
+            "label": "Privacy policy",
+            "href": "https://calibri.io/hub/privacy-policy"
           }
         ]
       }
     ]
-  },
-  "navbar": {
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "/quickstart"
-    }
-  },
-  "footer": {
-    "socials": {}
   }
 }

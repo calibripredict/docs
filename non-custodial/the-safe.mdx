@@ -1,0 +1,169 @@
+---
+title: "The Safe"
+description: "Your per-member Gnosis Safe — deploy and register (operator-gasless), fund with USDC, and make it trade-ready with signed approvals."
+---
+
+Every self-custody member trades from a **1-of-1 Gnosis Safe**. The Safe holds
+your USDC on-chain and is the maker of your orders. The operator deploys and
+relays it gaslessly — you only ever sign.
+
+## How the Safe fits in
+
+What differs between members is **what owns the Safe** — see
+[Your wallet options](/non-custodial/wallets):
+
+- **Owner** — either your **wallet address (EOA)** (linked/SIWE wallet, or a
+  legacy email-derived address), or, for a passkey wallet, a **signer contract**
+  derived from your WebAuthn credential. Either way, this is what **signs**.
+- **Safe (proxy)** — the 1-of-1 Gnosis Safe owned by that owner. This is the
+  **maker** of your orders and the **destination** for deposits.
+
+The owner also determines the signature type your orders use: `2`
+(`POLY_GNOSIS_SAFE`) for a wallet EOA, `3` (`POLY_1271`) for a passkey signer
+contract. The config below tells you which — see
+[Signed orders](/non-custodial/signed-orders).
+
+A member with neither a linked wallet nor a passkey is custodial-only.
+
+## 1. Deploy & register (operator-gasless)
+
+You do not deploy the Safe yourself. When you first read your CTF config, atlas
+calls the blockchain service to **ensure your Safe exists** — the operator
+deploys it gaslessly (idempotent) and returns the derived Safe address, then
+registers it so the deposit watcher can map on-chain transfers back to your
+account.
+
+Read your member-level wallet config:
+
+**`GET /api/v2/atlas/account/wallet`**
+
+Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
+
+```json
+{
+  "exchange_address": "0x… (this deployment's CTF Exchange)",
+  "conditional_tokens_address": "0x…",
+  "usdc_address": "0x…",
+  "chain_id": 137,
+  "blockchain_key": "polygon-mainnet",
+  "domain_name": "Calibri CTF Prediction Markets",
+  "proxy_address": "0x… (your Safe — deposit destination + order maker)",
+  "owner_address": "0x… (your EOA, or your passkey signer contract)",
+  "signature_type": 2,
+  "safe_setup": { "ready": true, "calls": [] },
+  "safe_status": "ready"
+}
+```
+
+<Warning>
+  Every value above is **per deployment** — read them from the API rather than copying them from this page. `domain_name` in particular is hashed into every order signature, and each network signs under its own name (testnets deliberately differ from production).
+</Warning>
+
+`safe_status` values:
+
+| Value | Meaning |
+|---|---|
+| `ready` | Safe exists and is set up — you can trade |
+| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first |
+| `error` | Lookup failed; retryable (the Safe is not presented as absent) |
+| `unavailable` | You have an owner but no Safe factory is available |
+| `unlinked` | Custodial-only — no wallet linked and no passkey enrolled |
+
+<Warning>
+  Do not trade on `setup_required`. An order placed before the approvals land will **rest on the book and then fail to settle** — worse than being rejected outright. Only `ready` is safe to trade on.
+</Warning>
+
+<Note>
+  For a specific market, use `GET /api/v2/atlas/account/wallet/markets/:id` instead. It returns the same funding config **plus** the market's `condition_id`, `yes_token_id`, and `no_token_id`. It returns `404` for a custodial-only market. See [Signed orders](/non-custodial/signed-orders).
+</Note>
+
+## 2. Fund the Safe with USDC
+
+Send USDC to your Safe address (`proxy_address`) on-chain — from any wallet or
+exchange. The deposit watcher credits your off-chain
+[`balance_safe`](/non-custodial/balances) mirror once the transfer confirms.
+
+<Warning>
+  The Safe must **actually hold USDC on-chain**. On-chain settlement pulls your real collateral from the Safe when a trade matches; `balance_safe` is only Calibri's mirror of that on-chain balance.
+</Warning>
+
+## 3. Make the Safe trade-ready
+
+Before its first trade, the Safe must grant three on-chain approvals:
+
+1. Approve **USDC → the exchange** — collateral for your fills
+2. `setApprovalForAll` on **ConditionalTokens → the exchange** — your outcome tokens
+3. Approve **USDC → the operator**, capped — the taker fee pulled at settlement
+
+The third is deliberately **bounded**, not unlimited: it covers many trades and
+depletes as fees are collected. When it runs low the config asks you to sign
+once more to top it up, so setup can recur — it is not strictly one-time. A
+capped allowance means a compromised operator key could take at most that
+remaining amount, never your Safe balance.
+
+These come back in the config as `safe_setup.calls` — a list of
+`{ to, data, operation, nonce, hash }`. Sign each as a Safe `SafeTx` (EIP-712)
+with your Safe's owner and relay it (see below).
+
+Where the deployment has Safe's **MultiSend** configured, all three approvals
+arrive as a **single** call with `operation: 1` (`DELEGATECALL`) — one signature
+instead of three. Otherwise you get three calls at sequential Safe nonces, which
+must be relayed **in order**. Either way, when setup is complete the config
+reports:
+
+```json
+"safe_setup": { "ready": true, "calls": [] }
+```
+
+### Relaying a setup call
+
+**`POST /api/v2/atlas/account/wallet/relay`**
+
+Submits a signed Safe transaction. The operator executes `Safe.execTransaction` and pays gas.
+
+Request body:
+
+```json
+{
+  "safe": "0x… (must be your own Safe)",
+  "to": "0x… (the exchange, for approvals)",
+  "value": "0",
+  "data": "0x… (encoded approve / setApprovalForAll)",
+  "operation": 0,
+  "signature": "0x… (your SafeTx signature — EOA ECDSA, or an EIP-1271 contract signature for a passkey)"
+}
+```
+
+Required fields: `safe`, `to`, `data`, `signature`. `value` defaults to `"0"`
+and `operation` to `0`. Atlas rejects with `400 safe does not belong to this
+member` unless `safe` equals your own derived Safe address, then forwards to the
+operator relayer.
+
+Response:
+
+```json
+{ "tx": "0x… (submitted tx hash, or null)" }
+```
+
+### The SafeTx typed data
+
+The same `SafeTx` EIP-712 structure is used for setup approvals, redemption, and
+withdrawals:
+
+```
+domain: { verifyingContract: <your Safe address>, chainId }   // name/version omitted
+SafeTx(
+  address to, uint256 value, bytes data, uint8 operation,
+  uint256 safeTxGas, uint256 baseGas, uint256 gasPrice,
+  address gasToken, address refundReceiver, uint256 nonce
+)
+```
+
+Use `value = safeTxGas = baseGas = gasPrice = 0`, `gasToken = refundReceiver =
+0x0`, `operation = 0` (CALL), and `nonce` = the Safe's current on-chain
+`nonce()`.
+
+## Next steps
+
+- [Signed orders](/non-custodial/signed-orders) — build and sign an EIP-712 order once the Safe is ready
+- [Redeeming winnings](/non-custodial/redeeming-winnings) — the same relay path is used to claim payouts

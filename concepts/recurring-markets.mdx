@@ -1,0 +1,96 @@
+---
+title: "Recurring markets and windows"
+description: "Series, windows, and price-feed markets — how a market that asks the same question every five minutes works, what the price line means, and what actually settles it."
+---
+
+Some questions don't happen once. *"Will Bitcoin close higher than it opened?"*
+is worth asking every five minutes, forever. On Calibri those are **recurring
+series**, and each round is a **window**.
+
+## Series and windows
+
+A **series** is a feed of markets generated from one question on a fixed
+cadence — every five minutes, hourly, daily. Each **window** is one round of it:
+its own market, its own order book, its own settlement.
+
+Because a five-minute feed produces 288 markets a day, the browse page shows the
+whole series as **one card**, not 288. Open it and you get the window strip:
+recent windows as a row you can step back through, the live one pulsing, and a
+countdown to close.
+
+<Note>
+  Not every daily feed collapses. A tennis tour publishes a different fixture each day — those are genuinely different questions and each is listed in full. Only feeds that ask the *same* question each round collapse behind one card.
+</Note>
+
+## Series vs tags
+
+Two different ways markets are grouped, and they are not interchangeable:
+
+- A **series** is where an event came from — the feed that generated it. At most one per event, and most events have none at all.
+- A **tag** is where an event is *shelved* — what puts it on a hub page. An event can carry several. One "Wimbledon" tag can collect the winner race and every individual match, which come from completely different places.
+
+## Price-feed markets
+
+A recurring crypto window is a **price-feed market**: instead of plotting the
+market's own probability, the chart plots the **underlying asset's price** with
+the level to beat drawn across it.
+
+You get three views of a window:
+
+- **Odds** — the probability chart every market on the site has. This is what you are actually trading.
+- **Price line** — the asset's price through the window, live.
+- **Candles** — hours of context around the window, scrollable into the past.
+
+The live price comes from Calibri's own feed, which is republished from **the
+same venue the market settles against**. That is deliberate: a chart fed from one
+source and a settlement taken from another disagree eventually, and every
+disagreement is somebody watching one number and being paid on another.
+
+## What settles a window
+
+A candle-direction window resolves on one question: **did the candle close at or
+above its own open?**
+
+- The **open** is fixed the moment the window starts. It is shown from the exchange's own candle, not from the first price the chart happened to see — so arriving mid-window still shows you the real level to beat.
+- The **close** moves until the window ends, and it is the same number the resolution source compares against.
+- **A tie resolves up.** `close == open` exactly is a real outcome on a quiet five-minute market, not a rounding artefact, and the rule is stated rather than left to chance.
+
+<Note>
+  There is a short gap between a window closing *by the clock* and the final candle being confirmed. During it the displayed close is still forming. The app distinguishes the two states so you are never shown a "final" price that then moves.
+</Note>
+
+Once settled, the window keeps the two numbers that decided it — the deciding
+candle's open and close — so you can always see what happened, even months
+later. They are reproducible: anyone can re-request that candle and get the same
+values.
+
+<Warning>
+  Settlement is **final**. If the exchange later restates its data, or there was an outage or an unusual print during the window, the market stays settled on what was published at the time. See [How markets are resolved](/concepts/resolution-sources).
+</Warning>
+
+## Old windows still work
+
+A window that closed three months ago renders exactly like a live one — its
+chart, its result, and its settlement figures. Bookmarks and shared links to old
+windows resolve.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Binary markets, prices as probabilities, settlement.
+  </Card>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    The exact Coinbase data a window settles on, and why it is never revised.
+  </Card>
+  <Card title="Market resolution" href="/non-custodial/resolution">
+    The on-chain escalation ladder and the deadman switch.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The single taker fee.
+  </Card>
+  <Card title="API Reference" href="/api-reference/introduction">
+    Series, tags, and the underlying-asset price endpoints.
+  </Card>
+</CardGroup>
+

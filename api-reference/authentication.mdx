@@ -1,0 +1,176 @@
+---
+title: "Authentication"
+description: "How to authenticate a private request: mint an API key and HMAC-sign every call."
+---
+
+Private requests authenticate with an **API key**: mint a key and secret, then
+HMAC-sign every request.
+
+The gateway validates the signature and forwards a trusted, short-lived JWT to
+the engine and orchestrator on the internal network, so both see the same
+authenticated member.
+
+Public endpoints need no authentication.
+
+<Warning>
+  Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign. A compromised API key can read your account — it cannot spend from your Safe.
+</Warning>
+
+## API-key (HMAC) authentication
+
+Send three headers on every private request:
+
+| Header | Value |
+|---|---|
+| `X-Auth-Apikey` | Your API key |
+| `X-Auth-Nonce` | Current Unix time in **milliseconds**, as a decimal string |
+| `X-Auth-Signature` | HMAC-SHA256 of the canonical message below, keyed with your API secret, hex-encoded |
+
+### The canonical message
+
+```
+nonce + apiKey + METHOD + path + body
+```
+
+Concatenated with **no separators**. Each part is exact:
+
+| Part | Rule |
+|---|---|
+| `nonce` | The same value you send in `X-Auth-Nonce` |
+| `apiKey` | The same value you send in `X-Auth-Apikey` |
+| `METHOD` | HTTP method, **upper-cased** |
+| `path` | The request target **exactly as sent** — leading `/`, full `/api/v2/…` prefix, and the **query string** if there is one. Not normalised, not stripped |
+| `body` | The raw request body, byte-for-byte. The **empty string** for `GET`/`DELETE` and any bodyless request |
+
+Because the method, path, and body are covered, one signature authorises exactly
+**one** request. It cannot be replayed against a different path, a different
+`limit=`, or different body contents.
+
+<CodeGroup>
+
+```javascript sign.js
+const crypto = require("crypto");
+const apiKey = "123456...";
+const secret = "ABCDEF...";
+
+// path = the request target EXACTLY as you send it, query string included.
+// body = the raw request body bytes; "" for GET/DELETE.
+module.exports = (method, path, body = "") => {
+  const nonce = String(Date.now());
+  const message = nonce + apiKey + method.toUpperCase() + path + body;
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(message)
+    .digest("hex");
+
+  return {
+    "Content-Type": "application/json;charset=utf-8",
+    "X-Auth-Apikey": apiKey,
+    "X-Auth-Nonce": nonce,
+    "X-Auth-Signature": signature,
+  };
+};
+```
+
+```python sign.py
+import hashlib, hmac, time
+
+API_KEY = "123456..."
+SECRET = "ABCDEF..."
+
+def sign(method: str, path: str, body: str = "") -> dict:
+    nonce = str(int(time.time() * 1000))
+    message = nonce + API_KEY + method.upper() + path + body
+    signature = hmac.new(
+        SECRET.encode(), message.encode(), hashlib.sha256
+    ).hexdigest()
+    return {
+        "Content-Type": "application/json;charset=utf-8",
+        "X-Auth-Apikey": API_KEY,
+        "X-Auth-Nonce": nonce,
+        "X-Auth-Signature": signature,
+    }
+```
+
+```go sign.go
+package main
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"strings"
+	"time"
+)
+
+const apiKey, secret = "123456...", "ABCDEF..."
+
+// path is the request target exactly as sent, query string included.
+// body is "" for GET/DELETE.
+func sign(method, path, body string) map[string]string {
+	nonce := fmt.Sprintf("%d", time.Now().UnixMilli())
+	message := nonce + apiKey + strings.ToUpper(method) + path + body
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(message))
+
+	return map[string]string{
+		"Content-Type":     "application/json;charset=utf-8",
+		"X-Auth-Apikey":    apiKey,
+		"X-Auth-Nonce":     nonce,
+		"X-Auth-Signature": hex.EncodeToString(mac.Sum(nil)),
+	}
+}
+```
+
+</CodeGroup>
+
+### The exact string signed, for a POST
+
+```
+1700000000000abc123POST/api/v2/atlas/account/orders{"market":"1","side":"yes"}
+└─ nonce ────┘└ kid ┘└ M ┘└─ path (query included) ─────────────┘└─ raw body ───────────┘
+```
+
+<Note>
+  Sign the body you actually send. If your HTTP client re-serialises JSON — reordering keys or changing whitespace — after you compute the signature, the signature will not match. Build the body string once, sign that string, and transmit it verbatim.
+</Note>
+
+### Clock skew
+
+`X-Auth-Nonce` is checked against server time. Read
+`GET /api/v2/atlas/public/timestamp` (Unix **milliseconds**) to measure your
+offset before signing.
+
+## WebSocket
+
+The private WebSocket upgrade is signed exactly like a REST call, so the signed
+`path` must include the **full `?stream=…` query string** you connect with.
+Signing the bare path will fail.
+
+```javascript
+const sign = require("./sign");
+
+const path =
+  "/api/v2/websocket/private?stream=12.ob-inc&stream=order&stream=trade&stream=balance";
+
+const headers = sign("GET", path); // GET, path-with-query, empty body
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="API overview" href="/api-reference/introduction">
+    Base URLs, response format, and pagination.
+  </Card>
+  <Card title="Errors" href="/api-reference/errors">
+    The dot-coded error catalog.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    The EIP-712 signature every order carries, separate from authentication.
+  </Card>
+  <Card title="Session keys" href="/non-custodial/session-keys">
+    Browser-held keys that sign orders without a passkey prompt.
+  </Card>
+</CardGroup>

@@ -1,0 +1,111 @@
+---
+title: "Resolution, UMA & the deadman"
+description: "How a market resolves — what the outcome is judged against, then the operator report, UMA escalation, and the permissionless deadman void, with the timeframes for each."
+---
+
+Every market has a scheduled resolution time (`resolveBy`). From there, a
+**permissionless escalation ladder** enforced by the on-chain `CalibriResolver`
+guarantees the market always settles or refunds — the one thing you trust Calibri
+for is reporting the **correct outcome on time**, and that trust is bounded at
+every step.
+
+## Before that: what the outcome is judged against
+
+Two things are published on the market itself, **before you trade**, so the rules
+are not something you have to take on trust after the fact.
+
+### The answer deadline
+
+Closing and answering are not the same moment. A market carries an **answer
+deadline** — when the outcome is expected to become *knowable* — separately from
+its **close time**, which is only when trading stops.
+
+Some markets legitimately wait hours after close because the authoritative report
+publishes later. Without the deadline stated up front that reads as a stuck
+market; with it, the wait is documented. Where the outcome is expected at close,
+no separate deadline is shown.
+
+### The settlement panel
+
+Manually-settled markets publish the **ordered list of authorities** their
+outcome may be determined from. Each source is either a **primary** (consulted
+first — a body that publishes the answer itself) or a **fallback** (used only
+where no primary has spoken).
+
+**The order is the content.** It is what decides the outcome when two sources
+disagree, which is the one situation the hierarchy exists for. Some panels are
+inherited from the market's series rather than set on the market itself; either
+way it is shown on the market page and in the API before a single order is
+placed.
+
+A hierarchy that lives only in an admin tool cannot be quoted back at anyone.
+That is why this is published rather than internal.
+
+<Note>
+  Machine-settled markets — a candle direction, a scoreboard — usually carry no panel: the resolution source is the market's own rule. For the specific feed behind each market type, and the rule that a settlement is never revised, see [How markets are resolved](/concepts/resolution-sources).
+</Note>
+
+## The escalation ladder
+
+<Steps>
+  <Step title="Operator report — the normal path">
+    At or after `resolveBy`, Calibri reports the outcome on-chain. Your winning
+    outcome token becomes redeemable for the full **1.00 USDC/share** (see
+    [Redeeming winnings](/non-custodial/redeeming-winnings)); the losing token for
+    `0`. One call per market — this is what happens in virtually all cases.
+  </Step>
+  <Step title="Grace window → UMA escalation (≈ 7 days)">
+    If Calibri has **not** reported by `resolveBy + grace window`, resolution
+    becomes **permissionless**: anyone may escalate the question to **UMA's
+    Optimistic Oracle**, which returns the *true* outcome trustlessly — so the
+    market still settles to the correct result and winners are paid, even if
+    Calibri never acts.
+  </Step>
+  <Step title="Deadman forceVoid → 50/50 (hard cap, ≈ 30 days)">
+    As a last resort, once `resolveBy + grace window + UMA extension` has elapsed
+    (a strictly-later hard cap), anyone may call `forceVoid`. This resolves the
+    market to an **equal `[1,1]` payout** — no winners, no losers — and every
+    position reclaims its collateral directly from the on-chain contracts.
+  </Step>
+</Steps>
+
+## Timeframes
+
+| Stage | Trigger | Who can act | Result |
+| --- | --- | --- | --- |
+| Report | `resolveBy` | Calibri (operator) | Winners redeem 1.00/share |
+| UMA escalation | `resolveBy` + **~7 days** (grace window) | Anyone | UMA settles the true outcome |
+| Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, collateral reclaimable |
+
+<Note>
+  These windows (≈7-day grace, ≈30-day hard cap) are the resolver's configured defaults and may differ per deployment; the contract bounds the grace window to 1 hour–14 days. UMA escalation applies only on deployments with an Optimistic Oracle configured — without one, a market skips straight to the deadman void.
+</Note>
+
+<Warning>
+  Reaching step 2 or 3 means Calibri failed to report. They are a **safety net**, not the normal path — and they exist so that your funds never depend on Calibri continuing to operate.
+</Warning>
+
+A **voided** market (admin- or deadman-voided) returns every position's
+collateral. Because each step is permissionless and enforced on-chain, your funds
+are always recoverable: you either get paid the correct outcome (operator or UMA),
+or — once the deadman cap elapses — you reclaim your collateral straight from the
+contracts. This is the liveness guarantee that makes the model genuinely
+self-custodial.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    The specific data source behind each market type, and the finality rule.
+  </Card>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    The market lifecycle end to end.
+  </Card>
+  <Card title="Recurring markets" href="/concepts/recurring-markets">
+    What settles a price-feed window.
+  </Card>
+  <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
+    Claiming a payout once a market resolves.
+  </Card>
+</CardGroup>
+

@@ -1,0 +1,146 @@
+---
+title: "Core Concepts"
+description: "Binary YES/NO markets, prices as probabilities, the combined order book, contracts, settlement, and the market lifecycle."
+---
+
+Everything on Calibri is built from a few simple ideas. Understand these and the
+rest of the platform follows.
+
+## Binary YES/NO markets
+
+Every market asks one question with exactly two outcomes: **YES** or **NO**.
+Each market has two contracts:
+
+- A **YES contract** pays **1.00 USDC** if the outcome is YES, and **0** if NO.
+- A **NO contract** pays **1.00 USDC** if the outcome is NO, and **0** if YES.
+
+You take a view by buying the side you believe in. Buying YES profits if the
+event happens; buying NO profits if it doesn't.
+
+## Prices are probabilities
+
+A contract's price is always between **0.01 and 0.99**, and it reads directly as
+the market's estimated probability of that outcome.
+
+| YES price | Market is saying… |
+|---|---|
+| `0.10` | ~10% chance of YES |
+| `0.50` | a coin flip |
+| `0.90` | ~90% chance of YES |
+
+Because YES and NO are the two halves of the same question, their prices always
+sum to **1.00**:
+
+```
+YES price + NO price = 1.00
+```
+
+If YES trades at `0.65`, NO is `0.35`. Buying NO at `0.35` is the mirror image of
+selling YES at `0.65` — they are the same economic position.
+
+## The combined order book
+
+Calibri does **not** keep a separate book for NO. There is **one combined order
+book** per market, and the YES+NO=1.00 identity is enforced by construction: a
+trade happens when a YES buyer and a NO buyer are matched, and their prices add
+up to 1.00. This keeps liquidity in one place instead of splitting it across two
+half-empty books.
+
+<Note>
+  A practical consequence: a resting YES bid at `0.60` is simultaneously offering the NO side at `0.40`. You never have to hunt for "the other side" — it's the same book.
+</Note>
+
+## What a contract is
+
+A **contract** is created the moment the engine matches a YES buyer with a NO
+buyer. Each contract is **jointly owned by both legs**: one member holds the YES
+side, the other holds the NO side, and together their stakes fund the full
+1.00 USDC that the winner will eventually collect.
+
+- Your **position** in a market is the set of contract legs you hold (net YES,
+  net NO, or flat).
+- You can exit before resolution by trading the opposite side — the price
+  difference is your profit or loss.
+
+## Settlement — winner takes 1.00, loser takes 0
+
+When a market resolves, each contract pays out:
+
+```
+Winning side  → 1.00 USDC per share
+Losing side   → 0
+```
+
+The winner collects the **full pot** — their own stake plus the loser's stake.
+There is **no fee at settlement or redemption**. Your only trading cost is the
+**taker fee at the time of the fill** (see [Fees](/concepts/fees)).
+
+Winners **redeem on-chain** themselves — resolution makes the winning outcome
+token redeemable for 1.00 USDC per share, and you claim it. See
+[Redeeming winnings](/non-custodial/redeeming-winnings).
+
+## Market lifecycle
+
+From a trader's point of view, a market moves through these stages:
+
+<Steps>
+  <Step title="Open">
+    The market is live. You can place, fill, and cancel orders; prices move as
+    people trade.
+  </Step>
+  <Step title="Closed">
+    Trading stops at the market's close time. Open orders stop matching and your
+    positions are locked in, pending the outcome.
+
+    Closing is not the same as answering. Where the outcome only becomes knowable
+    some time after close, the market states an **answer deadline** up front — see
+    [Market resolution](/non-custodial/resolution).
+  </Step>
+  <Step title="Resolved">
+    The outcome is determined and contracts pay out — winners 1.00/share, losers
+    0. This is the normal end state.
+  </Step>
+  <Step title="Voided (exception)">
+    If a market can't be resolved fairly, it is **voided**: every position is
+    refunded its collateral and the taker fee is returned. Nobody wins or loses.
+  </Step>
+</Steps>
+
+<Note>
+  Under the hood the platform tracks finer-grained states (the engine uses `open → frozen → settling → settled`; the orchestrator uses `initialized → active → closed → determined → settled`). The four stages above are the customer-facing summary. Resolution runs on-chain through an escalation ladder — see [Market resolution](/non-custodial/resolution).
+</Note>
+
+## Putting it together
+
+| Concept | Key idea |
+|---|---|
+| **Binary market** | One question, two outcomes: YES / NO |
+| **Price** | Reads as probability; YES + NO = 1.00 |
+| **Order book** | One combined book; a match is a YES buyer + a NO buyer |
+| **Contract** | Jointly owned YES/NO pair funding a 1.00 payout |
+| **Settlement** | Winner 1.00/share, loser 0, no settlement fee |
+| **Lifecycle** | Open → Closed → Resolved (or Voided) |
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    The single taker fee, charged once at the trade.
+  </Card>
+  <Card title="Rewards" href="/concepts/rewards">
+    Maker rebates and referral rewards.
+  </Card>
+  <Card title="Recurring markets" href="/concepts/recurring-markets">
+    Series, windows, and price-feed markets.
+  </Card>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    The data source behind each market type.
+  </Card>
+  <Card title="Placing orders" href="/trading-placing-orders">
+    Limit vs market orders in practice.
+  </Card>
+  <Card title="API Reference" href="/api-reference/introduction">
+    Market, order-book, and ticker endpoints.
+  </Card>
+</CardGroup>
+

@@ -1,0 +1,187 @@
+---
+title: "How markets are resolved"
+description: "The exact data each market settles against — Coinbase for crypto prices, official sports feeds for fixtures — how the deciding number is read, and why a settled market is never re-opened."
+---
+
+Every market names the source that decides it **before** you can trade it. This
+page sets out exactly what that source is, what number is read from it, and when.
+
+The governing principle throughout: **we settle on what the source published at
+the time, and we do not go back and change it later.**
+
+## Crypto price markets — Coinbase
+
+Crypto markets settle against **Coinbase Exchange**, read directly from
+Coinbase's public API. No aggregator, no index, no third-party price oracle sits
+in between.
+
+### The deciding number is the interval's final trade price
+
+Calibri reads **Coinbase's own candle** for the interval the market names. A
+candle's **close is the last trade price that occurred on Coinbase inside that
+interval**, published by Coinbase itself.
+
+So for a five-minute market covering `14:35:00`–`14:40:00`, the number that
+decides it is the final trade printed on Coinbase before `14:40:00` — as
+Coinbase reports it. The same holds for a fifteen-minute, hourly, or daily
+market: the final trade price of that interval, taken directly from Coinbase.
+
+<Note>
+  Candles, not a "current price" reading. A spot price fetched at a moment in time is unreproducible — ask twice, get two answers, and a member disputing a settlement has nothing to check. A closed candle for a stated interval is a fixed published fact that **anyone can re-request and verify**. That is what a resolution has to be.
+</Note>
+
+We do not recompute candles from our own sampled data. What settles the market is
+the candle Coinbase published, unaltered.
+
+### Up/down markets
+
+The most common recurring market asks: **did this interval close at or above its
+own open?**
+
+```
+YES  if  close >= open
+NO   if  close <  open
+```
+
+Both numbers come out of **the same candle**, so nothing has to be decided in
+advance and nothing depends on a feed being reachable at a particular instant.
+
+<Warning>
+  **A tie resolves UP.** `close == open` exactly is a real outcome on a quiet five-minute market, not a rounding artefact — so it has a stated answer rather than being left to chance. An interval that closes exactly where it opened resolves **YES**.
+</Warning>
+
+### Threshold markets
+
+Some markets ask whether the price is above or below a **fixed level** at a
+stated moment ("Will BTC be above $100,000 on 30 August?"). These compare the
+close of the named candle against the threshold written into the market when it
+was created.
+
+### Intervals we use
+
+Only widths Coinbase itself publishes: **1 minute, 5 minutes, 15 minutes, 1 hour,
+6 hours, and 1 day.** A width Coinbase does not publish would have to be
+assembled by us — and an assembled candle is our number, not theirs, which is
+exactly the property this design exists to avoid.
+
+### The chart and the settlement come from the same place
+
+The live price you watch on a market page is republished from **the same Coinbase
+feed the market settles against**. A chart fed from one venue and a settlement
+taken from another disagree eventually, and every disagreement is somebody
+watching one number and being paid on another.
+
+<Note>
+  The live line is for **drawing**. Settlement always reads the authoritative closed candle. In the seconds between an interval ending and its final candle being confirmed, the app marks the figure as not-yet-final rather than showing a number that then moves.
+</Note>
+
+### No retroactive corrections
+
+**This is the important one.**
+
+A market settles on the data that was live and published at the time the interval
+closed. If a problem occurred at or around that moment — an outage, a spike, a
+thin book, a print somebody disputes, or a later restatement by the exchange —
+**the settlement stands.** We do not revisit a settled market to apply a
+correction.
+
+Concretely:
+
+- If Coinbase later revises or restates historical candle data, the market stays settled on the value read at the time.
+- If Coinbase had an incident, a degraded feed, or unusual price action during the interval, that is part of the market. The price that traded is the price that traded.
+- A settled market is **terminal**. There is no re-resolution path, on Calibri's side or on-chain.
+
+This is deliberate. A settlement that can be reopened is not a settlement: it
+means every payout is provisional, winners cannot rely on being paid, and the
+decision of what counts as "an issue worth fixing" becomes a discretionary
+judgement made after the money is known. Finality is worth more than
+after-the-fact accuracy.
+
+<Warning>
+  Trade accordingly on very short intervals. A five-minute market resolves on a single interval of live exchange data with no correction mechanism behind it.
+</Warning>
+
+The one thing that is **not** a settlement dispute is a market that cannot be
+resolved at all — no data, an ambiguous question, a cancelled real-world event.
+Those are **voided**, and voiding refunds every position's collateral and taker
+fee. See [Market resolution](/non-custodial/resolution).
+
+## Sports and event markets
+
+Sports settle against official or established results feeds. These are easier
+than prices: a fixture has a definitive published outcome, and the sources agree
+with each other.
+
+| Market type | Source |
+|---|---|
+| MLB, NBA, NHL, WNBA, NCAA game results | SportsDataIO |
+| Soccer matches | ESPN |
+| Tennis matches | ESPN |
+| Golf tournaments | ESPN |
+| Motor racing (NASCAR, IndyCar) | ESPN |
+| Formula 1 | API-Sports |
+| MMA fights | API-Sports |
+| General fixtures | API-Sports |
+| Chess tournaments | Chess.com |
+
+The same finality rule applies: the result published by the source is the result,
+and a settled market is not reopened. In practice sports outcomes are unambiguous
+— a match has a winner — so this rarely comes up.
+
+Some situations do not produce a result at all. A postponed fixture is
+**rescheduled** where possible rather than voided at 50/50, so the market follows
+the real-world event. Where an event is abandoned outright and no outcome exists,
+the market is **voided** and everyone is refunded.
+
+<Note>
+  We add sources as we add categories. Whatever governs a given market is published on that market's page before trading opens — read it there rather than assuming from this list.
+</Note>
+
+## Manually-settled markets
+
+Where no machine feed can answer the question, the market publishes a
+**settlement panel**: an ordered list of the authorities its outcome may be
+determined from, split into **primary** sources (consulted first) and
+**fallbacks** (used only where no primary has spoken).
+
+**The order is the content.** It is what decides the outcome when two sources
+disagree — which is the one situation the hierarchy exists for. It is published
+on the market before you trade, so it can be quoted back at us.
+
+Manual settlements also go through a **two-person review**: one reviewer proposes
+the outcome, a second must agree, and a disagreement escalates to a senior
+adjudicator before anything is paid. A settlement never rests on one person's
+reading of a source.
+
+## Timing
+
+Closing and answering are two different moments.
+
+- **Close** is when trading stops.
+- **The answer deadline** is when the outcome is expected to become knowable. Markets state it separately when the two differ — some sources publish hours after the event.
+
+Automated settlements carry a short **review window** after the source is read
+(around a minute for crypto), during which an operator can object before the
+outcome is committed. Once committed, resolution is reported on-chain and your
+winning shares become redeemable.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Market resolution" href="/non-custodial/resolution">
+    The on-chain escalation ladder, UMA, and the deadman switch.
+  </Card>
+  <Card title="Recurring markets" href="/concepts/recurring-markets">
+    Series, windows, and price-feed markets.
+  </Card>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Settlement, payouts, and voiding.
+  </Card>
+  <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
+    Claiming a payout after resolution.
+  </Card>
+  <Card title="Terms of use" href="/terms-of-use">
+    The rules you accept by trading.
+  </Card>
+</CardGroup>
+

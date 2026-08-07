@@ -1,72 +1,205 @@
 ---
-title: "Calibri: Prediction Market Engine for Traders and Builders"
-sidebarTitle: "Introduction"
-description: "Calibri is a prediction market engine with a CLOB trading engine, real-time WebSocket streams, and REST APIs for binary and multi-outcome markets."
+title: "Welcome to Calibri"
+description: "Trade binary YES/NO prediction markets from a wallet only you control, settled in USDC on-chain."
 ---
 
-Calibri is a prediction market engine that lets you trade, build, and analyze markets on real-world events — elections, economic indicators, sports outcomes, and more. At its core, Calibri runs a Central Limit Order Book (CLOB) for peer-to-peer trading of binary and multi-outcome markets, backed by fully collateralized ERC-1155 outcome tokens and resolved through the UMA Optimistic Oracle. Whether you're a trader looking for programmatic order execution, a developer integrating market data into a product, or a market maker running automated liquidity strategies, Calibri gives you the infrastructure to do it.
+Calibri is a **prediction-market exchange**. You trade on the outcome of real
+events — an election, a match, where Bitcoin closes — against other people,
+using real money, on a public order book.
 
-## What you can build
+What makes it unusual is where the money sits. **Calibri never holds your
+funds.** They stay in a wallet only you control, on-chain, the entire time.
 
-<CardGroup cols={2}>
-  <Card title="Trading Applications" icon="chart-line">
-    Build interfaces that let users discover markets, stream live prices, and execute orders with full support for GTC, GTD, FOK, FAK, and Post-Only order types.
-  </Card>
-  <Card title="Market Making Bots" icon="robot">
-    Run automated liquidity strategies using the CLOB API and WebSocket price feeds, and earn maker rewards for providing two-sided quotes.
-  </Card>
-  <Card title="Analytics Dashboards" icon="chart-bar">
-    Query the Data API for historical trade data, volume metrics, and market resolution history to power research tools and probability trackers.
-  </Card>
-  <Card title="Embedded Markets" icon="puzzle-piece">
-    Embed live prediction market widgets or full trading experiences directly into your application using the REST APIs and TypeScript SDK.
-  </Card>
-</CardGroup>
+## What a prediction market is
 
-## Key concepts
+Every market asks **one question with exactly two answers**: YES or NO.
 
-Understanding these four concepts will help you navigate the Calibri platform and its APIs.
+You buy shares in whichever side you think is right. When the question is
+answered, **each winning share pays 1.00 USDC and each losing share pays 0**.
 
-**Markets & Events**
-A market represents a question about a future event with one or more possible outcomes (e.g., "Will Candidate A win the election?"). Markets are created with an expiry, a resolution source, and a set of outcome tokens. Multi-outcome markets use Calibri's negative risk model so positions net against each other efficiently.
+Prices sit between `0.01` and `0.99` and read directly as **probability**:
 
-**Outcome Tokens**
-Every market position is represented as a fully collateralized ERC-1155 outcome token. You can split USDC collateral into YES/NO token pairs, merge them back, or redeem winning tokens for collateral after resolution. Token balances are on-chain and non-custodial.
-
-**Order Book (CLOB)**
-Calibri's Central Limit Order Book matches buy and sell orders peer-to-peer in price-time priority. You submit orders through the CLOB API, which supports limit and market orders across all supported order types. A gasless transaction relayer handles on-chain settlement so you don't pay gas directly on each trade.
-
-**Resolution**
-Markets resolve through the UMA Optimistic Oracle. Once an event outcome is known, a proposer submits the result on-chain. After the dispute window passes without a successful challenge, the market settles and winning token holders can redeem their collateral.
-
-## API surfaces
-
-Calibri exposes four API surfaces depending on what you're doing.
-
-| Surface | Base URL | Purpose |
+| YES price | The market is saying | If YES happens |
 |---|---|---|
-| Market API | `https://gamma-api.calibri.com` | Market discovery, event metadata, and live pricing |
-| CLOB API | `https://clob.calibri.com` | Order placement, cancellation, and fill history |
-| Data API | `https://data-api.calibri.com` | Historical trades, volume analytics, and resolution data |
-| WebSocket | `wss://ws-subscriptions-clob.calibri.com/ws/` | Real-time order book updates and trade streams |
+| `0.10` | ~10% chance | 100 shares cost $10, pay out $100 |
+| `0.50` | a coin flip | 100 shares cost $50, pay out $100 |
+| `0.90` | ~90% chance | 100 shares cost $90, pay out $100 |
 
-<Note>
-  The CLOB API and all order management endpoints require L2 authentication. Market discovery and public pricing endpoints on the Market API are accessible without credentials.
-</Note>
+Cheap shares are the ones the market thinks are unlikely — they pay the most if
+you are right. YES and NO always sum to `1.00`, so buying NO at `0.35` is exactly
+the mirror of selling YES at `0.65`.
 
-## Quick links
+You don't have to wait for the answer. Prices move as opinion moves, and you can
+sell out at any time before the market closes — profit or loss is the difference.
+
+<Card title="How prediction markets work" href="/how-prediction-markets-work" icon="lightbulb">
+  The intuition and economics, in more depth.
+</Card>
+
+## How Calibri approaches it
+
+**One order book, self-custody throughout.** Everyone trades the same book, and
+every order is a signature you produce. There is no Calibri balance, no deposit
+into our custody, and no version of this where we hold your money and you trust
+us to give it back.
+
+- **Settled in USDC** — a US-dollar stablecoin. Stakes, fees, winnings, rewards, all in USDC.
+- **One fee, once** — a taker fee when your order fills. Nothing at settlement, nothing at redemption. A winning share always pays the full 1.00. See [Fees](/concepts/fees).
+- **Resolution is published before you trade** — the exact source that decides each market is on the market page. Crypto markets read Coinbase's own data directly. See [How markets are resolved](/concepts/resolution-sources).
+- **Settlement is on-chain** and enforced by public contracts, not by our word.
+
+## Your money is yours
+
+Your USDC lives in a **1-of-1 Gnosis Safe** — a smart-contract wallet on the
+blockchain that only you can authorise. Calibri deploys it for you and pays the
+gas, but the operator has no key to it and no ability to move anything out of it.
+
+That means:
+
+- You can withdraw **even if Calibri is offline**, because withdrawing is a transaction against your own wallet, not a request to a company.
+- If we vanished tomorrow, on-chain fallbacks still settle open markets or refund them. See [Market resolution](/non-custodial/resolution).
+- Your Safe and its transactions are **public on the blockchain**. Anyone can verify the funds are where we say they are — including you.
+
+<Warning>
+  **We hold no keys, and we cannot recover your account.** There is no password reset for a wallet. If you lose the passkey or the wallet that owns your Safe, and you have no backup, your funds are unreachable — by you and by us. That is not a policy we could change; it is the same property that stops us from touching your money. Read [Your wallet options](/non-custodial/wallets) before you fund anything.
+</Warning>
+
+## Two ways to hold it
+
+Both end at the same place — your own Safe, holding your own USDC. They differ
+only in **what owns the Safe**.
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="bolt" href="/quickstart">
-    Go from zero to your first trade in five minutes.
+  <Card title="A passkey wallet" icon="fingerprint" href="/non-custodial/wallets">
+    Face ID, Touch ID, or your device PIN. No app, no browser extension, no seed
+    phrase to write down. Best if you have never used a crypto wallet.
   </Card>
-  <Card title="Authentication" icon="lock" href="/authentication">
-    Set up your wallet credentials and learn how to sign requests.
-  </Card>
-  <Card title="Core Concepts" icon="graduation-cap" href="/concepts/orders">
-    Dive deeper into order types, token mechanics, and market resolution.
-  </Card>
-  <Card title="API Reference" icon="code" href="/api-reference/overview">
-    Browse the full endpoint reference with live request examples.
+  <Card title="Your own wallet" icon="wallet" href="/non-custodial/wallets">
+    MetaMask, Coinbase Wallet, Rainbow, or anything on WalletConnect. Keep the
+    signing habits you already have, and sign in with your wallet too.
   </Card>
 </CardGroup>
+
+### How a passkey wallet works
+
+A passkey is the same technology that lets you sign in to a website with Face ID
+instead of a password — used here to own a wallet.
+
+- **There is no private key we could ever hold.** Your device generates a
+  credential in its secure hardware and gives Calibri only the **public** half.
+  The private half cannot be exported, by you or by anyone.
+- **Your Safe is owned by a signer contract** derived from that public key, so
+  approving with your face or fingerprint is what authorises a trade.
+- **Your address exists the moment you enrol** — it is computed from the public
+  key, before anything is deployed on-chain.
+
+Whether your passkey survives losing your device depends entirely on where your
+platform stores it — **iPhone and Android sync it to your account, Windows Hello
+does not**. That difference is the single most important thing to understand
+before funding an account, and it is laid out per-platform in
+[Your wallet options](/non-custodial/wallets).
+
+## How signing works, briefly
+
+You never send a blockchain transaction and you never need gas. What you do is
+**approve**, and here is what that approval actually is:
+
+<Steps>
+  <Step title="You build an order">
+    Pick a market, a side, a price, and a size. Nothing has left your browser
+    yet.
+  </Step>
+  <Step title="Your device signs it">
+    The order's exact terms — market, outcome token, amount, price, expiry — are
+    turned into a structured message and signed by your passkey or wallet. The
+    signature covers those terms specifically, so it cannot be reused for a
+    different order.
+  </Step>
+  <Step title="Calibri checks the signature and places it">
+    We verify the signature really came from your wallet before the order
+    reaches the book. An order we cannot verify is rejected, not placed.
+  </Step>
+  <Step title="A match settles on-chain">
+    When your order matches, the contracts pull the collateral from your Safe
+    and mint the outcome tokens. Calibri submits the transaction and pays the
+    gas — but it can only ever submit orders both sides have signed.
+  </Step>
+  <Step title="You claim your winnings">
+    Resolution makes your winning shares redeemable. You sign the claim; we
+    relay it and pay the gas. Nothing is pushed to you automatically.
+  </Step>
+</Steps>
+
+If you use a passkey, approving every single order gets tiring — so you can
+authorise a **[session key](/non-custodial/session-keys)** once and trade without
+a prompt per order. It can place orders and nothing else: it provably cannot
+withdraw.
+
+<Card title="Signed orders — the technical detail" href="/non-custodial/signed-orders" icon="file-signature">
+  The EIP-712 domain, the order struct, the unit rules, and what the server validates.
+</Card>
+
+## The contracts, in public
+
+Everything above is enforced by contracts you can read yourself. Nothing about
+custody depends on trusting a claim on this page.
+
+| Contract | What it does |
+|---|---|
+| **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds |
+| **ConditionalTokens** | Gnosis' audited framework. Holds the collateral and mints the YES / NO outcome tokens. Winnings redeem straight from it |
+| **CTF Exchange** | Matches and settles signed orders on-chain |
+| **CalibriResolver** | Reports each market's outcome. It can **only report** — it cannot take or freeze funds |
+
+<Card title="Deployed addresses" href="/smart-contracts/deployed-addresses" icon="magnifying-glass">
+  The live addresses, how to pull them from the API, and how to verify each one on the block explorer.
+</Card>
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Getting Started" href="/getting-started/overview" icon="rocket">
+    Zero to your first trade: account, wallet, funding, order, settlement.
+  </Card>
+  <Card title="Your wallet options" href="/non-custodial/wallets" icon="key">
+    Passkey or your own wallet — and what each means if you lose a device.
+  </Card>
+  <Card title="Core concepts" href="/concepts/core-concepts" icon="book-open">
+    Binary markets, prices as probabilities, the combined book, and settlement.
+  </Card>
+  <Card title="Placing orders" href="/trading-placing-orders" icon="chart-line">
+    Limit vs market orders, and how a fill becomes a position.
+  </Card>
+</CardGroup>
+
+## Understand the details
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees" icon="receipt">
+    One taker fee, at the trade, never at settlement.
+  </Card>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources" icon="scale-balanced">
+    The exact source behind every market, and why a settlement is never revised.
+  </Card>
+  <Card title="Self-custody" href="/non-custodial/overview" icon="shield">
+    Your Safe, signed orders, and the Conditional Token Framework end to end.
+  </Card>
+  <Card title="Rewards" href="/concepts/rewards" icon="gift">
+    Maker rebates for providing liquidity, referral rewards for bringing traders.
+  </Card>
+  <Card title="Terms of use" href="/terms-of-use" icon="file-contract">
+    The rules you accept by trading.
+  </Card>
+  <Card title="Privacy policy" href="/privacy-policy" icon="lock">
+    What we collect, and what the blockchain makes public regardless.
+  </Card>
+</CardGroup>
+
+## Build on the API
+
+Calibri exposes a REST and WebSocket API for browsing markets, placing signed
+orders, and reading account data. The [API Overview](/api-reference/introduction) covers
+base paths, authentication (a validated session or an HMAC-signed API key —
+**not** bearer tokens), and response format. The full endpoint-by-endpoint
+specification is the
+**[API Reference](/api-reference/introduction)**.

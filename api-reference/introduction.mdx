@@ -1,0 +1,142 @@
+---
+title: "Overview"
+description: "Explore the APIs available for building with Calibri prediction markets."
+---
+
+Calibri exposes REST and WebSocket APIs for discovering markets, reading live
+books, placing signed orders, and managing positions and account data.
+
+## APIs
+
+Calibri comprises several services behind one gateway. Each is responsible for a
+distinct part of an integration.
+
+<CardGroup cols={2}>
+  <Card title="Market data" icon="database">
+    **`https://calibri.io/api/v2/pythia`**
+
+    Discover events and markets, then read books, tickers, candles, and the
+    public trade tape — no authentication.
+  </Card>
+
+  <Card title="Trading" icon="arrows-rotate">
+    **`https://calibri.io/api/v2/atlas`** · **`…/pythia`**
+
+    Place EIP-712-signed orders (Atlas), then list and cancel resting orders
+    (Pythia).
+  </Card>
+
+  <Card title="Account" icon="chart-line">
+    **`https://calibri.io/api/v2/atlas`**
+
+    Balances, transactions, PnL, contracts, limits, preferences, and rewards.
+  </Card>
+
+  <Card title="Wallet" icon="bolt">
+    **`https://calibri.io/api/v2/atlas`**
+
+    Self-custody Safe setup, passkey enrolment, session keys, and gasless
+    relay — without holding funds on Calibri.
+  </Card>
+
+  <Card title="WebSocket" icon="radio" href="/api-reference/websockets">
+    **Realtime streams**
+
+    Order-book increments, candles, trade prints, underlying prices, and your
+    own order / fill / balance updates.
+  </Card>
+
+  <Card title="Identity" icon="user">
+    **`https://calibri.io/api/v2/persona`**
+
+    Account reads and wallet linking for machine integrations. Browser sign-in
+    is a product UI flow, not a documented API path.
+  </Card>
+</CardGroup>
+
+## Before you integrate
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Mint an API key and HMAC-sign every private request.
+  </Card>
+
+  <Card title="Rate limits" icon="gauge" href="/api-reference/rate-limits">
+    Request limits and caching behaviour for public and private endpoints.
+  </Card>
+
+  <Card title="Errors" icon="triangle-exclamation" href="/api-reference/errors">
+    HTTP status codes and the `errors: ["dot.coded"]` body shape.
+  </Card>
+
+  <Card title="Self-custody" icon="lock" href="/non-custodial/overview">
+    How signed orders and Safe wallets work — Calibri never holds your funds.
+  </Card>
+</CardGroup>
+
+## Base URL
+
+All requests go through one gateway and are routed by path prefix:
+
+```
+https://calibri.io
+```
+
+| Prefix | Serves |
+|---|---|
+| `/api/v2/pythia/*` | Matching engine — market data, books, tickers, open orders |
+| `/api/v2/atlas/*` | Orchestrator — balances, signed-order placement, contracts, wallet |
+| `/api/v2/persona/*` | Identity — account reads and wallet link |
+
+## Response format
+
+Responses are **plain JSON** — a resource object or an array of them. There is
+**no `{ success, data }` envelope**.
+
+Monetary and volume values are **strings** — parse them as decimals, not floats.
+
+```json
+{
+  "id": 90231,
+  "market": "12",
+  "side": "yes",
+  "ord_type": "limit",
+  "price": "0.60",
+  "remaining_volume": "100",
+  "origin_volume": "100",
+  "locked": "61.68",
+  "state": "wait",
+  "contracts_count": 0,
+  "created_at": "2026-08-07T10:00:00Z",
+  "updated_at": "2026-08-07T10:00:00Z"
+}
+```
+
+## Authentication
+
+Private requests use an **HMAC-signed API key** (`X-Auth-Apikey`,
+`X-Auth-Nonce`, `X-Auth-Signature`). There is no `Authorization: Bearer`
+header. See [Authentication](/api-reference/authentication).
+
+<Warning>
+  Authentication proves **who you are**. It does not authorise the movement of
+  funds. Every order carries your own EIP-712 signature; every transfer out of
+  your Safe is a transaction you sign.
+</Warning>
+
+## Pagination
+
+List endpoints that page accept `page` and `limit` (or similar). Totals come
+back in response headers:
+
+| Header | Meaning |
+|---|---|
+| `Page` | Current page |
+| `Per-Page` | Page size |
+| `Total` | Total matching rows |
+
+## Caching
+
+Public market-data routes send `Cache-Control` (short TTL on live books, longer
+on browse, `immutable` on closed asset ranges). Private account and trade
+routes are not shared-cacheable.

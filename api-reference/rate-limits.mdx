@@ -1,109 +1,108 @@
 ---
-title: "Calibri API Rate Limits — Tiers, Quotas, and Batch Caps"
-sidebarTitle: "Rate Limits"
-description: "Understand Calibri's rate limits for public and authenticated endpoints, account tiers, and best practices for staying within limits."
+title: "Rate Limits"
+description: "Per-endpoint request allowances, how limits are keyed, and how to back off correctly when you hit one."
 ---
 
-Calibri enforces rate limits across all API surfaces to ensure fair access and platform stability. Public endpoints are protected by Cloudflare's IP-based throttling, while authenticated trading endpoints use per-signer token-bucket limits tied to your account tier. Understanding these limits — and designing your integration around them — will help you avoid disruptions in production.
+Limits are applied per endpoint class rather than as one global budget, so a
+burst of order placement cannot exhaust the allowance you need to sign in, and a
+scripted retry loop on one endpoint cannot lock you out of the rest of the API.
 
-## Public Endpoint Limits
+Every limit below is enforced server-side and is not configurable per account.
 
-Public endpoints (such as `GET /markets` and `GET /markets/{id}/prices-history`) are rate-limited at the network edge by **Cloudflare IP-based throttling**. Calibri does not publish a fixed request-per-minute ceiling for these endpoints, as limits are applied dynamically based on traffic patterns.
+## What you get back
 
-<Tip>
-  Cache market metadata and price history responses on your end wherever possible. Market metadata rarely changes, and fetching it repeatedly from the same IP will increase your exposure to edge throttling.
-</Tip>
-
-## Authenticated Endpoint Limits
-
-Trading and order-management endpoints on the CLOB API (`https://clob.calibri.com`) use a **per-signer token-bucket** model. Each signer address has its own bucket that refills at a rate determined by your account tier. This applies specifically to order placement and cancellation requests.
-
-When your bucket is empty, the API returns `429 Too Many Requests` until the bucket refills.
-
-## Account Tiers
-
-Your account tier determines three key limits. You can retrieve your current limits at any time by calling `GET https://clob.calibri.com/account-limits`, which returns:
-
-```json
-{
-  "actions_per_minute": 100,
-  "open_orders": 50,
-  "messages_per_minute": 200
-}
-```
-
-| Limit Type | Description |
-|------------|-------------|
-| `actions_per_minute` | Total order actions (placements + cancellations) allowed per minute |
-| `open_orders` | Maximum number of concurrently open orders on the book |
-| `messages_per_minute` | Total API messages (requests) allowed per minute across all CLOB endpoints |
-
-To see all available tier definitions and their thresholds, call:
-
-```http
-GET https://clob.calibri.com/limit-tiers
-```
-
-Tier promotions are **volume-based** — Calibri automatically evaluates your trading volume and upgrades your tier accordingly. If you need a higher tier for a specific integration or market-making program, contact Calibri support directly.
-
-## Batch Limits
-
-Several endpoints accept batched payloads to reduce the number of requests you need to make. Each has a hard cap on how many items you can include per request:
-
-| Endpoint | Limit |
-|----------|-------|
-| `POST /orders` — batch order placement | Max **15 orders** per request |
-| `DELETE /orders` — batch order cancellation | Max **1,000 order IDs** per request |
-| `GET /last-trade-prices` — bulk last-trade prices | Max **500 token IDs** per request |
-
-Exceeding these limits returns a `400 Bad Request` response — the entire batch is rejected, not partially processed.
-
-## Handling 429 Too Many Requests
-
-When you receive a `429` response, your request was not processed. The response body will contain an `error` field explaining the limit that was hit.
-
-```json
-{
-  "error": "rate limit exceeded: actions_per_minute"
-}
-```
+A throttled request returns **`429 Too Many Requests`**. Identity endpoints tag
+the body with the error code `identity.too_many_requests`.
 
 <Warning>
-  Do not retry immediately after a `429`. Implement **exponential backoff with jitter** — start with a short delay (e.g. 500 ms), double it on each subsequent retry, and add random jitter to avoid thundering-herd collisions when multiple instances retry at the same time.
+  Several identity limits **block for longer than the window they measure**. Ten failed sign-in attempts in a minute does not free up after that minute — it blocks for five. Retrying at the window boundary re-arms the block; see [Backing off](#backing-off).
 </Warning>
 
-A safe retry strategy in pseudocode:
+## Sign-in and account creation
 
-```typescript
-async function withRetry(fn: () => Promise<Response>, maxAttempts = 5) {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const response = await fn();
-    if (response.status !== 429) return response;
+Keyed **per IP address**, so these apply before anyone is authenticated.
 
-    const baseDelay = 500 * Math.pow(2, attempt);
-    const jitter = Math.random() * 200;
-    await sleep(baseDelay + jitter);
-  }
-  throw new Error("Max retry attempts exceeded");
-}
+| Endpoints | Allowance | Blocked for |
+|---|---|---|
+| `POST /identity/sessions`<br/>`POST /identity/sessions/social`<br/>`POST /identity/sessions/web3/nonce`<br/>`POST /identity/sessions/web3` | 10 per minute | 5 minutes |
+| `POST /identity/users`<br/>`POST /identity/users/password/generate_code`<br/>`POST /identity/users/email/generate_code` | 5 per minute | 5 minutes |
+| `POST /identity/users/password/confirm_code`<br/>`POST /identity/users/email/confirm_code` | 10 per minute | 15 minutes |
+
+Note the asymmetry between requesting a code and submitting one: requesting is
+capped at 5/minute because each request sends an email, while submitting is
+capped at 10/minute with a **longer** block, because that endpoint is where a
+token would be brute-forced.
+
+## Two-factor and phone verification
+
+Keyed **per user**, and enforced after authentication.
+
+| Action | Allowance | Blocked for |
+|---|---|---|
+| 2FA code on sign-in | 5 per minute | 15 minutes |
+| `POST /resource/phones`<br/>`POST /resource/phones/send_code` | 3 per hour | 1 hour |
+| `POST /resource/phones/verify` | 5 per 15 minutes | 1 hour |
+
+<Note>
+  The 2FA budget is **shared across all three sign-in paths** — email, social and wallet. Alternating between them does not give you three separate allowances.
+</Note>
+
+Sending an SMS costs money and reaching a real handset, so 3 per hour is
+deliberately tight. Build the "resend code" button to respect it: a user who taps
+resend three times in a minute is locked out of SMS for the rest of the hour.
+
+## Trading and wallet
+
+Keyed **per member**.
+
+| Endpoints | Allowance |
+|---|---|
+| `POST /atlas/account/orders` | 120 per minute |
+| `POST /atlas/account/wallet/relay` | 30 per 5 minutes |
+| `POST /atlas/account/wallet/passkey`<br/>`POST /atlas/account/wallet/session-key`<br/>`DELETE /atlas/account/wallet/session-key`<br/>`POST /atlas/account/market_requests` | 5 per hour |
+
+Order placement is the loosest limit on the API at two per second sustained,
+because it is the one endpoint where a legitimate client is genuinely fast.
+
+The relay limit is tighter than it looks because **the operator pays the gas** for
+every relayed transaction — it is a spend limit as much as a rate limit. The
+5-per-hour class covers enrolment and one-off setup actions, which no correct
+client repeats in a loop.
+
+## Market data
+
+Public market-data reads are **not currently rate-limited**, but they are cached
+— see the `Cache-Control` table in the [API overview](/api-reference/introduction).
+Polling inside the TTL returns the same bytes and gains you nothing.
+
+<Warning>
+  Do not treat "no limit today" as a guarantee. Use the [WebSocket](/api-reference/websockets) for anything live; it is both cheaper for you and the reason this endpoint class has not needed a limit.
+</Warning>
+
+## Backing off
+
+Retry with **exponential backoff and jitter**, and treat the block duration — not
+the measurement window — as your floor.
+
+```
+attempt 1 fails  ->  wait  1s ± jitter
+attempt 2 fails  ->  wait  2s
+attempt 3 fails  ->  wait  4s
+attempt 4 fails  ->  wait  8s   ... capped at 60s
 ```
 
-## Best Practices
+Three rules that matter more than the curve:
 
-<AccordionGroup>
-  <Accordion title="Use batch endpoints">
-    Whenever you need to place or cancel multiple orders, use `POST /orders` and `DELETE /orders` in batch mode rather than making individual requests. A single batch call of 15 orders costs you one action against your `actions_per_minute` bucket instead of fifteen. This is the single most impactful change you can make to stay within your tier limits at scale.
-  </Accordion>
+- **Add jitter.** Without it, every client that failed together retries together, and the retry storm is worse than the original burst.
+- **Never retry a 429 immediately**, even once. On the endpoints with a block, an immediate retry lands inside the block and can extend it.
+- **Do not retry a `422` at all.** It is a validation failure; the same body will fail every time. Only `429`, `5xx` and network errors are worth retrying.
 
-  <Accordion title="Cache market metadata">
-    Market metadata — including outcome labels, token IDs, resolution sources, and minimum tick sizes — changes infrequently. Instead of fetching `GET /markets/{id}` on every request, cache the response locally and refresh it periodically (e.g., every 5–10 minutes). This dramatically reduces your load on public endpoints and keeps your integration well under Cloudflare's edge limits.
-  </Accordion>
+## If you need more
 
-  <Accordion title="Use WebSocket for real-time data">
-    If your application needs live price or orderbook updates, subscribe to the WebSocket stream at `wss://ws-subscriptions-clob.calibri.com/ws/` instead of polling `GET /markets/{id}` or `GET /last-trade-prices` in a loop. Polling at high frequency is the most common cause of hitting rate limits on public endpoints. A single WebSocket connection delivers updates as they happen with no polling overhead.
-  </Accordion>
+Order placement at 120/minute is sized for a normal trading client. If you are
+building something that genuinely needs more — a market maker quoting across many
+markets — raise a support ticket at
+[support.calibri.io/contact](https://support.calibri.io/contact).
 
-  <Accordion title="Monitor your tier proactively">
-    Call `GET https://clob.calibri.com/account-limits` at application startup and log your current `actions_per_minute`, `open_orders`, and `messages_per_minute` values. Build alerting around these limits before you hit them in production — don't wait for a `429` to tell you that your tier is too low for your traffic.
-  </Accordion>
-</AccordionGroup>
+Do not shard across accounts to get around a limit. That reads as abuse, and the
+outcome is every one of those accounts limited rather than one of them raised.

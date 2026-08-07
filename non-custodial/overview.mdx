@@ -1,0 +1,67 @@
+---
+title: "Self-custody"
+description: "How trading on Calibri works when the money never leaves your own on-chain Gnosis Safe."
+---
+
+Calibri is **fully non-custodial**. Your USDC sits in **your own 1-of-1 Gnosis
+Safe** on-chain, and Calibri has no ability to move it. You authorise every
+trade by signing; the operator relays the signed order and pays the gas.
+
+The practical consequence: your funds are **withdrawable even if Calibri is
+offline**, because withdrawal is a transaction against your own Safe, not a
+request to a company.
+
+<Note>
+  Two setups lead to the same Safe — a **passkey** (Face ID / Touch ID) or a **wallet you already use** (MetaMask, Coinbase Wallet, Rainbow, WalletConnect). They differ only in what owns the Safe. See [Your wallet options](/non-custodial/wallets).
+</Note>
+
+## How it works, end to end
+
+| Stage | What happens |
+|---|---|
+| **Funds** | USDC lives in your own 1-of-1 Gnosis Safe on-chain |
+| **Balances** | `balance_safe` / `locked_safe` mirror your Safe — see [Balances](/non-custodial/balances) |
+| **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; atlas validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
+| **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
+| **Contracts** | A YES buyer matched with a NO buyer; the leg carries a `settlement_status` badge tracking the on-chain mint |
+| **Settlement** | On-chain: a complete set of outcome tokens is minted from Safe collateral |
+| **Winnings** | **Not** auto-paid — you call `redeemPositions` yourself (relayed, gasless), USDC lands in your Safe, then you withdraw. See [Redeeming winnings](/non-custodial/redeeming-winnings) |
+| **Fees** | Taker fee charged **once at trade**, pulled on-chain from your Safe after the match |
+| **Gas** | None **for you** — the operator relays every Safe transaction (deploy, approvals, settlement, redeem) and pays the gas. You only ever sign |
+
+## You only ever sign
+
+Signing is the whole of your involvement in the on-chain machinery. You never
+need to hold a gas token, approve a network fee, or send a transaction yourself:
+
+- **Deploying** your Safe and signer contracts — operator pays, on first deposit
+- **Approvals** that let the exchange settle your trades — operator relays
+- **Settlement** of a matched order — operator relays
+- **Redeeming** a winning position — operator relays
+
+What the operator *cannot* do is move your funds without a signature from you.
+
+## No fee at settlement
+
+<Warning>
+  Winning shares redeem for the **full 1.00 USDC each** — there is **no fee at settlement or redemption**. The platform fee is charged **once, at trade time** (the taker fee). Any older wording that says winners redeem "1.00 minus a settlement fee" is incorrect.
+</Warning>
+
+## What you are responsible for
+
+Self-custody cuts both ways. Because only you can move your funds:
+
+- **Nobody can recover your wallet for you.** Calibri holds no key and no
+  backup. Keep your passkey synced to a keychain, or your wallet's recovery
+  phrase safe.
+- **Winnings are claimed, not delivered.** A resolved market makes your winning
+  token redeemable; it does not push funds to you. See
+  [Redeeming winnings](/non-custodial/redeeming-winnings).
+
+## Next steps
+
+- [Your wallet options](/non-custodial/wallets) — passkey or your own wallet
+- [Balances](/non-custodial/balances) — how `balance_safe` / `locked_safe` work
+- [The Safe](/non-custodial/the-safe) — deploy, fund, and make your Safe trade-ready
+- [Signed orders](/non-custodial/signed-orders) — build and sign an EIP-712 order
+- [Redeeming winnings](/non-custodial/redeeming-winnings) — claim on-chain payouts and withdraw

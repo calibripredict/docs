@@ -1,0 +1,106 @@
+---
+title: "Errors"
+description: "HTTP status codes and the dot-coded error strings the API returns — match on the code, not the status or the human text."
+---
+
+Calibri uses conventional HTTP status codes plus a machine-readable **dot-coded**
+error string in the body.
+
+## Error body
+
+```json
+{ "errors": ["market.order.insufficient_balance"] }
+```
+
+Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
+`identity.*`, `prediction.*`).
+
+<Warning>
+  Match on the **code**, not the HTTP status and not the human-readable text. New codes are added over time — treat an unknown code as a generic failure of its HTTP class rather than crashing on it.
+</Warning>
+
+## HTTP status codes
+
+| Code | Reason | Description |
+|---|---|---|
+| 400 | Bad Request | The request is invalid |
+| 401 | Unauthorized | API key, secret or HMAC signature incorrect, or the nonce is outside the accepted window |
+| 403 | Forbidden | Authenticated, but not permitted to access this endpoint |
+| 404 | Not Found | Invalid endpoint or resource |
+| 405 | Method Not Allowed | Wrong method for the endpoint |
+| 422 | Unprocessable Entity | Understood, but the data provided is incorrect |
+| 429 | Too Many Requests | Rate limited — back off exponentially |
+| 500 | Internal Server Error | A problem on our side |
+| 503 | Service Unavailable | Temporarily offline for maintenance |
+
+## Trading and orders
+
+| Code | Status | Meaning |
+|---|---|---|
+| `market.order.invalid_side` | 422 | `side` must be `yes` or `no` |
+| `market.order.invalid_ord_type` | 422 | `ord_type` must be `limit` or `market` |
+| `market.order.invalid_price` | 422 | Price outside `0.01`–`0.99` |
+| `market.order.price_too_high` / `market.order.price_too_low` | 422 | Price beyond the market's allowed band |
+| `market.order.invalid_volume` | 422 | Volume missing or malformed |
+| `market.order.amount_too_small` / `market.order.amount_too_large` | 422 | Order size below or above market limits |
+| `market.order.missing_price` / `missing_volume` / `missing_market` | 422 | Required field absent |
+| `market.order.insufficient_balance` | 422 | Not enough collateral — remember an order locks stake **plus** the taker-fee reserve |
+| `market.order.post_only_would_match` | 422 | A `post_only` order would have taken liquidity |
+| `market.order.account_not_active` | 403 | Account is not in an active state |
+| `market.order.kyc_required` | 403 | KYC level below the market's minimum |
+| `market.order.cannot_cancel` | 422 | Order is already terminal or fully matched |
+| `market.order.not_found` | 404 | Order does not exist or is not yours |
+| `market.market.doesnt_exist` / `public.market.doesnt_exist` | 404 | Unknown market |
+| `market.engine.not_found` | 404 | Market engine unavailable |
+| `market.order.insufficient_market_liquidity` | 422 | A market order cannot be filled to the requested size |
+| `market.order.spend_amount_*` | 422 | Misuse of `spend_amount` / `max_spend` / `use_max_available` |
+| `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
+| `prediction.event.not_found` | 404 | Unknown event slug |
+| `auth.required` | 401 | Authentication required |
+| `server.error` | 500 | Unexpected server error |
+
+## Self-custody — Safe, relay, and session keys
+
+| Code | Status | Meaning |
+|---|---|---|
+| `Market is not CTF-registered` | 404 | No on-chain condition exists for this market yet |
+| `signed_order with signature is required` | 422 | The order was posted without a `signed_order` |
+| `Member safe is not settlement-ready` | 422 | Approvals outstanding — relay `safe_setup.calls` first |
+| `signed_order maker is not a Safe registered to this member` | 422 | The `maker` is not your Safe |
+| `signed_order signature does not match the signer` | 422 | The signature does not verify |
+| `Your trading key has expired or been revoked — approve with your passkey` | 422 | The [session key](/non-custodial/session-keys) grant is no longer valid |
+| `safe does not belong to this member` | 400 | The relayed Safe is not yours |
+| `Session keys are not enabled` | 400 | This deployment has no session-key contracts |
+| `Session keys require a passkey wallet` | 400 | The member has no passkey wallet |
+
+<Note>
+  There are no deposit, withdrawal, or beneficiary error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits).
+</Note>
+
+## Identity and sessions
+
+| Code | Status | Meaning |
+|---|---|---|
+| `identity.session.invalid_params` | 401 | Wrong email or password |
+| `identity.session.missing_otp` | 401 | 2FA code required |
+| `identity.session.invalid_otp` | 401 | 2FA code incorrect |
+| `identity.session.otp_rate_limited` | 429 | Too many 2FA attempts |
+| `identity.wallet.already_linked` | 409 | Wallet already linked to this account |
+| `identity.wallet.account_already_linked` | 409 | Wallet already linked to a different account |
+
+## Rate limits
+
+Requests are limited per route class, with stricter limits on order intake,
+wallet relays, and member-intake endpoints than on public reads. Implement
+exponential backoff on `429`.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Authentication" href="/api-reference/authentication">
+    A `401` usually means a signing mistake — check the canonical message.
+  </Card>
+  <Card title="API overview" href="/api-reference/introduction">
+    Base URLs, response format, and pagination.
+  </Card>
+</CardGroup>

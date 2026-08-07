@@ -1,0 +1,164 @@
+---
+title: "Fees"
+description: "Calibri charges a single taker fee, once, at the moment of the trade — price-dependent, highest at 50/50 and falling toward zero at the extremes. Makers pay nothing, and there is no settlement fee."
+---
+
+Calibri's trading cost is deliberately simple: **one fee, charged once, when your
+order fills.** There is no settlement fee, no redemption fee, and makers pay
+nothing.
+
+- **One fee, at the trade** — A single **taker fee** is charged the moment your order fills. Nothing is taken again at settlement — winners redeem the **full 1.00 USDC per share**.
+- **Makers pay nothing** — Only the **taker** (the side that crosses the book to fill a resting order) pays. If your resting order gets filled, you pay **no** fee — and you may even earn a [maker rebate](/concepts/rewards).
+
+## How the taker fee is calculated
+
+The fee is **not** a flat percentage of what you spend. It scales with how
+uncertain the market is, peaking at price `0.50` and falling to zero at the
+extremes:
+
+```
+fee = rate × volume × P × (1 − P)
+```
+
+where **P** is the trade price (0–1), **volume** is the number of contracts, and
+**rate** is the taker rate for that market's category.
+
+The `P × (1 − P)` term is a bell curve. It is `0` at the edges, rises to its
+maximum of `0.25` at a coin flip, and is symmetric about `0.50` — so:
+
+- You pay the **most** on **coin-flip prices** (near `0.50`).
+- You pay **very little** on **lopsided prices** (near `0.05` or `0.95`) — a
+  near-certain outcome is cheap to trade.
+- The fee **scales with your fill size**.
+
+This is the same formula Polymarket publishes.
+
+### Relative fee across prices
+
+Holding rate and size fixed, the fee at each price relative to its maximum (at
+`P = 0.50`):
+
+| Trade price P | `P × (1 − P)` | Fee vs. the 50/50 maximum |
+|---|---|---|
+| `0.05` / `0.95` | `0.0475` | 19% |
+| `0.10` / `0.90` | `0.09` | 36% |
+| `0.25` / `0.75` | `0.1875` | 75% |
+| `0.50` | `0.25` | 100% (highest) |
+
+<Note>
+  The curve is symmetric: `P` and `1 − P` give the same value, so a trade at `0.30` and a trade at `0.70` carry the same fee.
+</Note>
+
+### Worked example
+
+Buying **100 contracts** of YES at `0.60` in a **Crypto** market (taker rate
+**7.00%**):
+
+```
+P × (1 − P) = 0.60 × 0.40 = 0.24
+fee         = 0.07 × 100 × 0.24 = 1.68 USDC
+```
+
+Your stake is `0.60 × 100 = 60.00 USDC`, so the fee works out to **2.80% of what
+you put in** — below the headline rate, because the curve tops out at `0.25` and
+`0.60` is off the midpoint.
+
+### The fee is set aside when you place the order
+
+The maximum fee your order could incur is reserved **alongside** your collateral
+the moment you place, so a fee is never taken out of the stake backing a
+contract. Anything left over is released when the order fills, rests, or is
+cancelled.
+
+- A **limit** order reserves the fee at its own limit price.
+- A **market** order reserves a conservative upper bound and refunds the unused part.
+- A **post-only** order reserves **nothing** — it can only ever be a maker, and makers pay no fee.
+
+<Note>
+  Practically: an order needs `stake + maximum fee` available, not just the stake. On the example above that is `60.00 + 1.68 = 61.68 USDC`.
+</Note>
+
+## Taker rates by category
+
+The rate is resolved per market: an event-specific override if one is set,
+otherwise the market category's rate.
+
+| Category | Taker rate |
+|---|---|
+| Crypto | 7.00% |
+| Culture | 5.00% |
+| Economics | 5.00% |
+| Science | 5.00% |
+| Weather | 5.00% |
+| Other | 5.00% |
+| Finance | 4.00% |
+| Mentions | 4.00% |
+| Politics | 4.00% |
+| Tech | 4.00% |
+| Sports | 3.00% |
+| Geopolitics | 0.00% |
+| World | 0.00% |
+
+A market whose category carries a `0.00%` rate is **free to take** — no fee is
+charged and no rebate or referral reward is generated from it.
+
+The resolved rate is also carried in the market data the app reads, so the
+figure shown in the order ticket is always the one that will be applied.
+
+<Warning>
+  Read the rate as the input to the formula above, **not** as a flat percentage of your stake. Because it is multiplied by `P × (1 − P)` — at most `0.25` — the effective cost is always a fraction of the headline rate, and smaller still away from the middle.
+</Warning>
+
+## Where the fee goes
+
+The taker fee is the only money the platform takes from a trade, and it also
+funds both reward programmes:
+
+| Share | Goes to |
+|---|---|
+| **10% of the fee** | The **maker** on the other side of your fill, as a [rebate](/concepts/rewards) |
+| **10% of the fee** | Your **referrer**, if you were referred |
+| The remainder | Platform revenue |
+
+Both rewards are a percentage **of the taker fee**, not of your stake — so on
+the 1.68 USDC example above, the maker earns 0.168 USDC. Neither is paid at the
+moment of the trade: each fill records a reward, and a **daily payout** settles
+them. Markets in a `0.00%` category generate no fee, and therefore no rewards.
+
+## Currency and rounding
+
+- All fees are denominated in **USDC** (6 decimals — one base unit is
+  `0.000001 USDC`).
+- The fee is computed from the formula, then converted to base units and
+  **rounded up**. A fee smaller than one base unit rounds up to the minimum unit
+  (or is skipped entirely when the rate is zero).
+
+## How the fee is collected
+
+The fee is **pulled on-chain from your Safe** to the operator at settlement.
+Your Safe pre-approved this during setup, so you only ever *sign* — the operator
+pays the gas.
+
+See [Self-custody](/non-custodial/overview) for the full model.
+
+## In short
+
+> You pay a single **taker fee** when your order fills — **never again** at
+> settlement. **Makers pay nothing** and earn a rebate. The fee is highest around
+> 50/50 prices, near-zero on lopsided prices, and scales with your fill size. The
+> rate depends on the market's category (0%–7%).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Rewards" href="/concepts/rewards">
+    Maker rebates and referral rewards — both funded from the taker fee.
+  </Card>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Prices as probabilities and how settlement pays out.
+  </Card>
+  <Card title="Account fees endpoint" href="/api-reference/introduction">
+    Read resolved fees programmatically in the API Reference.
+  </Card>
+</CardGroup>
+

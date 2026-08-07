@@ -1,0 +1,166 @@
+---
+title: "Privacy Policy"
+description: "What Calibri collects, why, who it goes to, and what you can ask us to do with it."
+---
+
+<Note>
+  The full legal text is published at [calibri.io/hub/privacy-policy](https://calibri.io/hub/privacy-policy). This article covers the same ground in plain language; where the two differ, the published policy governs.
+</Note>
+
+Calibri is self-custodial, which shapes this policy: we never hold your funds, so
+we hold no banking details, no card numbers, and no custody records. What we do
+hold is your account identity, your verification documents where they are
+required, and your activity on the platform.
+
+## What we collect
+
+### Account details
+
+Given by you when you sign up:
+
+- **Email address** — the account identifier and how we contact you.
+- **Password** — stored hashed, never in readable form. We cannot see it.
+- **Wallet address**, if you sign in with a wallet, or the **public half of your passkey credential** if you enrol one. The private half of a passkey never leaves your device and is never sent to us.
+- **Referral code**, where you arrived through one.
+
+### Identity verification (KYC)
+
+Collected only where verification is required for your account or jurisdiction —
+see [KYC verification](/account-kyc):
+
+- Legal name, date of birth, nationality and country of residence
+- Residential address
+- Government-issued photo ID and any supporting documents
+- Phone number
+- Source of funds and occupation, where asked
+- Politically-exposed-person screening results
+
+We ask for these because financial-services regulation requires it, not because
+we want them. Where verification is not required for your account, they are not
+collected.
+
+### Trading and platform activity
+
+- Orders, fills, contracts, positions, and settlement outcomes
+- Rewards and referral earnings
+- Market suggestions you submit
+- Your Safe address and the on-chain transactions relayed on your behalf
+
+### Technical data
+
+- **Session cookies** — HTTP-only, used to keep you signed in. Not used for advertising.
+- **Device and browser information**, IP address, and request logs — kept for security, fraud prevention, and debugging.
+- **Analytics** — we use Google Analytics 4 (linked to Firebase) to understand how the app is used. Where you are signed in, events are associated with your account identifier. Analytics is off entirely on deployments where no measurement ID is configured.
+- **Bot protection** — Cloudflare Turnstile runs on sign-up and sign-in.
+- **Push notification tokens**, if you enable notifications.
+- **Browser security reports** — content-security-policy violation reports, which we log to catch misconfigurations. They are logged and discarded, never stored against your account.
+
+## What is public by design
+
+Some things are public because the system is on-chain, not because we published
+them:
+
+<Warning>
+  **Your Safe address and every transaction it makes are public on the blockchain.** Anyone can look up its balance and history. This is inherent to self-custody — the same property that lets you verify your own funds lets anyone else read them. If you need separation, do not fund the Safe from an address that identifies you.
+</Warning>
+
+The **leaderboard** shows a privacy-masked display name — an opted-in name, or a
+masked form derived from your account. You can opt out in your account
+preferences.
+
+## What we do with it
+
+| Purpose | Data used |
+|---|---|
+| Running your account and trading | Account details, activity |
+| Meeting legal and regulatory obligations | KYC data, activity |
+| Preventing fraud, abuse, and manipulation | Technical data, activity |
+| Support | Account details, and whatever you tell us |
+| Improving the product | Analytics, aggregated activity |
+| Service messages and, if you opt in, updates | Email, notification tokens |
+
+We do **not** sell your personal data, and we do not share it with advertisers.
+
+## Who else sees it
+
+Only the providers needed to run the service:
+
+- **Identity verification providers** — for document and identity checks
+- **Google Analytics / Firebase** — usage analytics and push notifications
+- **Cloudflare** — bot protection and network delivery
+- **Our support helpdesk** — for tickets you raise
+- **Market resolution sources** (Coinbase, sports data providers) — these receive **no personal data**; we read prices and results from them, and nothing about you goes the other way
+- **Regulators, law enforcement, and auditors** — where we are legally required to disclose
+
+## How long we keep it
+
+- **Account and KYC records** — for as long as your account is open, and afterwards for as long as financial-services record-keeping rules require. These retention periods are set by regulation, not by us, and they mean closing your account does not immediately erase your verification records.
+- **Trading activity** — retained as part of the same record-keeping obligation.
+- **Technical logs** — a limited period, for security and debugging.
+- **On-chain data** — permanent and outside anyone's control, including ours.
+
+## Your rights
+
+Depending on where you live, you can ask us to:
+
+- **Access** the personal data we hold about you
+- **Correct** anything inaccurate
+- **Delete** your data, subject to the retention obligations above
+- **Object to or restrict** certain processing
+- **Port** your data to another provider
+- **Withdraw consent** for anything you opted into, such as marketing
+
+Ask via [support.calibri.io/contact](https://support.calibri.io/contact). We may
+need to verify your identity before acting on a request — which is itself a
+protection, since otherwise anyone could ask for your data.
+
+<Warning>
+  We cannot delete anything from the blockchain. Your Safe address, its transactions, and on-chain settlement records are permanent and were never ours to remove.
+</Warning>
+
+## Security
+
+Passwords are hashed. Sessions are HTTP-only cookies with CSRF protection and a
+sliding expiry. API requests are signed so a captured signature cannot be
+replayed against a different request. Passkeys and wallet keys stay on your
+device — we never hold a key that can move your funds.
+
+No system is perfectly secure. Keep your credentials, passkeys, API keys, and
+[session keys](/non-custodial/session-keys) to yourself, and revoke anything you
+think has been exposed.
+
+## Cookies
+
+We use cookies to keep you signed in, to protect against cross-site request
+forgery, and — where analytics is enabled — to measure usage. We do not use
+advertising cookies. Blocking the session cookie will stop you from signing in.
+
+## Children
+
+Calibri is not for anyone under the legal age in their jurisdiction. We do not
+knowingly collect data from minors, and will delete it if we find we have.
+
+## Changes
+
+We may update this policy. Material changes will be announced, and the published
+policy carries the authoritative version and date.
+
+## Contact
+
+Privacy questions and data requests:
+[support.calibri.io/contact](https://support.calibri.io/contact).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Terms of use" href="/terms-of-use">
+    The rules you accept by trading.
+  </Card>
+  <Card title="KYC verification" href="/account-kyc">
+    What verification asks for and what it unlocks.
+  </Card>
+  <Card title="How self-custody works" href="/non-custodial/overview">
+    Why we hold no funds and no keys.
+  </Card>
+</CardGroup>
+

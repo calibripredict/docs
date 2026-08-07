@@ -1,0 +1,60 @@
+---
+title: "Balances"
+description: "How your Safe balance (balance_safe / locked_safe) is reported, and how it moves."
+---
+
+Your tradeable funds are reported as `balance_safe` and `locked_safe` — an
+off-chain **mirror** of the USDC actually held in your on-chain Gnosis Safe.
+
+## Endpoint
+
+**`GET /api/v2/atlas/account/balances`**
+
+Returns one row per currency. `GET /api/v2/atlas/account/balances/:currency`
+returns a single row.
+
+Redis is the source of truth; the controller overlays the live Redis pools onto
+the stored row before serializing.
+
+## Response fields
+
+| Field | Meaning |
+|---|---|
+| `balance_safe` | Available funds mirrored from your on-chain Safe |
+| `locked_safe` | Safe funds locked by your resting orders |
+
+<Note>
+  The response also carries `balance` and `locked`. These belong to an operator-held balance model that Calibri does not offer — they read `"0"`. The pools that matter to you are `balance_safe` and `locked_safe`.
+</Note>
+
+## Example row
+
+```json
+{
+  "currency": "usdc",
+  "balance": "0",
+  "locked": "0",
+  "balance_safe": "150.00",
+  "locked_safe": "40.00"
+}
+```
+
+## How the Safe pool moves
+
+- **Funding** — USDC sent to your Safe address on-chain is credited to
+  `balance_safe` by the deposit watcher.
+- **Resting order** — placing an order locks collateral against `locked_safe`.
+- **Redemption** — redeemed winnings land in your Safe on-chain and are mirrored
+  back into `balance_safe`.
+- **Withdrawal** — moving USDC out of the Safe on-chain debits `balance_safe`
+  and cancels any resting orders those funds collateralised.
+
+<Warning>
+  The mirror follows the chain, not the other way round. Withdrawing from your Safe directly is always allowed — but it will cancel resting orders whose collateral you have just moved.
+</Warning>
+
+## Related
+
+- [The Safe](/non-custodial/the-safe) — how the on-chain Safe is created and funded
+- [Signed orders](/non-custodial/signed-orders) — what locks `locked_safe`
+- [Redeeming winnings](/non-custodial/redeeming-winnings) — how payouts reach `balance_safe`
