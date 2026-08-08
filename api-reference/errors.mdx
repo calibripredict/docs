@@ -43,7 +43,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.price_too_high` / `market.order.price_too_low` | 422 | Price beyond the market's allowed band |
 | `market.order.invalid_volume` | 422 | Volume missing or malformed |
 | `market.order.amount_too_small` / `market.order.amount_too_large` | 422 | Order size below or above market limits |
-| `market.order.missing_price` / `missing_volume` / `missing_market` | 422 | Required field absent |
+| `market.order.missing_price` / `missing_volume` / `missing_market` | 400 | Required field absent |
 | `market.order.insufficient_balance` | 422 | Not enough collateral — remember an order locks stake **plus** the taker-fee reserve |
 | `market.order.post_only_would_match` | 422 | A `post_only` order would have taken liquidity |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
@@ -52,8 +52,8 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.not_found` | 404 | Order does not exist or is not yours |
 | `market.market.doesnt_exist` / `public.market.doesnt_exist` | 404 | Unknown market |
 | `market.engine.not_found` | 404 | Market engine unavailable |
-| `market.order.insufficient_market_liquidity` | 422 | A market order cannot be filled to the requested size |
-| `market.order.spend_amount_*` | 422 | Misuse of `spend_amount` / `max_spend` / `use_max_available` |
+| `market.order.insufficient_market_liquidity` | 422 | Not enough resting liquidity to fill the order to the requested size |
+| `market.order.spend_amount_*` | 400 | Misuse of `spend_amount` / `max_spend` / `use_max_available`. `spend_amount_too_small` is the exception, at 422 |
 | `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
 | `prediction.event.not_found` | 404 | Unknown event slug |
 | `auth.required` | 401 | Authentication required |

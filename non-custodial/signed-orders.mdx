@@ -96,7 +96,7 @@ them apart by length alone — never by a client-supplied flag:
 | Shape | Content |
 |---|---|
 | **Passkey** | The WebAuthn assertion, wrapped as a Safe contract signature. Long |
-| **Session key** | `abi.encode(uint256 keyId, bytes32 r, bytes32 s)` — exactly **96 bytes** (`0x` + 192 hex chars) |
+| **Session key** | `abi.encode(uint256 keyId, uint256 r, uint256 s)` — exactly **96 bytes** (`0x` + 192 hex chars) |
 
 The grant id is read out of the envelope's first word, so a client cannot name a
 live grant while signing with an expired key. A session-signed order is

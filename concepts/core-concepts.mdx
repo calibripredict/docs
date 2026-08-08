@@ -59,8 +59,9 @@ side, the other holds the NO side, and together their stakes fund the full
 
 - Your **position** in a market is the set of contract legs you hold (net YES,
   net NO, or flat).
-- You can exit before resolution by trading the opposite side — the price
-  difference is your profit or loss.
+- Positions are **held to resolution**. Buying the opposite side does not net
+  against the first — each leg is collateralised independently, so it locks
+  additional capital instead of returning any.
 
 ## Settlement — winner takes 1.00, loser takes 0
 
@@ -137,7 +138,7 @@ From a trader's point of view, a market moves through these stages:
     The data source behind each market type.
   </Card>
   <Card title="Placing orders" href="/trading-placing-orders">
-    Limit vs market orders in practice.
+    Placing a signed limit order in practice.
   </Card>
   <Card title="API Reference" href="/api-reference/introduction">
     Market, order-book, and ticker endpoints.
