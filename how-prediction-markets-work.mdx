@@ -49,13 +49,17 @@ cost of the contracts.
 
 Prices change as new information arrives and as traders update their views. Say a
 market prices a company's earnings beat at `0.60`. If the company then reports
-strong results, buyers push the YES price up toward `0.75`; anyone who bought
-earlier at `0.60` now holds contracts worth more, and can sell to lock in the
-gain rather than wait for settlement.
+strong results, buyers push the YES price up toward `0.75` — later buyers pay
+more for the same contract than you did.
 
-This is the core of trading a prediction market: **you profit from being right
-about the price, not only from the final outcome.** You can enter when you think a
-side is mispriced and exit once the price moves your way.
+That is what the price is telling you: **buying a side you think is underpriced
+is how you profit.** Get in at `0.60` on something that resolves YES and each
+share pays `1.00`; the cheaper you bought, the more you made.
+
+<Note>
+  Calibri does not currently support selling a position back before the market
+  resolves. You buy the side you believe in and are paid at resolution.
+</Note>
 
 ## What keeps prices honest
 
@@ -98,7 +102,7 @@ fallback — see [Market resolution](/non-custodial/resolution).
     Binary markets, the combined order book, contracts, and lifecycle.
   </Card>
   <Card title="Placing orders" href="/trading-placing-orders">
-    How to actually place a limit or market order and read your position.
+    How to actually place an order and read your position.
   </Card>
   <Card title="Fees" href="/concepts/fees">
     The single taker fee and how it's computed.

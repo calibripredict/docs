@@ -17,7 +17,7 @@ URL. You can combine as many as you like — including public and private togeth
 — so a client needs **one** connection, not several.
 
 ```
-?stream=12.ob-inc&stream=order&stream=trade&stream=balance
+?stream=12.ob-inc&stream=order&stream=contract&stream=balance
 ```
 
 Each message is a JSON object **keyed by the stream name**, so one handler can
@@ -40,7 +40,7 @@ product id.
 | `{market}.trades` | none | Public trade tape (matched contracts) |
 | `crypto.{symbol}` | none | Underlying-asset price ticks |
 | `order` | signed | Your order create / update / fill / cancel events |
-| `trade` | signed | Your own fills |
+| `contract` | signed | Your own fills |
 | `balance` | signed | Your balance changes |
 
 <Warning>
@@ -57,7 +57,7 @@ const sign = require("./sign");
 
 const baseUrl = "wss://calibri.io/api/v2";
 const streams =
-  "?stream=12.ob-inc&stream=order&stream=trade&stream=balance";
+  "?stream=12.ob-inc&stream=order&stream=contract&stream=balance";
 const path = `/websocket/private${streams}`;
 
 // Sign the full path, query string included.
