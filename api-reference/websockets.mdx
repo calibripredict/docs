@@ -37,11 +37,12 @@ product id.
 | `{market}.ob-snap` | none | Full order-book snapshot, sent once on subscribe |
 | `{market}.ob-inc` | none | Order-book increments. Subscribing also delivers an initial `.ob-snap` |
 | `{market}.kline-{period}` | none | OHLC candle updates — `[ts, o, h, l, c, v]` |
-| `{market}.trades` | none | Public trade tape (matched contracts) |
+| `{market}.trades` | none | Public trade tape (matched contracts), including `taker_side` |
 | `crypto.{symbol}` | none | Underlying-asset price ticks |
 | `order` | signed | Your order create / update / fill / cancel events |
 | `contract` | signed | Your own fills |
 | `balance` | signed | Your balance changes |
+| `position` | signed | Your holdings, after any change to one |
 
 <Warning>
   Order-book increments carry a `sequence`. **If it skips, re-subscribe** to get a fresh `.ob-snap` and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
@@ -110,6 +111,7 @@ Throttled to roughly one message per second, newest-wins.
     "id": 173757,
     "market": "12",
     "side": "yes",
+    "direction": "buy",
     "ord_type": "limit",
     "price": "0.60",
     "state": "wait",
@@ -147,6 +149,48 @@ Balance values are strings — parse as decimals, not floats.
 Balance updates are triggered by order creation (locking stake **plus** the
 taker-fee reserve), cancellation, partial fills, rejection, redemption, and
 voids.
+
+**Position** — your holding in a market, after anything changes it: a fill, an
+exit, settlement, or a void.
+
+```json
+{
+  "position": {
+    "market": "12",
+    "outcome": "yes",
+    "custody": "self",
+    "qty": "100",
+    "locked_qty": "0",
+    "sellable_qty": "100",
+    "avg_price": "0.60",
+    "realized_pnl": "0.00",
+    "updated_at": "2026-08-07T08:46:59Z"
+  }
+}
+```
+
+`sellable_qty` is what you can offer right now — `qty` less anything already
+committed to a resting sell. `realized_pnl` banks at the moment you exit, so it
+moves on a sale rather than waiting for the market to resolve.
+
+## Reading the tape
+
+Each fill on `{market}.trades` carries `taker_side`: the outcome the **aggressor**
+bought, meaning the side that crossed the spread and paid the taker fee. It is
+`"yes"`, `"no"`, or `""`.
+
+Without it a tape is only a list of prices. Direction inferred from the price
+moving says nothing about the many fills that print at the same price as the one
+before them, and a buy and a sell print identically.
+
+<Warning>
+  **`""` means unknown, not "neither".** Fills matched before the engine recorded
+  a taker report `""`, and so does any row read from the historical tape. Render
+  those as unattributed — do not pick a side for them.
+</Warning>
+
+The same field, under the same rule, is on the REST tape at
+`GET /public/markets/{market}/contracts/recent`.
 
 ## Related
 

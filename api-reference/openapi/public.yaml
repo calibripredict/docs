@@ -497,7 +497,17 @@ components:
       type: object
     OrderBookResponse:
       properties:
+        no_asks:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
         no_bids:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+        yes_asks:
           items:
             $ref: '#/components/schemas/BookLevel'
           type: array
@@ -549,6 +559,24 @@ components:
           - settled_yes
           - settled_no
           example: active
+          type: string
+        taker_side:
+          description: |-
+            TakerSide names the outcome the AGGRESSOR bought — the side that crossed
+            the spread and paid the taker fee. It is what lets a tape be read as
+            pressure rather than as a list of prices: direction inferred from the
+            price moving says nothing on the many fills that print at the price
+            before them.
+
+            Empty means UNKNOWN, not "neither". A contract matched before the engine
+            recorded a taker, and any row served from the QuestDB tape (whose
+            `contracts` table does not carry the taker), report "" — clients must
+            render those as unattributed rather than picking a side.
+          enum:
+          - ""
+          - "yes"
+          - "no"
+          example: "yes"
           type: string
         volume:
           example: "25.5"

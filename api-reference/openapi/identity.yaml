@@ -475,7 +475,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageEntity'
           description: ''
-      security: []
       summary: 'Resend the confirmation email'
       tags:
         - 'Account'
@@ -490,7 +489,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserEntity'
           description: ''
-      security: []
       summary: 'Current account'
       tags:
         - 'Account'
@@ -545,7 +543,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CurrentUserEntity'
           description: ''
-      security: []
       summary: 'Current account with verification status'
       tags:
         - 'Account'
@@ -565,7 +562,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageEntity'
           description: ''
-      security: []
       summary: 'Change password'
       tags:
         - 'Account'
@@ -585,7 +581,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/WalletLinkedEntity'
           description: ''
-      security: []
       summary: 'Link a wallet to this account'
       tags:
         - 'Account'
