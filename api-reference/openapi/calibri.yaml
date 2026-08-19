@@ -54,6 +54,9 @@ tags:
   - name: Account
     description: Balances, ledger, PnL, limits, preferences, and profile.
     x-displayName: Account
+  - name: Other
+    description: Other
+    x-displayName: Other
 externalDocs:
   description: ''
   url: ''
@@ -934,10 +937,11 @@ paths:
                   $ref: '#/components/schemas/BalanceEntity'
                 type: array
           description: ''
-      security: []
       summary: All balances
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/balances/{currency}:
     get:
       description: >-
@@ -957,10 +961,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/BalanceEntity'
           description: ''
-      security: []
       summary: Balance by currency
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/contracts:
     get:
       description: >-
@@ -977,10 +982,11 @@ paths:
                   $ref: '#/components/schemas/ContractEntity'
                 type: array
           description: ''
-      security: []
       summary: Your contracts
       tags:
         - Positions
+      security:
+        - apiKey: []
   /api/v2/atlas/account/contracts/{id}:
     get:
       description: >-
@@ -1005,10 +1011,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
-      security: []
       summary: Contract by id
       tags:
         - Positions
+      security:
+        - apiKey: []
   /api/v2/atlas/account/limits:
     get:
       description: >-
@@ -1024,10 +1031,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/LimitsEntity'
           description: ''
-      security: []
       summary: Account limits
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/orders:
     post:
       description: >-
@@ -1055,10 +1063,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: Signature or validation failure
-      security: []
       summary: Place a signed order
       tags:
         - Trade
+      security:
+        - apiKey: []
+  /api/v2/atlas/account/positions:
+    get:
+      description: >-
+        Your net holdings per market and outcome, with the quantity you can sell
+        right now (total less anything already reserved by a resting sell
+        order). Use this to offer a position for sale; use /account/contracts
+        for the trade history behind it.
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PositionEntity'
+                type: array
+          description: ''
+      summary: Your positions
+      tags:
+        - Other
+      security:
+        - apiKey: []
   /api/v2/atlas/account/preferences:
     get:
       description: >-
@@ -1072,10 +1103,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/PreferencesEntity'
           description: ''
-      security: []
       summary: Read preferences
       tags:
         - Account
+      security:
+        - apiKey: []
     put:
       description: >-
         Partial update — send only the fields to change. Unknown keys are
@@ -1093,10 +1125,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/PreferencesEntity'
           description: ''
-      security: []
       summary: Update preferences
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/referrals/earnings:
     get:
       description: >-
@@ -1111,10 +1144,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReferralEarningsEntity'
           description: ''
-      security: []
       summary: Referral earnings
       tags:
         - Rewards
+      security:
+        - apiKey: []
+  /api/v2/atlas/account/rewards/liquidity:
+    get:
+      description: >-
+        Liquidity rewards earned for resting orders, one row per market per UTC
+        day, newest first. Scored daily at 01:00 UTC for the previous day and
+        paid by the daily sweep — `status` moves pending → paying → paid. Filter
+        with `status`; paginate with `page` and `limit` (totals in the `Page` /
+        `Per-Page` / `Total` headers).
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LiquidityRewardEntity'
+                type: array
+          description: ''
+      summary: Your liquidity rewards
+      tags:
+        - Rewards
+      security:
+        - apiKey: []
   /api/v2/atlas/account/rewards/pending:
     get:
       description: >-
@@ -1130,10 +1187,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/PendingRewardsEntity'
           description: ''
-      security: []
       summary: Pending rewards
       tags:
         - Rewards
+      security:
+        - apiKey: []
   /api/v2/atlas/account/stats/pnl:
     get:
       description: >-
@@ -1149,10 +1207,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/PnlEntity'
           description: ''
-      security: []
       summary: Prediction PnL
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/stats/pnl/history:
     get:
       description: >-
@@ -1170,10 +1229,11 @@ paths:
                   $ref: '#/components/schemas/PnlPointEntity'
                 type: array
           description: ''
-      security: []
       summary: Prediction PnL history
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/transactions:
     get:
       description: >-
@@ -1248,7 +1308,9 @@ paths:
               - internal_transfer
               - trade
               - referral
+              - referral_reward
               - maker_reward
+              - lp_reward
             type: string
         - description: >-
             Filter to one asset. Matches either side of the entry, credit or
@@ -1268,10 +1330,11 @@ paths:
                   $ref: '#/components/schemas/TransactionEntity'
                 type: array
           description: ''
-      security: []
       summary: Transaction history
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet:
     get:
       description: >-
@@ -1286,10 +1349,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/CtfWalletEntity'
           description: ''
-      security: []
       summary: CTF wallet
       tags:
         - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet/markets/{id}:
     get:
       description: >-
@@ -1315,10 +1379,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: Market is not CTF-registered
-      security: []
       summary: CTF config for a market
       tags:
         - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet/passkey:
     post:
       description: >-
@@ -1346,10 +1411,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
-      security: []
       summary: Enrol a passkey wallet
       tags:
         - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet/relay:
     post:
       description: >-
@@ -1376,10 +1442,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
-      security: []
       summary: Relay a Safe transaction
       tags:
         - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet/session-key:
     delete:
       description: >-
@@ -1399,10 +1466,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionKeyRevokeEntity'
           description: ''
-      security: []
       summary: Revoke a session key
       tags:
         - Wallet
+      security:
+        - apiKey: []
     get:
       description: >-
         Whether session keys are usable, the highest grant id issued, and the
@@ -1417,10 +1485,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionKeyStatusEntity'
           description: ''
-      security: []
       summary: Session key status
       tags:
         - Wallet
+      security:
+        - apiKey: []
     post:
       description: >-
         Returns the Safe calls that authorise a browser-held P-256 key to sign
@@ -1446,10 +1515,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
-      security: []
       summary: Authorise a session key
       tags:
         - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/public/currencies:
     get:
       description: >-
@@ -1571,10 +1641,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageEntity'
           description: ''
-      security: []
       summary: Resend the confirmation email
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/persona/identity/users/me:
     get:
       description: >-
@@ -1588,10 +1659,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserEntity'
           description: ''
-      security: []
       summary: Current account
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/persona/identity/users/password/confirm_code:
     post:
       description: >-
@@ -1651,10 +1723,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/CurrentUserEntity'
           description: ''
-      security: []
       summary: Current account with verification status
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/persona/resource/users/password:
     put:
       description: >-
@@ -1674,10 +1747,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/MessageEntity'
           description: ''
-      security: []
       summary: Change password
       tags:
         - Account
+      security:
+        - apiKey: []
   /api/v2/persona/resource/users/wallet:
     post:
       description: >-
@@ -1698,10 +1772,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/WalletLinkedEntity'
           description: ''
-      security: []
       summary: Link a wallet to this account
       tags:
         - Account
+      security:
+        - apiKey: []
 components:
   schemas:
     ActivityItem:
@@ -2305,7 +2380,17 @@ components:
       type: object
     OrderBookResponse:
       properties:
+        no_asks:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
         no_bids:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+        yes_asks:
           items:
             $ref: '#/components/schemas/BookLevel'
           type: array
@@ -2357,6 +2442,36 @@ components:
             - settled_yes
             - settled_no
           example: active
+          type: string
+        taker_side:
+          description: >-
+            TakerSide names the outcome the AGGRESSOR bought — the side that
+            crossed
+
+            the spread and paid the taker fee. It is what lets a tape be read as
+
+            pressure rather than as a list of prices: direction inferred from
+            the
+
+            price moving says nothing on the many fills that print at the price
+
+            before them.
+
+
+            Empty means UNKNOWN, not "neither". A contract matched before the
+            engine
+
+            recorded a taker, and any row served from the QuestDB tape (whose
+
+            `contracts` table does not carry the taker), report "" — clients
+            must
+
+            render those as unattributed rather than picking a side.
+          enum:
+            - ''
+            - 'yes'
+            - 'no'
+          example: 'yes'
           type: string
         volume:
           example: '25.5'
@@ -3185,6 +3300,18 @@ components:
       type: object
     CreateOrderRequest:
       properties:
+        direction:
+          description: >-
+            Whether you are opening or closing. `buy` posts collateral and
+            acquires the outcome; `sell` offers outcome tokens you already hold,
+            so it locks INVENTORY rather than cash and its `locked` is zero.
+            Defaults to `buy`, which is how every order behaved before position
+            exit. See /account/positions for how much of a holding is sellable.
+          enum:
+            - buy
+            - sell
+          example: buy
+          type: string
         market:
           description: Market id.
           example: '12'
@@ -3206,7 +3333,10 @@ components:
           example: '0.60'
           type: string
         side:
-          description: The outcome you are buying.
+          description: >-
+            The OUTCOME this order is about — never buy/sell. Pair it with
+            `direction`: a sell of `yes` and a buy of `no` are different orders
+            that happen to sit on the same side of the book.
           enum:
             - 'yes'
             - 'no'
@@ -3705,6 +3835,53 @@ components:
         - funding_method_limits
         - global_limits
       type: object
+    LiquidityRewardEntity:
+      properties:
+        amount:
+          example: '1.87'
+          type: string
+        currency:
+          example: usdc
+          type: string
+        market_id:
+          example: '42'
+          type: string
+        market_title:
+          description: Market title at read time; null if the market row is gone.
+          example: Chiefs to win Super Bowl LXI
+          type:
+            - string
+            - 'null'
+        paid_at:
+          example: '2026-08-13T06:00:12Z'
+          type:
+            - string
+            - 'null'
+        reward_date:
+          description: >-
+            The UTC day the quoting was scored over (rewards are earned per day,
+            not per instant).
+          example: '2026-08-12'
+          type: string
+        status:
+          description: >-
+            `pending` — earned, awaiting the daily sweep. `paying` — sweep in
+            flight. `paid` — in your balance.
+          enum:
+            - pending
+            - paying
+            - paid
+          example: pending
+          type: string
+      required:
+        - market_id
+        - market_title
+        - currency
+        - reward_date
+        - amount
+        - status
+        - paid_at
+      type: object
     OrderEntity:
       properties:
         contracts_count:
@@ -3797,6 +3974,13 @@ components:
         currency:
           example: usdc
           type: string
+        liquidity:
+          description: >-
+            Liquidity rewards — earned for QUOTING rather than for filling, from
+            how long your size rested inside the spread band. Scored once a day,
+            so this steps rather than ticks.
+          example: '0.75'
+          type: string
         maker:
           description: Earned by your resting orders being filled.
           example: '2.00'
@@ -3806,7 +3990,7 @@ components:
           example: '1.20'
           type: string
         total:
-          description: Accrued but not yet swept — `maker + referral`.
+          description: Accrued but not yet swept — `maker + referral + liquidity`.
           example: '3.20'
           type: string
       required:
@@ -3814,6 +3998,7 @@ components:
         - total
         - maker
         - referral
+        - liquidity
       type: object
     PnlCapitalEntity:
       properties:
@@ -3956,6 +4141,89 @@ components:
         - returned
         - fees
         - pnl
+      type: object
+    PositionEntity:
+      properties:
+        avg_cost:
+          description: Weighted-average price paid for the contracts still held.
+          example: '0.61'
+          type: string
+        cost_basis:
+          description: avg_cost × qty — what the holding cost you.
+          example: '183'
+          type: string
+        currency:
+          example: usdc
+          type: string
+        custody:
+          description: >-
+            Which pool backs it. `self` holdings are real ERC-1155 tokens in
+            your Safe; `custodial` are ledger entries. The two never net against
+            each other.
+          enum:
+            - custodial
+            - self
+          example: self
+          type: string
+        locked_qty:
+          description: Contracts reserved by your resting sell orders.
+          example: '50'
+          type: string
+        market_id:
+          description: The market this holding is in.
+          example: '12'
+          type: string
+        market_title:
+          example: Will BTC close above its open?
+          type:
+            - string
+            - 'null'
+        outcome:
+          description: The outcome held.
+          enum:
+            - 'yes'
+            - 'no'
+          example: 'yes'
+          type: string
+        outcome_label:
+          description: The market's own label for this outcome (e.g. a team name).
+          example: 'Yes'
+          type: string
+        qty:
+          description: Contracts held.
+          example: '300'
+          type: string
+        realized_pnl:
+          description: >-
+            Profit or loss already banked on this holding, from exits and from
+            settlement. Excludes the unrealised move on what you still hold.
+          example: '3'
+          type: string
+        sellable_qty:
+          description: >-
+            Contracts you can offer on a NEW sell order: `qty` less anything
+            already reserved by a resting sell. Size a sell against this, not
+            `qty`.
+          example: '250'
+          type: string
+        updated_at:
+          example: '2026-08-17T12:00:00Z'
+          type:
+            - string
+            - 'null'
+      required:
+        - market_id
+        - market_title
+        - outcome
+        - outcome_label
+        - custody
+        - currency
+        - qty
+        - sellable_qty
+        - locked_qty
+        - avg_cost
+        - cost_basis
+        - realized_pnl
       type: object
     PreferencesEntity:
       properties:
