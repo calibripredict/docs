@@ -7,7 +7,7 @@ Calibri pays two kinds of reward, both funded out of the **taker fee** on a
 trade. They **accrue live** as you trade and are **paid out once a day** —
 independent of whether the market has resolved.
 
-- **Maker rebate** — When **your resting order gets filled**, you earn a share of the taker's fee. This is the reward for **providing liquidity** — quoting a price and waiting for someone to trade with you.
+- **Maker rebate** — When **your resting order gets filled**, you earn a share of the taker's fee — **15%, 20% or 25%** depending on the market's category. This is the reward for **providing liquidity** — quoting a price and waiting for someone to trade with you. Full mechanics, rates and worked examples: [Maker rebates](/concepts/maker-rebates).
 - **Referral reward** — When someone **you referred trades as the taker**, **you (the referrer)** earn a share of the fee they paid. Tied to your referred members' taker activity.
 
 ## Both are a share of the taker fee
@@ -17,12 +17,13 @@ independent of whether the market has resolved.
 | **Maker rebate** | the **maker** — the resting (non-taker) side of the fill | a % of the taker fee on that fill |
 | **Referral reward** | the **taker's referrer** | a % of the taker fee on the referred taker's fill |
 
-Because both are a percentage **of the taker fee**, a trade that pays **no** fee
-(for example a very lopsided price, see [Fees](/concepts/fees)) generates **no**
-reward.
+Because both are a percentage **of the taker fee**, and the fee follows the
+`P × (1 − P)` curve, both rewards **inherit that curve**: largest on coin-flip
+prices, near zero at the extremes, and zero on a trade that pays no fee at all
+(a fee-free category — see [Fees](/concepts/fees)).
 
 <Note>
-  Rates are **operator-set per market category and may be zero.** This page describes the mechanism, not the numbers — any specific rebate or referral percentage is published in the rewards schedule and shown in-app, not fixed here.
+  Rates are set **per market category**. The maker rebate is **20%** in Crypto, **15%** in Sports and **25%** elsewhere — see [Maker rebates](/concepts/maker-rebates) for the table. Referral rates are published in the rewards schedule and shown in-app.
 </Note>
 
 ## How and when you get paid
@@ -87,6 +88,9 @@ the taker fee back. For rewards:
 ## Related
 
 <CardGroup cols={2}>
+  <Card title="Maker rebates" href="/concepts/maker-rebates">
+    The rebate curve, per-category rates, and worked examples.
+  </Card>
   <Card title="Fees" href="/concepts/fees">
     The taker fee that funds every reward.
   </Card>

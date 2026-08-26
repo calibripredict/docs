@@ -1,15 +1,15 @@
 ---
 title: "Signed orders (EIP-712)"
-description: "Build, sign, and place a non-custodial order — the EIP-712 Order domain and struct, 6-decimal unit rules, and the atlas order endpoint."
+description: "Build, sign, and place a non-custodial order — the EIP-712 Order domain and struct, 6-decimal unit rules, and the signed-order endpoint."
 ---
 
 A non-custodial order is a standard limit order **authorized by an EIP-712
 signature**. You build the typed `Order`, sign it with your EOA, and post it to
-atlas, which validates the signature and relays the order to the engine. The
+Calibri, which validates the signature and places the order on the book. The
 resting order locks your [`locked_safe`](/non-custodial/balances) pool.
 
 <Note>
-  Orders are **placed** through atlas so the signature can be validated and attached. They are **read** back from the engine at `GET /api/v2/pythia/orders`. Posting an unsigned order directly to the engine is not a supported path — every order on Calibri carries your signature.
+  Orders are **placed** at `POST /api/v2/atlas/account/orders` so the signature can be validated and attached, and **read** back at `GET /api/v2/pythia/orders`. There is no unsigned placement path — every order on Calibri carries your signature.
 </Note>
 
 ## 1. Read the market's CTF config
@@ -32,7 +32,7 @@ maker), `owner_address` (what owns the Safe), `signature_type`,
 </Warning>
 
 <Warning>
-  `domain_name` is **served, not hard-coded** — it is this deployment's EIP-712 domain name (default legacy value `"Polymarket CTF Exchange"`). You **must** sign with the served value or the signature will not recover.
+  `domain_name` is **served by the API** — it is the EIP-712 domain name of Calibri's exchange. You **must** sign with the value the API returns, not a copied constant, or the signature will not recover.
 </Warning>
 
 ## 2. The EIP-712 domain
@@ -155,7 +155,7 @@ string** — including `fee_rate_bps`; `side` and `signature_type` are numbers:
 
 **`POST /api/v2/atlas/account/orders`**
 
-Places a non-custodial (signed) order. Atlas validates the `signed_order`, relays it to the engine as an orchestrated order (`custody = "self"`), and attaches the signature to the order record. Returns the engine order object, `201`.
+Places a non-custodial (signed) order. Calibri validates the `signed_order`, places it as a self-custody order (`custody = "self"`), and attaches the signature to the order record. Returns the order object, `201`.
 
 Request body:
 
@@ -171,12 +171,12 @@ Request body:
 }
 ```
 
-If attaching the signature fails, atlas cancels the engine order so no unsignable
-orphan is left behind.
+If attaching the signature fails, the order is cancelled so no unsignable orphan
+is left behind.
 
 ### Server-side validation
 
-Atlas fully validates the signed order before anything is placed, rejecting with
+Calibri fully validates the signed order before anything is placed, rejecting with
 `422` unless:
 
 - it is a **limit** order with a valid side and `price ∈ (0, 1)`;

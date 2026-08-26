@@ -1,0 +1,181 @@
+---
+title: "Maker Rebates"
+description: "Makers pay no fee and earn a share of the taker fee on every fill of a resting order — fee-curve weighted, so the rebate peaks at 50/50 prices and fades toward the extremes."
+---
+
+Providing liquidity pays. When someone trades against **your resting order**,
+you pay **no fee** and earn a **rebate** — a share of the taker fee that the
+other side paid on that fill.
+
+The rebate is **fee-curve weighted**: it is a percentage of the taker fee, and
+the taker fee itself follows the `P × (1 − P)` curve. So the rebate is largest
+where quoting is hardest — around `0.50`, where the outcome is genuinely
+uncertain — and smallest at lopsided prices where a quote carries little risk.
+
+<Note>
+  Calibri's rebate schedule mirrors Polymarket's — the same fee curve, the same per-category rebate rates. If you already run a maker strategy there, the economics carry across unchanged.
+</Note>
+
+## What qualifies
+
+You earn a rebate when **your order was already resting on the book and someone
+else crossed into it**. That is the only condition.
+
+| Your order | Rebate |
+|---|---|
+| Rests on the book, then gets filled | **Earns** — you are the maker |
+| Crosses the book to fill someone else | **None** — you are the taker, and you pay the fee |
+| Rests and is never filled | None — the rebate is paid on fills, not on quoting |
+| `post_only` | Always a maker when it fills — it can never cross |
+
+Each **fill** earns its own rebate. A large resting order that fills in five
+pieces accrues five rebates, one per contract created.
+
+## How the rebate is calculated
+
+The taker fee on a fill is:
+
+```
+fee = takerRate × C × P × (1 − P)
+```
+
+where **C** is the number of contracts filled, **P** is the trade price (0–1),
+and **takerRate** is the category's taker rate. Your rebate is a fixed share of
+that fee:
+
+```
+rebate = rebateRate × fee
+       = rebateRate × takerRate × C × P × (1 − P)
+```
+
+Both rates are set per **market category** — see the table below. The rebate is
+computed on **each fill**, from the fee actually charged on that fill.
+
+<Note>
+  Because every maker's rebate is proportional to the fee their own fills generated, this is the same distribution as a per-market pool split pro-rata by fee-equivalent — expressed directly, per fill, so you can compute what a quote earns before you place it.
+</Note>
+
+### Why the curve
+
+`P × (1 − P)` is a bell curve: `0` at the edges, maximum `0.25` at `0.50`, and
+symmetric about the midpoint. Holding rate and size fixed, the rebate on a fill
+relative to its maximum:
+
+| Fill price P | `P × (1 − P)` | Rebate vs. the 50/50 maximum |
+|---|---|---|
+| `0.05` / `0.95` | `0.0475` | 19% |
+| `0.10` / `0.90` | `0.09` | 36% |
+| `0.25` / `0.75` | `0.1875` | 75% |
+| `0.50` | `0.25` | 100% (highest) |
+
+The practical read for a maker: **quoting the uncertain middle of the book pays
+several times what quoting the tails pays**, for the same size filled. A fill at
+`0.30` and a fill at `0.70` pay identically — the curve is symmetric, so neither
+side of the book is favoured.
+
+## Rebate rates by category
+
+The rebate rate is the **share of the taker fee** paid to the maker. It is
+resolved from the market's category; a category with no rate of its own falls
+back to **25%**.
+
+| Category | Taker rate | Maker rebate | Maker earns per 100 contracts filled at `0.50` |
+|---|---|---|---|
+| Crypto | 7.00% | **20%** | 0.350 USDC |
+| Economics | 5.00% | **25%** | 0.313 USDC |
+| Culture | 5.00% | **25%** | 0.313 USDC |
+| Science | 5.00% | **25%** | 0.313 USDC |
+| Weather | 5.00% | **25%** | 0.313 USDC |
+| Other | 5.00% | **25%** | 0.313 USDC |
+| Sports | 5.00% | **15%** | 0.188 USDC |
+| Finance | 4.00% | **25%** | 0.250 USDC |
+| Mentions | 4.00% | **25%** | 0.250 USDC |
+| Politics | 4.00% | **25%** | 0.250 USDC |
+| Tech | 4.00% | **25%** | 0.250 USDC |
+| Geopolitics | 0.00% | — | 0.000 USDC |
+| World | 0.00% | — | 0.000 USDC |
+
+<Warning>
+  A rebate is a fraction **of a fee**. Fee-free categories (`0.00%` taker rate) generate no fee and therefore **no rebate** — quoting them costs nothing and earns nothing.
+</Warning>
+
+The last column is the maximum, at the top of the curve. Away from `0.50`, scale
+it by the curve: the same 100 contracts filled at `0.80` earn `0.16 / 0.25` =
+64% of it.
+
+### Worked example
+
+You rest a **Crypto** offer and it is filled for **100 contracts at `0.60`**:
+
+```
+P × (1 − P) = 0.60 × 0.40 = 0.24
+taker fee   = 0.07 × 100 × 0.24 = 1.68 USDC   (paid by the taker, not you)
+your rebate = 0.20 × 1.68        = 0.336 USDC
+```
+
+You paid **nothing** on that fill and earned **0.336 USDC** on top of the
+position.
+
+## Rounding
+
+- Rebates are denominated in **USDC** (6 decimals — one base unit is
+  `0.000001 USDC`).
+- The rebate is computed from the fee and **rounded down** to the base unit. A
+  rebate below one base unit rounds to zero and never becomes a payable — this
+  only bites on dust-sized fills at extreme prices.
+
+## When you get paid
+
+<Steps>
+  <Step title="Accrues at the fill">
+    The moment your resting order fills, the rebate is recorded as **pending**.
+    No money moves for it at that point — only the taker's fee moves.
+  </Step>
+  <Step title="Visible live">
+    Pending rebates are readable in near-real-time, separated from referral
+    earnings:
+
+    ```json
+    { "currency": "usdc", "total": "12.35", "maker": "10.00", "referral": "2.35" }
+    ```
+  </Step>
+  <Step title="Paid daily, to your Safe">
+    A **daily sweep** pays pending rebates on-chain to your Safe — whether or
+    not the market has resolved. You do not wait for settlement to be paid for
+    quoting.
+  </Step>
+</Steps>
+
+There is **no arbitrary payout threshold**. The only floor is economic: an
+amount below the network gas cost of sending it stays pending and rolls into the
+next sweep rather than being written off.
+
+## Voided markets
+
+If a market is **voided**, every position is refunded in full (stake and taker
+fee). Rebates still **pending** for that market are removed along with the fee
+that funded them; rebates already **paid** are **not** clawed back.
+
+## In short
+
+> Rest an order, get filled, earn a share of the taker's fee — **15%, 20% or
+> 25%** depending on the category, on top of paying no fee yourself. The rebate
+> rides the same `P × (1 − P)` curve as the fee, so the uncertain middle of the
+> book pays most. Rebates accrue per fill and are paid **daily** to your Safe.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    The taker fee that funds every rebate, and the curve it follows.
+  </Card>
+  <Card title="Rewards" href="/concepts/rewards">
+    Payout mechanics shared by both reward programmes.
+  </Card>
+  <Card title="Referral program" href="/rewards-referral-program">
+    The other way to earn a share of the taker fee.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    Placing the resting orders that earn rebates.
+  </Card>
+</CardGroup>

@@ -1,0 +1,112 @@
+---
+title: "Signing keys"
+description: "Adding a second key that can sign for your wallet — what it enables, what it can do, how to remove it, and what happens if it removes your passkey."
+---
+
+Your wallet starts with **one** thing that can authorise it: your passkey. You can add a
+**second** — an Ethereum wallet you hold the private key for — in
+**Settings → Wallet → Signing keys**.
+
+It is the same wallet either way. Same address, same balance, same positions, same open
+orders. You are adding a key that can sign for it; nothing moves.
+
+## Why you would
+
+<CardGroup cols={2}>
+  <Card title="Recovery" icon="life-ring">
+    Lose your passkey with no second key and the funds are gone — permanently, for you and for us. A second key means you can still reach them.
+  </Card>
+  <Card title="Trading from your own code" icon="code">
+    Your passkey only signs in this browser. A wallet key signs anywhere, so an API client can place orders, withdraw, and redeem.
+  </Card>
+</CardGroup>
+
+## What it can do
+
+Everything your passkey can. There is no lesser tier of key here, and pretending
+otherwise would be the dangerous kind of simplification.
+
+| | Your passkey | A signing key you add | A [session key](/non-custodial/session-keys) |
+|---|---|---|---|
+| Place orders | Yes | Yes | Yes |
+| Withdraw | Yes | **Yes** | No |
+| Redeem winnings | Yes | **Yes** | No |
+| Change what can sign | Yes | **Yes — including removing your passkey** | No |
+| Works outside this browser | No | Yes | No |
+
+<Warning>
+  **A signing key can remove your passkey.** Both keys are equal owners of your wallet, and either can act alone — that is what lets one of them rescue you when the other is lost, and it is also the whole risk. Add a key only if you control it and trust wherever it is kept. A key on a server is a key that can empty the wallet if that server is compromised.
+</Warning>
+
+## Adding one
+
+<Steps>
+  <Step title="Turn on two-factor authentication">
+    Required. Adding a key that can withdraw your funds and replace your passkey is not
+    something a hijacked session should be able to do with a tap.
+  </Step>
+  <Step title="Connect the wallet">
+    In Settings → Wallet → Signing keys. It must be a wallet you hold the private key
+    for — that is the entire point of it.
+  </Step>
+  <Step title="Enter your 2FA code and approve with your passkey">
+    Your passkey signs the change (it is the only owner so far), and we relay it and pay
+    the gas. The threshold stays at one, so afterwards **either** key can sign — not
+    both.
+  </Step>
+</Steps>
+
+We email you whenever a signing key is added or removed, so a change you did not make is
+visible immediately.
+
+## Removing one
+
+Same place, at any time. Either key can sign the removal — your passkey, or the wallet
+itself if it is the one connected — so you are not locked out of cleaning up when the
+passkey is the thing you lost.
+
+You cannot remove your **passkey** here. That would leave the wallet signable only by
+the other key, which is indistinguishable from someone with that key locking you out.
+
+## If your passkey stops working
+
+If a key you added removes your passkey **on-chain**, directly, we cannot prevent it: it
+is a full owner of your Safe and needs nothing from us to transact. What we do is tell
+you what happened rather than let you discover it as a signature that mysteriously
+stopped working.
+
+The moment your passkey is refused — placing an order, withdrawing, or redeeming — we
+check the wallet's owners and, if your passkey is no longer among them, say so plainly:
+the keys still on the wallet can move these funds, and you should move them somewhere
+safe with a key you control and contact support.
+
+The same state is shown in Settings → Wallet → Signing keys whenever you look.
+
+## Quick trading, and which key signs
+
+With more than one way to sign, orders use whichever costs you least:
+
+1. A **trading key you have unlocked** — signs with no prompt at all.
+2. A **connected signing wallet** — one confirmation per order.
+3. Your **passkey** — a biometric prompt per order.
+
+While a signing wallet is connected you will not be offered a new trading key, because
+there is no passkey prompt left for one to save you. Disconnect it and everything
+behaves as it did before.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Your wallet options" href="/non-custodial/wallets">
+    Passkey wallet vs your own wallet.
+  </Card>
+  <Card title="Session keys" href="/non-custodial/session-keys">
+    Trading without a prompt per order.
+  </Card>
+  <Card title="API authentication" href="/api-reference/authentication">
+    Signing orders from your own client.
+  </Card>
+  <Card title="Withdrawing without Calibri" href="/non-custodial/withdraw-without-calibri">
+    The exit that needs nothing from us.
+  </Card>
+</CardGroup>

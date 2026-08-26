@@ -108,7 +108,7 @@ From a trader's point of view, a market moves through these stages:
 </Steps>
 
 <Note>
-  Under the hood the platform tracks finer-grained states (the engine uses `open → frozen → settling → settled`; the orchestrator uses `initialized → active → closed → determined → settled`). The four stages above are the customer-facing summary. Resolution runs on-chain through an escalation ladder — see [Market resolution](/non-custodial/resolution).
+  The four stages above are the summary; the API reports finer-grained statuses within them. Resolution runs on-chain through an escalation ladder — see [Market resolution](/non-custodial/resolution).
 </Note>
 
 ## Putting it together

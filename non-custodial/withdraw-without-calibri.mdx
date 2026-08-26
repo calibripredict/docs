@@ -1,0 +1,118 @@
+---
+title: "Withdrawing without Calibri"
+description: "How to move funds out of your Safe if Calibri is unreachable, has shut down, or refuses — what you need, what still works, and the one thing to keep alive."
+---
+
+Self-custody only means something if it holds on our worst day. So: **your funds
+do not depend on Calibri existing.** Your money sits in a standard Gnosis Safe
+that only your own signer can move, and the transaction that moves it can be
+broadcast by anyone, from anywhere.
+
+This page is how you do that, and — just as important — what you need to keep in
+order to be able to.
+
+## The rescue page
+
+<Card title="Withdraw without Calibri" href="https://calibri.io/rescue" icon="life-ring">
+  Builds the transfer, has you sign it with your passkey or a signing wallet, and hands you the transaction to send.
+</Card>
+
+It calls **no Calibri service**. Not for your Safe address, not for balances, not
+for the signature, not for broadcasting. It reads the chain through an RPC URL
+**you** choose and it signs in your browser. If our API, our app, or our company
+is gone, that page still works.
+
+<Steps>
+  <Step title="Choose which key signs">
+    Your passkey, or a [signing wallet](/non-custodial/signing-keys) you added — including
+    when the passkey is the thing you have lost.
+  </Step>
+  <Step title="Point it at a node">
+    Any RPC for the chain your Safe is on — a public one, a provider, or your own node.
+  </Step>
+  <Step title="Give it your Safe">
+    Prefilled if you have used Calibri on that device before. Otherwise paste the address.
+  </Step>
+  <Step title="Say where the funds go">
+    Token, destination address, amount. Check the destination character by character.
+  </Step>
+  <Step title="Sign it">
+    One prompt, from whichever key you chose. The signature never leaves the page.
+  </Step>
+  <Step title="Send it">
+    From a browser wallet holding a little native currency for gas, or by handing the
+    transaction details to any tool that can send one. Whoever sends it pays the gas and
+    authorises nothing — your signature already did that.
+  </Step>
+</Steps>
+
+## What to keep, starting now
+
+<Warning>
+  **A passkey only works on the website it was created for.** That is a WebAuthn rule, not a Calibri policy, and there is no way around it: if `calibri.io` stops resolving, no other page — ours, yours, or anyone's — can ask your authenticator to sign. Keep the items below, and check occasionally that the domain still loads.
+
+  **A [signing wallet](/non-custodial/signing-keys) removes that dependency entirely.** You hold the key, so you can move your funds from any Safe interface whether or not this page, this domain, or this company still exists. If you want one thing from this page, it is that.
+</Warning>
+
+Three things, none of them secret:
+
+| Keep | Why |
+|---|---|
+| **Your Safe address** | The rescue page remembers it per device, and a device can be lost. It is on your Wallet page — write it down |
+| **Your Safe owner (signer contract)** | Goes into the signature. Also on your Wallet page |
+| **A working passkey** | Enrol on a platform that syncs (iCloud Keychain, Google Password Manager), and add a second device |
+| **Or a signing wallet** | Added in advance, it works with no passkey and no dependency on this domain |
+
+The exchange and collateral addresses are on
+[Deployed Addresses](/smart-contracts/deployed-addresses), and your own Safe and
+its owner are on your Wallet page.
+
+The **factory** addresses — the ones needed to create a Safe that was never deployed —
+are listed under [Wallet infrastructure](/smart-contracts/deployed-addresses#wallet-infrastructure),
+published there once the production contracts are deployed.
+
+## If your Safe was never deployed
+
+Your Safe address is derived the moment you enrol, but the contract itself is
+only deployed when you first deposit — we pay for that. If you never deposited,
+nothing exists at the address and there is nothing to rescue.
+
+If funds were sent to an undeployed Safe address, it can still be created: both
+the passkey signer factory and the Safe factory are **permissionless**, so anyone
+can deploy them with the published addresses and your credential's coordinates.
+That is a manual job, not something the rescue page does for you — the addresses
+you need are on the deployed-addresses page.
+
+## If your wallet is your own wallet
+
+None of the passkey constraints apply. Your Safe is owned by an address whose
+private key you hold, so you can move it from **any** Safe interface, or by
+calling `execTransaction` yourself. Nothing about that depends on Calibri or on
+this domain.
+
+## What this does not cover
+
+- **Redeeming a winning position.** Settlement pays into your Safe, and redeeming is a
+  different call than a transfer. It is documented in
+  [Redeeming winnings](/non-custodial/redeeming-winnings).
+- **Moving outcome tokens** rather than collateral. They are ERC-1155; the transfer call
+  differs. The addresses and interfaces are public.
+- **Open orders.** A resting order is off-chain state on our side. If we are gone, it
+  cannot fill — nothing of yours is at risk in it.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    What it is and what can act on it.
+  </Card>
+  <Card title="Deployed addresses" href="/smart-contracts/deployed-addresses">
+    Every contract, and how to verify it.
+  </Card>
+  <Card title="Your wallet options" href="/non-custodial/wallets">
+    Passkey wallet vs your own wallet.
+  </Card>
+  <Card title="Signing keys" href="/non-custodial/signing-keys">
+    A second key that can move these funds.
+  </Card>
+</CardGroup>

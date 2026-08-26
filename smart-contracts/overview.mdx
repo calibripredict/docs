@@ -20,13 +20,13 @@ values and how to verify them.
 |---|---|
 | **USDC (collateral)** | The stablecoin that backs every position. Deposits, stakes, fees, winnings, and rewards are all in USDC (6 decimals). |
 | **ConditionalTokens (CTF)** | Gnosis' audited framework. It **holds the collateral** and mints the **YES / NO outcome tokens** for each market. At resolution, winning tokens **redeem for USDC directly from the CTF** — funds live here, not with the operator. |
-| **CTF Exchange** | Where signed non-custodial orders are matched and executed on-chain. Its name is baked into the EIP-712 signing domain per brand, so your wallet signs against **your** exchange. |
+| **CTF Exchange** | Where signed non-custodial orders are matched and executed on-chain. Its name is baked into the EIP-712 signing domain, so your wallet signs against Calibri's own exchange and nowhere else. |
 | **CalibriResolver** | The **oracle** that reports each market's outcome to the CTF. It can **only report** outcomes — it **cannot take or freeze funds** — and it has trustless fallbacks (see below). |
-| **Your Gnosis Safe (1-of-1)** | Your own smart-contract wallet — the **funds source and order maker**. Owned solely by your wallet; the operator only **deploys it and relays your signed actions**, paying gas. You always sign. |
+| **Your Gnosis Safe** | Your own smart-contract wallet — the **funds source and order maker**. Owned solely by your own key(s) — your wallet or your passkey's signer contract, plus any [signing key](/non-custodial/signing-keys) you add; the operator only **deploys it and relays your signed actions**, paying gas. You always sign. |
 
 ## What "non-custodial" actually guarantees
 
-- **You hold the funds** — Your USDC sits in **your own 1-of-1 Safe**. Only your wallet can authorize a move. The operator can never move funds without your signature.
+- **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature.
 - **The operator can only report** — CalibriResolver reports outcomes; it can't seize collateral. Redemption of winnings happens **directly from the CTF**, so your winnings are never custodied by the operator between resolution and redeem.
 - **You sign, the operator pays gas** — Deploying your Safe, approvals, order settlement, and redemption are all **relayed** by the operator. You sign; you never need to hold gas.
 - **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or refunds. See [Market resolution](/non-custodial/resolution).
@@ -43,12 +43,8 @@ want, interact with them directly:
 
 ## Where the live addresses come from
 
-<Warning>
-  **Never hard-code contract addresses.** Addresses are **per-deployment** — they differ by network and by brand, and local/testnet addresses are throwaway. The app reads them from the API for exactly this reason, and so should you.
-</Warning>
-
-The **canonical, deployment-correct source** for every address you need is the
-CTF-config API:
+The **canonical source** for every address you need is the CTF-config API — the
+same one the app itself reads:
 
 - **`GET /api/v2/atlas/account/wallet`** — your member-level
   funding config: `exchange_address`, `conditional_tokens_address`,

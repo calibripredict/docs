@@ -3,19 +3,24 @@ title: "The Safe"
 description: "Your per-member Gnosis Safe — deploy and register (operator-gasless), fund with USDC, and make it trade-ready with signed approvals."
 ---
 
-Every self-custody member trades from a **1-of-1 Gnosis Safe**. The Safe holds
-your USDC on-chain and is the maker of your orders. The operator deploys and
-relays it gaslessly — you only ever sign.
+Every self-custody member trades from a **Gnosis Safe** they alone own. The Safe
+holds your USDC on-chain and is the maker of your orders. The operator deploys
+and relays it gaslessly — you only ever sign.
+
+It starts as **1-of-1**: one owner, either your wallet or the signer contract
+derived from your passkey. It becomes **1-of-2** if you add a
+[signing key](/non-custodial/signing-keys) — a second key of your own, where
+either one alone can sign. Calibri is never an owner in any configuration.
 
 ## How the Safe fits in
 
 What differs between members is **what owns the Safe** — see
 [Your wallet options](/non-custodial/wallets):
 
-- **Owner** — either your **wallet address (EOA)** (linked/SIWE wallet, or a
-  legacy email-derived address), or, for a passkey wallet, a **signer contract**
+- **Owner** — either your **wallet address (EOA)** (linked/SIWE wallet, or an
+  email-derived address), or, for a passkey wallet, a **signer contract**
   derived from your WebAuthn credential. Either way, this is what **signs**.
-- **Safe (proxy)** — the 1-of-1 Gnosis Safe owned by that owner. This is the
+- **Safe (proxy)** — the Gnosis Safe owned by that owner. This is the
   **maker** of your orders and the **destination** for deposits.
 
 The owner also determines the signature type your orders use: `2`
@@ -27,11 +32,10 @@ A member with neither a linked wallet nor a passkey is custodial-only.
 
 ## 1. Deploy & register (operator-gasless)
 
-You do not deploy the Safe yourself. When you first read your CTF config, atlas
-calls the blockchain service to **ensure your Safe exists** — the operator
-deploys it gaslessly (idempotent) and returns the derived Safe address, then
-registers it so the deposit watcher can map on-chain transfers back to your
-account.
+You do not deploy the Safe yourself. When you first read your CTF config, Calibri
+**ensures your Safe exists** — the operator deploys it gaslessly (idempotent) and
+returns the derived Safe address, then registers it so on-chain transfers to it
+are credited back to your account.
 
 Read your member-level wallet config:
 
@@ -41,7 +45,7 @@ Returns your funding config: `proxy_address` (your Safe), `owner_address` (your 
 
 ```json
 {
-  "exchange_address": "0x… (this deployment's CTF Exchange)",
+  "exchange_address": "0x… (Calibri's CTF Exchange)",
   "conditional_tokens_address": "0x…",
   "usdc_address": "0x…",
   "chain_id": 137,
@@ -56,7 +60,7 @@ Returns your funding config: `proxy_address` (your Safe), `owner_address` (your 
 ```
 
 <Warning>
-  Every value above is **per deployment** — read them from the API rather than copying them from this page. `domain_name` in particular is hashed into every order signature, and each network signs under its own name (testnets deliberately differ from production).
+  Read every value above from the API rather than copying it from this page. `domain_name` in particular is hashed into every order signature, so a stale copy produces a signature that will not recover.
 </Warning>
 
 `safe_status` values:
@@ -80,8 +84,8 @@ Returns your funding config: `proxy_address` (your Safe), `owner_address` (your 
 ## 2. Fund the Safe with USDC
 
 Send USDC to your Safe address (`proxy_address`) on-chain — from any wallet or
-exchange. The deposit watcher credits your off-chain
-[`balance_safe`](/non-custodial/balances) mirror once the transfer confirms.
+exchange. Your off-chain [`balance_safe`](/non-custodial/balances) mirror is
+credited once the transfer confirms.
 
 <Warning>
   The Safe must **actually hold USDC on-chain**. On-chain settlement pulls your real collateral from the Safe when a trade matches; `balance_safe` is only Calibri's mirror of that on-chain balance.
@@ -105,11 +109,11 @@ These come back in the config as `safe_setup.calls` — a list of
 `{ to, data, operation, nonce, hash }`. Sign each as a Safe `SafeTx` (EIP-712)
 with your Safe's owner and relay it (see below).
 
-Where the deployment has Safe's **MultiSend** configured, all three approvals
-arrive as a **single** call with `operation: 1` (`DELEGATECALL`) — one signature
-instead of three. Otherwise you get three calls at sequential Safe nonces, which
-must be relayed **in order**. Either way, when setup is complete the config
-reports:
+Handle both shapes: the approvals may arrive batched through Safe's
+**MultiSend** as a **single** call with `operation: 1` (`DELEGATECALL`) — one
+signature instead of three — or as three separate calls at sequential Safe
+nonces, which must be relayed **in order**. Either way, when setup is complete
+the config reports:
 
 ```json
 "safe_setup": { "ready": true, "calls": [] }
@@ -135,7 +139,7 @@ Request body:
 ```
 
 Required fields: `safe`, `to`, `data`, `signature`. `value` defaults to `"0"`
-and `operation` to `0`. Atlas rejects with `400 safe does not belong to this
+and `operation` to `0`. Calibri rejects with `400 safe does not belong to this
 member` unless `safe` equals your own derived Safe address, then forwards to the
 operator relayer.
 

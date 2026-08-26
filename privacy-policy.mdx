@@ -19,14 +19,14 @@ required, and your activity on the platform.
 Given by you when you sign up:
 
 - **Email address** — the account identifier and how we contact you.
-- **Password** — stored hashed, never in readable form. We cannot see it.
+- **Password** — stored hashed, never in readable form. We cannot see it. Accounts created with Google or a wallet get a random one they never use.
+- **Google account identifier**, if you continue with Google. Google sends us a signed token containing your **email address, whether Google has verified it, and an account identifier**; we store the identifier so the same Google account signs you back in. We do not receive your Google password, and we do not gain access to anything else in your Google account.
 - **Wallet address**, if you sign in with a wallet, or the **public half of your passkey credential** if you enrol one. The private half of a passkey never leaves your device and is never sent to us.
 - **Referral code**, where you arrived through one.
 
 ### Identity verification (KYC)
 
-Collected only where verification is required for your account or jurisdiction —
-see [KYC verification](/account-kyc):
+Collected only where verification is required for your account or jurisdiction:
 
 - Legal name, date of birth, nationality and country of residence
 - Residential address
@@ -50,7 +50,7 @@ collected.
 
 - **Session cookies** — HTTP-only, used to keep you signed in. Not used for advertising.
 - **Device and browser information**, IP address, and request logs — kept for security, fraud prevention, and debugging.
-- **Analytics** — we use Google Analytics 4 (linked to Firebase) to understand how the app is used. Where you are signed in, events are associated with your account identifier. Analytics is off entirely on deployments where no measurement ID is configured.
+- **Analytics** — we use Google Analytics 4 (linked to Firebase) to understand how the app is used. Where you are signed in, events are associated with your account identifier.
 - **Bot protection** — Cloudflare Turnstile runs on sign-up and sign-in.
 - **Push notification tokens**, if you enable notifications.
 - **Browser security reports** — content-security-policy violation reports, which we log to catch misconfigurations. They are logged and discarded, never stored against your account.
@@ -87,6 +87,7 @@ Only the providers needed to run the service:
 
 - **Identity verification providers** — for document and identity checks
 - **Google Analytics / Firebase** — usage analytics and push notifications
+- **Google Sign-In**, if you use it — Google learns that you signed in to Calibri, as it does for any site you use it on. We send Google nothing about your trading
 - **Cloudflare** — bot protection and network delivery
 - **Our support helpdesk** — for tickets you raise
 - **Market resolution sources** (Coinbase, sports data providers) — these receive **no personal data**; we read prices and results from them, and nothing about you goes the other way
@@ -156,8 +157,8 @@ Privacy questions and data requests:
   <Card title="Terms of use" href="/terms-of-use">
     The rules you accept by trading.
   </Card>
-  <Card title="KYC verification" href="/account-kyc">
-    What verification asks for and what it unlocks.
+  <Card title="Getting started" href="/getting-started/overview">
+    Creating an account and setting up your wallet.
   </Card>
   <Card title="How self-custody works" href="/non-custodial/overview">
     Why we hold no funds and no keys.

@@ -45,6 +45,7 @@
               "concepts/resolution-sources",
               "concepts/fees",
               "concepts/rewards",
+      "concepts/maker-rebates",
               "rewards-referral-program"
             ]
           },
@@ -57,8 +58,10 @@
               "non-custodial/the-safe",
               "non-custodial/signed-orders",
               "non-custodial/session-keys",
+              "non-custodial/signing-keys",
               "non-custodial/redeeming-winnings",
-              "non-custodial/resolution"
+              "non-custodial/resolution",
+              "non-custodial/withdraw-without-calibri"
             ]
           },
           {
