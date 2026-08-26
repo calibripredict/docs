@@ -3,8 +3,8 @@ title: "Self-custody"
 description: "How trading on Calibri works when the money never leaves your own on-chain Gnosis Safe."
 ---
 
-Calibri is **fully non-custodial**. Your USDC sits in **your own 1-of-1 Gnosis
-Safe** on-chain, and Calibri has no ability to move it. You authorise every
+Calibri is **fully non-custodial**. Your USDC sits in **your own Gnosis Safe**
+on-chain — owned by your keys, never ours — and Calibri has no ability to move it. You authorise every
 trade by signing; the operator relays the signed order and pays the gas.
 
 The practical consequence: your funds are **withdrawable even if Calibri is
@@ -19,7 +19,7 @@ request to a company.
 
 | Stage | What happens |
 |---|---|
-| **Funds** | USDC lives in your own 1-of-1 Gnosis Safe on-chain |
+| **Funds** | USDC lives in your own Gnosis Safe on-chain — 1-of-1, or 1-of-2 if you add a [signing key](/non-custodial/signing-keys) |
 | **Balances** | `balance_safe` / `locked_safe` mirror your Safe — see [Balances](/non-custodial/balances) |
 | **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; atlas validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
 | **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
@@ -53,7 +53,9 @@ Self-custody cuts both ways. Because only you can move your funds:
 
 - **Nobody can recover your wallet for you.** Calibri holds no key and no
   backup. Keep your passkey synced to a keychain, or your wallet's recovery
-  phrase safe.
+  phrase safe — and consider adding a
+  [signing key](/non-custodial/signing-keys), a second key of your own that can
+  still reach the funds if the first one is lost.
 - **Winnings are claimed, not delivered.** A resolved market makes your winning
   token redeemable; it does not push funds to you. See
   [Redeeming winnings](/non-custodial/redeeming-winnings).

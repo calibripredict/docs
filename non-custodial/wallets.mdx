@@ -3,8 +3,8 @@ title: "Your wallet options"
 description: "Two ways to hold your funds on Calibri — a passkey wallet or your own wallet — both fully self-custody, both trading the same order book."
 ---
 
-**Calibri never holds your money.** Your USDC lives in a 1-of-1 Gnosis Safe that
-only you control, on-chain. You can withdraw from it even if Calibri is offline.
+**Calibri never holds your money.** Your USDC lives in a Gnosis Safe that only
+you control, on-chain. You can withdraw from it even if Calibri is offline.
 
 There are two ways to set that up:
 
@@ -135,11 +135,66 @@ actually matters is **how each one is backed up**:
 
 | | Backed up by | Recoverable if you lose everything? |
 |---|---|---|
-| **Passkey wallet** | Your platform account or password manager | Only through that account — Calibri cannot help |
+| **Passkey wallet** | Your platform account or password manager | Through that account — or through a second signing key you added in advance. Calibri cannot help |
 | **Your own wallet** | Your wallet's own recovery phrase | Only through that phrase — Calibri cannot help |
 
 <Warning>
   Neither path has a support ticket at the end of it. Self-custody means the backup is yours to keep, and it is the only copy.
+</Warning>
+
+## Adding a second signing key
+
+A passkey wallet starts with one thing that can authorise it. You can add a second — an
+Ethereum wallet you hold the key for — which makes your funds recoverable if you lose the
+passkey, and lets your own code trade, withdraw and redeem.
+
+It is the same wallet either way: same address, same balance, same positions. But an
+added key is a **full** owner — it can withdraw, and it can remove your passkey — so it
+is worth reading what you are agreeing to before you do it.
+
+<Card title="Signing keys" href="/non-custodial/signing-keys" icon="key">
+  What a second key can do, how to add and remove one, and what happens if it removes your passkey.
+</Card>
+
+## How this compares to email wallets elsewhere
+
+Most prediction markets that let you sign up with an email address do it the same
+way, and it is worth understanding because it is **not** what Calibri does.
+
+The usual pattern — Polymarket's, through Magic — is that signing up creates an
+ordinary wallet with an ordinary private key, generated and held by a third-party
+key service. It is genuinely your key: the exchange cannot sign with it. But the
+key **exists off your device**, and you can export it. Their own API clients
+depend on exactly that: an email user who wants to trade programmatically exports
+the private key from the key service and imports it into their bot, then signs
+with `signature_type=1`.
+
+A passkey wallet has no such key to export. Your credential is sealed inside your
+authenticator, and the Safe is owned by an **on-chain signer contract derived
+from its public half** — so there is no private key on our servers, in a vendor's
+infrastructure, or anywhere a script can reach. Every signature requires you, in
+person, unlocking your device.
+
+| | Email wallet (key service) | Calibri passkey wallet |
+|---|---|---|
+| A private key exists | Yes, held by the key service | **No** — a credential in your authenticator |
+| Can be exported | Yes | **No**, by construction |
+| Can be phished, copied, or compelled from a third party | In principle, yes | Nothing exists to hand over |
+| Account recovery | Usually the email account behind it | Your platform's passkey sync |
+| Trading from your own code | Yes — export the key | Yes, by adding a second signing key you hold — the passkey itself is never exportable |
+
+Both are called self-custody, and both are: neither operator can move your money.
+The difference is what "your key" means. If a key can be exported, then whoever
+reaches the account that guards it — by phishing, by an email compromise, or by
+legal process against the key service — can reach your funds. A passkey removes
+that surface entirely, and the price is the last row of that table.
+
+<Note>
+  The difference is who decides. Nobody holds a key on your behalf here; if you want one that a script can use, you add it yourself, knowingly, and you can remove it again. The default stays a wallet with no exportable key at all.
+</Note>
+
+<Warning>
+  **Pick one — an account has a single self-custody wallet.** It is fixed when the wallet is created and cannot be switched afterwards: a passkey account cannot add an Ethereum wallet as its funding wallet (linking one makes it a sign-in credential only), and an account already using its own wallet is not offered a passkey wallet. This is deliberate — two wallets on one account means two pots of money, only one of which the app can show you.
 </Warning>
 
 ## Related

@@ -6,9 +6,8 @@ description: "How to authenticate a private request: mint an API key and HMAC-si
 Private requests authenticate with an **API key**: mint a key and secret, then
 HMAC-sign every request.
 
-The gateway validates the signature and forwards a trusted, short-lived JWT to
-the engine and orchestrator on the internal network, so both see the same
-authenticated member.
+Calibri validates the signature and authenticates you as the member the key
+belongs to for the rest of the request.
 
 Public endpoints need no authentication.
 
@@ -157,6 +156,59 @@ const path =
 
 const headers = sign("GET", path); // GET, path-with-query, empty body
 ```
+
+## Authentication is not authorisation to trade
+
+Signing the request proves who you are. It does not authorise an order — every
+non-custodial order carries **your own EIP-712 signature** as well, and whether
+your client can produce one depends entirely on what owns your Safe. Check
+`signature_type` on `GET /api/v2/atlas/account/wallet` before you build.
+
+<Tabs>
+  <Tab title="3 — passkey wallet">
+    **Reads work as normal.** For writes it depends on whether you have added a
+    second signing key.
+
+    A passkey signs only in the browser it was registered in, and session keys are
+    generated non-extractable, so neither can reach a server. Without a second key
+    your client can read balances, positions, orders, contracts and market data,
+    and nothing else.
+
+    **With** a second [signing key](/non-custodial/signing-keys) (Settings →
+    Wallet → Signing keys — adding one requires two-factor authentication) your
+    client signs as an owner of your Safe: orders, withdrawals and redemptions
+    all work.
+    The order stays `signature_type: 3` with `maker == signer == your Safe` — what
+    changes is the signature, which becomes a standard Safe owner signature:
+
+    ```
+    data        = abi.encode(bytes32 orderHash)
+    messageHash = EIP-712 SafeMessage(bytes message), domain = (chainId, your Safe)
+    signature   = your key's signature over messageHash   // 65 bytes, v ∈ {27,28}
+    ```
+
+    Sign the SafeMessage, not the order hash — the Safe hashes it again itself, so
+    signing the order hash directly always fails validation.
+  </Tab>
+  <Tab title="2 or 0 — your own wallet">
+    **Full access.** Your Safe is owned by an address whose private key you hold,
+    so your client signs orders itself — an ordinary EIP-712 secp256k1 signature
+    over the exchange `Order` struct.
+
+    `maker` is your Safe (type `2`) or the EOA itself (type `0`); `signer` is
+    always the EOA. The same key signs `execTransaction`, so withdrawals and
+    redemptions are scriptable too. See
+    [Signed orders](/non-custodial/signed-orders).
+
+    A browser wallet like MetaMask will not hand its key to a server — use an
+    account you control directly.
+  </Tab>
+  <Tab title="Custodial">
+    **Nothing extra to sign.** Orders placed from your Calibri balance carry no
+    order signature at all, and withdrawals go through the normal withdrawal
+    endpoints. The API key is everything your client needs.
+  </Tab>
+</Tabs>
 
 ## Related
 

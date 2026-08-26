@@ -8,7 +8,7 @@ books, placing signed orders, and managing positions and account data.
 
 ## APIs
 
-Calibri comprises several services behind one gateway. Each is responsible for a
+Calibri's API is grouped by path prefix under one base URL. Each group covers a
 distinct part of an integration.
 
 <CardGroup cols={2}>
@@ -22,8 +22,8 @@ distinct part of an integration.
   <Card title="Trading" icon="arrows-rotate">
     **`https://calibri.io/api/v2/atlas`** · **`…/pythia`**
 
-    Place EIP-712-signed orders (Atlas), then list and cancel resting orders
-    (Pythia).
+    Place EIP-712-signed orders, then list and cancel resting orders. Needs a
+    key your client can sign with — see below.
   </Card>
 
   <Card title="Account" icon="chart-line">
@@ -35,8 +35,8 @@ distinct part of an integration.
   <Card title="Wallet" icon="bolt">
     **`https://calibri.io/api/v2/atlas`**
 
-    Self-custody Safe setup, passkey enrolment, session keys, and gasless
-    relay — without holding funds on Calibri.
+    Self-custody Safe setup, passkey enrolment, signing keys, session keys, and
+    gasless relay — without holding funds on Calibri.
   </Card>
 
   <Card title="WebSocket" icon="radio" href="/api-reference/websockets">
@@ -74,9 +74,31 @@ distinct part of an integration.
   </Card>
 </CardGroup>
 
+## Can your account place orders from a script?
+
+Reading is always available. **Writing depends on what owns your wallet**, because an
+order carries your own signature as well as the request signature — and a passkey cannot
+sign outside the browser it was created in.
+
+<CardGroup cols={2}>
+  <Card title="Your own wallet" icon="circle-check">
+    `signature_type` `0` or `2`. You hold the key, so your client signs orders,
+    withdrawals and redemptions. Nothing to set up.
+  </Card>
+  <Card title="Passkey wallet" icon="key">
+    `signature_type` `3`. Reads work as they are. To place orders, add a
+    [signing key](/non-custodial/signing-keys) — a wallet you hold the key for,
+    which becomes an owner of the same Safe.
+  </Card>
+</CardGroup>
+
+Check `signature_type` on `GET /api/v2/atlas/account/wallet` before you build, and see
+[Authentication](/api-reference/authentication#authentication-is-not-authorisation-to-trade)
+for what each type signs.
+
 ## Base URL
 
-All requests go through one gateway and are routed by path prefix:
+All requests share one base URL and are routed by path prefix:
 
 ```
 https://calibri.io
@@ -84,8 +106,8 @@ https://calibri.io
 
 | Prefix | Serves |
 |---|---|
-| `/api/v2/pythia/*` | Matching engine — market data, books, tickers, open orders |
-| `/api/v2/atlas/*` | Orchestrator — balances, signed-order placement, contracts, wallet |
+| `/api/v2/pythia/*` | Market data — events, markets, books, tickers, open orders |
+| `/api/v2/atlas/*` | Trading and account — balances, signed-order placement, contracts, wallet |
 | `/api/v2/persona/*` | Identity — account reads and wallet link |
 
 ## Response format

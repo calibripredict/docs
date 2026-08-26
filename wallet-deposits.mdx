@@ -12,9 +12,11 @@ denominated in USDC.
 Your funds live in **your own on-chain Safe**. Funding is simply sending USDC to
 its address:
 
-- The Safe is a **1-of-1 Gnosis Safe** owned solely by you — by your wallet, or
-  by the signer contract derived from your passkey. The operator deploys it and
-  relays your signed orders, but **can never move funds without your signature**.
+- The Safe is a **Gnosis Safe** owned solely by you — by your wallet, or by the
+  signer contract derived from your passkey, plus any
+  [signing key](/non-custodial/signing-keys) you add yourself. The operator
+  deploys it and relays your signed orders, but **can never move funds without
+  your signature**.
 - You fund it by holding **USDC** in the Safe on the relevant network.
 - As part of Safe setup, the Safe **pre-approves** the operator to pull the taker
   fee at settlement, up to a capped amount — so you only ever *sign*; the

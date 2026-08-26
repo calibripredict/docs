@@ -8,7 +8,7 @@ order fills.** There is no settlement fee, no redemption fee, and makers pay
 nothing.
 
 - **One fee, at the trade** — A single **taker fee** is charged the moment your order fills. Nothing is taken again at settlement — winners redeem the **full 1.00 USDC per share**.
-- **Makers pay nothing** — Only the **taker** (the side that crosses the book to fill a resting order) pays. If your resting order gets filled, you pay **no** fee — and you may even earn a [maker rebate](/concepts/rewards).
+- **Makers pay nothing** — Only the **taker** (the side that crosses the book to fill a resting order) pays. If your resting order gets filled, you pay **no** fee — and you may even earn a [maker rebate](/concepts/maker-rebates).
 
 ## How the taker fee is calculated
 
@@ -71,7 +71,6 @@ contract. Anything left over is released when the order fills, rests, or is
 cancelled.
 
 - A **limit** order reserves the fee at its own limit price.
-- 
 - A **post-only** order reserves **nothing** — it can only ever be a maker, and makers pay no fee.
 
 <Note>
@@ -91,11 +90,11 @@ otherwise the market category's rate.
 | Science | 5.00% |
 | Weather | 5.00% |
 | Other | 5.00% |
+| Sports | 5.00% |
 | Finance | 4.00% |
 | Mentions | 4.00% |
 | Politics | 4.00% |
 | Tech | 4.00% |
-| Sports | 3.00% |
 | Geopolitics | 0.00% |
 | World | 0.00% |
 
@@ -116,14 +115,20 @@ funds both reward programmes:
 
 | Share | Goes to |
 |---|---|
-| **10% of the fee** | The **maker** on the other side of your fill, as a [rebate](/concepts/rewards) |
-| **10% of the fee** | Your **referrer**, if you were referred |
+| **15% / 20% / 25% of the fee**, by category | The **maker** on the other side of your fill, as a [rebate](/concepts/maker-rebates) |
+| A **percentage of the fee**, by category | Your **referrer**, if you were referred |
 | The remainder | Platform revenue |
 
+The maker's share is set per category — **20%** in Crypto, **15%** in Sports,
+**25%** everywhere else. See [Maker rebates](/concepts/maker-rebates) for the
+full table. The referral share is likewise set per category and published in the
+rewards schedule — see the [referral program](/rewards-referral-program).
+
 Both rewards are a percentage **of the taker fee**, not of your stake — so on
-the 1.68 USDC example above, the maker earns 0.168 USDC. Neither is paid at the
-moment of the trade: each fill records a reward, and a **daily payout** settles
-them. Markets in a `0.00%` category generate no fee, and therefore no rewards.
+the 1.68 USDC Crypto example above, the maker earns `0.20 × 1.68 = 0.336 USDC`.
+Neither is paid at the moment of the trade: each fill records a reward, and a
+**daily payout** settles them. Markets in a `0.00%` category generate no fee,
+and therefore no rewards.
 
 ## Currency and rounding
 
@@ -151,8 +156,8 @@ See [Self-custody](/non-custodial/overview) for the full model.
 ## Related
 
 <CardGroup cols={2}>
-  <Card title="Rewards" href="/concepts/rewards">
-    Maker rebates and referral rewards — both funded from the taker fee.
+  <Card title="Maker rebates" href="/concepts/maker-rebates">
+    The share of this fee paid back to the maker, on the same curve.
   </Card>
   <Card title="Core concepts" href="/concepts/core-concepts">
     Prices as probabilities and how settlement pays out.

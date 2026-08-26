@@ -36,7 +36,7 @@ You place: BUY 100 YES, limit, price 0.60
 ```
 
 - **Pros:** exact price control, no slippage; a resting order can earn a
-  [maker rebate](/concepts/rewards) when it's the side that gets filled.
+  [maker rebate](/concepts/maker-rebates) when it's the side that gets filled.
 - **Cons:** it may not fill if the price never reaches your limit.
 
 A `post_only` limit order is **rejected if it would immediately take liquidity** —
@@ -73,8 +73,8 @@ for each market.
 ## How your order reaches the market
 
 Every order is **EIP-712 signed** by your wallet — or by your passkey — and
-relayed on-chain via the orchestrator. **The operator pays the gas**, so signing
-costs you nothing.
+relayed on-chain by Calibri. **The operator pays the gas**, so signing costs you
+nothing.
 
 Signing is what authorises the order against your Safe; nothing can be placed on
 your behalf without it. See [Signed orders](/non-custodial/signed-orders) for the

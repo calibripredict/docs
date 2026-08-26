@@ -47,9 +47,8 @@ Withdrawals and redemptions still require your passkey, always.
   </Step>
 </Steps>
 
-If your device or browser doesn't support passkeys, or the feature isn't enabled
-on this deployment, the app simply keeps prompting per order — the original
-behaviour, and always a valid fallback.
+If your device or browser doesn't support passkeys, the app simply keeps
+prompting per order — the original behaviour, and always a valid fallback.
 
 ## When it stops working
 
@@ -76,12 +75,52 @@ Revoke the session key. It takes effect on-chain the moment it lands, and your
 funds were never reachable by that key in the first place — a session key cannot
 withdraw. Your passkey remains the only thing that can move money.
 
+## How long a key lasts
+
+You choose, in **Settings → Quick trading**: **1 day**, **7 days**, or **30 days**.
+The choice applies to the **next** key you authorise — it cannot shorten a grant
+that already exists on-chain, so to cut one short, revoke it and authorise a new
+one.
+
+Whatever you pick, the key still locks after 15 minutes idle and still cannot
+withdraw.
+
 ## For API clients
 
-Session keys are a browser convenience. A server-side integration signing with
-an API key does not need one — see the
-[API Reference](/api-reference/introduction) for the session-key
-endpoints and the order-signature envelope if you are building your own client.
+A session key is a **browser** convenience, and it stays in the browser: it is
+generated as a non-extractable key so that no script — ours or anyone's — can
+read it out. That is what makes it safe to leave unlocked, and it also means it
+cannot be copied to a server.
+
+So if you use a **passkey wallet**:
+
+| Over the API | |
+|---|---|
+| **Reading** — balances, positions, orders, contracts, market data | Works normally |
+| **Placing orders** | Not possible. Your passkey signs only in this browser |
+| **Withdrawing, redeeming** | Not possible. Owner-only, and your passkey is the owner |
+
+To trade from your own code, **add a second signing key** to your wallet
+(Settings → Wallet → Signing keys) and sign with that. It is an owner of the same
+Safe, so it can place orders, withdraw and redeem — and it is a key you hold, so a
+script can use it. See [Signing keys](/non-custodial/signing-keys).
+
+Orders signed that way are still `signature_type: 3` with `maker == signer == your
+Safe`; only the signature differs — see
+[Signed orders](/non-custodial/signed-orders) and
+[Authentication](/api-reference/authentication).
+
+<Warning>
+  A second signing key can do everything your passkey can, including removing your passkey. A session key cannot — that is the trade you are making when you choose one over the other.
+</Warning>
+
+They also interact: while a signing wallet is connected, it signs your orders and quick
+trading is not offered. An already-unlocked session key still signs first, since it needs
+no prompt at all.
+
+<Note>
+  A session key stays in the browser by design, not by omission: it is generated non-extractable so that no script — ours or anyone's — can lift it, which is what makes it safe to leave unlocked. A key a server could use has to be one you deliberately add and can remove, which is what a [signing key](/non-custodial/signing-keys) is. Other markets reach the same place by holding an exportable key on your behalf from the start: see [how this compares](/non-custodial/wallets#how-this-compares-to-email-wallets-elsewhere).
+</Note>
 
 ## Related
 
@@ -97,6 +136,12 @@ endpoints and the order-signature envelope if you are building your own client.
   </Card>
   <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
     Still passkey-only.
+  </Card>
+  <Card title="Withdrawing without Calibri" href="/non-custodial/withdraw-without-calibri">
+    The exit that does not need us.
+  </Card>
+  <Card title="Signing keys" href="/non-custodial/signing-keys">
+    A second key that can sign for your wallet.
   </Card>
 </CardGroup>
 

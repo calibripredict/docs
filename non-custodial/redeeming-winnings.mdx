@@ -70,7 +70,7 @@ Submits a signed Safe transaction; the operator executes it and pays gas.
 }
 ```
 
-Atlas rejects with `400 safe does not belong to this member` unless `safe` is
+Calibri rejects with `400 safe does not belong to this member` unless `safe` is
 your own derived Safe. Response:
 
 ```json
@@ -84,12 +84,11 @@ on-chain USDC transfer out of the Safe** — a Safe `SafeTx` executing
 `USDC.transfer(to, amount)`, relayed gaslessly through the same
 `ctf/relay` endpoint used for redemption.
 
-When funds leave the Safe on-chain, Calibri's watcher reconciles the off-chain
-mirror: it debits `balance_safe` and cancels any resting orders those funds
-collateralised.
+When funds leave the Safe on-chain, Calibri reconciles the off-chain mirror: it
+debits `balance_safe` and cancels any resting orders those funds collateralised.
 
 <Note>
-  Withdrawals are done through the generic `ctf/relay` USDC-transfer path described above. Confirm in the Wallet UI whether a dedicated one-click "withdraw from Safe" flow is available for your deployment.
+  Withdrawals are done through the generic `ctf/relay` USDC-transfer path described above.
 </Note>
 
 ## Void
