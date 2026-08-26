@@ -162,3 +162,10 @@ PY
 
 echo "wrote ${OUT}"
 npx --yes @redocly/cli@latest lint "${OUT}"
+
+# The Models section of the reference is derived from THIS document — one page
+# per components.schemas entry, plus the navigation group. It is regenerated
+# here rather than by a workflow of its own because a joined spec that lands
+# without its model pages is the same stale-doc failure this pipeline exists to
+# prevent, one directory over.
+./scripts/gen-model-pages.py "${OUT}"

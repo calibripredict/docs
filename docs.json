@@ -45,7 +45,7 @@
               "concepts/resolution-sources",
               "concepts/fees",
               "concepts/rewards",
-      "concepts/maker-rebates",
+              "concepts/maker-rebates",
               "rewards-referral-program"
             ]
           },
@@ -88,7 +88,7 @@
             "group": "Getting Started",
             "pages": [
               "api-reference/introduction",
-      "api-reference/quickstart",
+              "api-reference/quickstart",
               "api-reference/authentication",
               "api-reference/errors",
               "api-reference/rate-limits"
@@ -106,6 +106,103 @@
               "source": "/api-reference/openapi/calibri.yaml",
               "directory": "api-reference/endpoints"
             }
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "api-reference/models/overview",
+              {
+                "group": "Market data & trading",
+                "pages": [
+                  "api-reference/models/activity-item",
+                  "api-reference/models/asset-candles-response",
+                  "api-reference/models/asset-prices-response",
+                  "api-reference/models/asset-symbols-response",
+                  "api-reference/models/asset-window-response",
+                  "api-reference/models/book-level",
+                  "api-reference/models/candle-point",
+                  "api-reference/models/depth-response",
+                  "api-reference/models/error-response",
+                  "api-reference/models/event",
+                  "api-reference/models/leaderboard-entry",
+                  "api-reference/models/market-meta",
+                  "api-reference/models/market-payload",
+                  "api-reference/models/member-order",
+                  "api-reference/models/order-book-response",
+                  "api-reference/models/order-cancel-result",
+                  "api-reference/models/price-point",
+                  "api-reference/models/price-settlement",
+                  "api-reference/models/public-contract",
+                  "api-reference/models/series-count",
+                  "api-reference/models/series-ref",
+                  "api-reference/models/settlement-panel",
+                  "api-reference/models/settlement-source",
+                  "api-reference/models/tag-count",
+                  "api-reference/models/tag-ref",
+                  "api-reference/models/ticker-entry",
+                  "api-reference/models/ticker-response"
+                ]
+              },
+              {
+                "group": "Account & wallet",
+                "pages": [
+                  "api-reference/models/balance-entity",
+                  "api-reference/models/contract-entity",
+                  "api-reference/models/create-order-request",
+                  "api-reference/models/ctf-config-entity",
+                  "api-reference/models/ctf-wallet-entity",
+                  "api-reference/models/currency-entity",
+                  "api-reference/models/error-entity",
+                  "api-reference/models/funding-method-limit-entity",
+                  "api-reference/models/global-limit-entity",
+                  "api-reference/models/health-entity",
+                  "api-reference/models/limits-entity",
+                  "api-reference/models/liquidity-reward-entity",
+                  "api-reference/models/order-entity",
+                  "api-reference/models/passkey-enrol-request",
+                  "api-reference/models/pending-rewards-entity",
+                  "api-reference/models/pnl-capital-entity",
+                  "api-reference/models/pnl-entity",
+                  "api-reference/models/pnl-market-entity",
+                  "api-reference/models/pnl-point-entity",
+                  "api-reference/models/pnl-realized-entity",
+                  "api-reference/models/position-entity",
+                  "api-reference/models/preferences-entity",
+                  "api-reference/models/preferences-update-request",
+                  "api-reference/models/referral-earnings-entity",
+                  "api-reference/models/referred-member-entity",
+                  "api-reference/models/relay-request",
+                  "api-reference/models/relay-result-entity",
+                  "api-reference/models/safe-setup-call-entity",
+                  "api-reference/models/safe-setup-entity",
+                  "api-reference/models/session-key-prepare-entity",
+                  "api-reference/models/session-key-prepare-request",
+                  "api-reference/models/session-key-revoke-entity",
+                  "api-reference/models/session-key-revoke-request",
+                  "api-reference/models/session-key-status-entity",
+                  "api-reference/models/signed-order-entity",
+                  "api-reference/models/transaction-entity"
+                ]
+              },
+              {
+                "group": "Identity",
+                "pages": [
+                  "api-reference/models/current-user-entity",
+                  "api-reference/models/email-confirm-request",
+                  "api-reference/models/kyc-item-entity",
+                  "api-reference/models/kyc-status-entity",
+                  "api-reference/models/label-entity",
+                  "api-reference/models/message-entity",
+                  "api-reference/models/password-reset-confirm-request",
+                  "api-reference/models/password-reset-request",
+                  "api-reference/models/password-update-request",
+                  "api-reference/models/register-request",
+                  "api-reference/models/user-entity",
+                  "api-reference/models/wallet-link-request",
+                  "api-reference/models/wallet-linked-entity"
+                ]
+              }
+            ]
           }
         ]
       }
