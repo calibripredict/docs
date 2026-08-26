@@ -1,0 +1,232 @@
+---
+title: "End-to-end flow"
+description: "One pass through a working integration: read your wallet config, make the Safe trade-ready, fund it, sign and place an order, follow its status, and stream updates over the WebSocket."
+---
+
+Every other page in this reference documents one endpoint. This one runs the
+whole sequence in order, so you can see how the calls fit together before you
+build.
+
+```
+API key ──▶ wallet config ──▶ approvals ──▶ fund Safe ──▶ sign + place ──▶ status ──▶ WebSocket
+```
+
+## 0. Before you start
+
+You need an account and an **API key** — every private call below is HMAC-signed
+with it (`X-Auth-Apikey`, `X-Auth-Nonce`, `X-Auth-Signature`). See
+[Authentication](/api-reference/authentication).
+
+<Warning>
+  **Check `signature_type` first.** Authentication proves who you are; it does not let your client sign an order. A passkey wallet (`3`) signs only in the browser it was registered in — to trade from a script, add a [signing key](/non-custodial/signing-keys) you hold the key for. Types `0` and `2` are scriptable as they are.
+</Warning>
+
+## 1. Read your wallet config
+
+**`GET /api/v2/atlas/account/wallet`**
+
+This is the entry point to everything on-chain: it tells you which Safe is
+yours, what owns it, which contracts you are trading against, and whether you
+are ready to trade.
+
+```json
+{
+  "proxy_address": "0x…",          // your Safe — deposit here, and it makes your orders
+  "owner_address": "0x…",          // what signs: your EOA, or your passkey signer contract
+  "signature_type": 2,
+  "exchange_address": "0x…",
+  "conditional_tokens_address": "0x…",
+  "usdc_address": "0x…",
+  "chain_id": 137,
+  "domain_name": "Calibri CTF Prediction Markets",
+  "safe_setup": { "ready": false, "calls": [ /* … */ ] },
+  "safe_status": "setup_required"
+}
+```
+
+Read every address from here rather than hard-coding it — `domain_name` in
+particular is hashed into every order signature.
+
+## 2. Make the Safe trade-ready
+
+If `safe_status` is `setup_required`, the Safe still owes its approvals. Each
+entry in `safe_setup.calls` is `{ to, data, operation, nonce, hash }`: sign it
+as a Safe `SafeTx` (EIP-712) with the Safe's owner, then relay it.
+
+**`POST /api/v2/atlas/account/wallet/relay`**
+
+```json
+{
+  "safe": "0x… (your own Safe)",
+  "to": "0x…",
+  "value": "0",
+  "data": "0x…",
+  "operation": 0,
+  "signature": "0x…"
+}
+```
+
+The operator executes it and pays the gas; you get back `{ "tx": "0x…" }`. Calls
+may arrive batched as one MultiSend call (`operation: 1`) or as several at
+sequential nonces — relay those **in order**. Re-read the config until
+`safe_status` is `ready`.
+
+<Warning>
+  Do not place orders on `setup_required`. The order will rest on the book and then **fail to settle** — worse than being rejected. Only `ready` is safe to trade on. Full detail in [The Safe](/non-custodial/the-safe).
+</Warning>
+
+## 3. Fund the Safe
+
+Send **USDC on Polygon** to `proxy_address` from any wallet or exchange. There
+is nothing to call — the deposit is an ordinary on-chain transfer, and it is
+credited once it confirms.
+
+**`GET /api/v2/atlas/account/balances`**
+
+```json
+{ "currency": "usdc", "balance_safe": "150.00", "locked_safe": "0", "balance": "0", "locked": "0" }
+```
+
+`balance_safe` is your tradeable USDC — the mirror of what your Safe holds
+on-chain. `balance` / `locked` are the operator-held pool Calibri does not
+operate; they are always `"0"`. See [Balances](/non-custodial/balances).
+
+## 4. Pick a market
+
+Public, no authentication:
+
+```
+GET /api/v2/pythia/public/markets
+GET /api/v2/pythia/public/markets/{market}/order-book
+GET /api/v2/pythia/public/markets/{market}/ticker
+```
+
+## 5. Sign and place an order
+
+Read the market's CTF config — the same funding config plus the market's
+on-chain identifiers:
+
+**`GET /api/v2/atlas/account/wallet/markets/{id}`** → adds `condition_id`,
+`yes_token_id`, `no_token_id`.
+
+Build the EIP-712 `Order`, sign it, and post it:
+
+**`POST /api/v2/atlas/account/orders`**
+
+```json
+{
+  "market": "will-x-happen",
+  "side": "yes",
+  "ord_type": "limit",
+  "price": "0.60",
+  "volume": "100",
+  "post_only": false,
+  "signed_order": { "…": "" }
+}
+```
+
+Returns `201` with the order object. The struct, the unit rules and the
+signature types are in [Signed orders](/non-custodial/signed-orders) — three
+things catch people out:
+
+- **Units are 6-decimal.** `takerAmount = volume × 1e6`,
+  `makerAmount = price × volume × 1e6`.
+- **Sign the served `domain_name`**, never a copied constant.
+- **Placing locks stake *plus* the maximum taker fee** the fill could incur; the
+  unused reserve is released when the order fills, rests or is cancelled. Budget
+  `stake + max fee`, not just the stake — see [Fees](/concepts/fees).
+
+## 6. Follow the order
+
+**`GET /api/v2/pythia/orders?state=wait`** — your resting orders.
+**`GET /api/v2/pythia/orders/{id}`** — one order, open or terminal.
+
+| Field | What it tells you |
+|---|---|
+| `state` | `wait` (resting) · `done` · `cancel` · `reject` |
+| `remaining_volume` | Still working on the book |
+| `filled_volume` | Matched so far |
+| `contracts_count` | How many fills it has produced |
+| `locked` | Currently reserved against this order |
+
+Cancel with **`POST /api/v2/pythia/orders/{id}/cancel`** → `{ "id": 1420, "state": "cancel" }`.
+
+Then the results of the fill:
+
+```
+GET /api/v2/atlas/account/contracts    # your fills
+GET /api/v2/atlas/account/positions    # net holdings, and what is sellable now
+GET /api/v2/atlas/account/rewards/pending   # maker rebates accrued so far
+```
+
+<Note>
+  Orders are **placed** through `/atlas` (so the signature is validated and attached) and **read** back from `/pythia`. Listing and cancelling are the same calls for every order, however it was placed.
+</Note>
+
+## 7. Stream it instead of polling
+
+One connection carries public and private streams together:
+
+```javascript
+const streams =
+  "?stream=12.ob-inc&stream=order&stream=contract&stream=balance";
+const path = `/websocket/private${streams}`;
+
+// The upgrade is a signed GET — sign the FULL path, query string included.
+const headers = sign("GET", `/api/v2${path}`);
+const ws = new WebSocket(`wss://calibri.io/api/v2${path}`, { headers });
+```
+
+Each message is keyed by the stream name, so one handler switches on the key:
+
+```json
+{ "order": { "id": 1420, "state": "done", "remaining_volume": "0" } }
+```
+
+`order`, `contract`, `balance` and `position` replace every poll in step 6.
+
+<Warning>
+  Order-book increments carry a `sequence`. **If it skips, re-subscribe** — a client that ignores the gap quotes against a book that no longer exists.
+</Warning>
+
+Full channel list and payloads: [WebSocket streams](/api-reference/websockets).
+
+## The whole flow, once more
+
+<Steps>
+  <Step title="Authenticate">
+    Mint an API key; HMAC-sign every private request. Check `signature_type`.
+  </Step>
+  <Step title="Wallet config">
+    `GET /account/wallet` — Safe address, contracts, domain, `safe_status`.
+  </Step>
+  <Step title="Approvals">
+    Sign each `safe_setup.calls` entry as a SafeTx; relay until `ready`.
+  </Step>
+  <Step title="Fund">
+    Send USDC on Polygon to `proxy_address`; watch `balance_safe`.
+  </Step>
+  <Step title="Place">
+    Per-market config → EIP-712 `Order` → `POST /account/orders`.
+  </Step>
+  <Step title="Follow">
+    `GET /pythia/orders/{id}`, or subscribe to `order` / `contract` / `balance`.
+  </Step>
+</Steps>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Authentication" href="/api-reference/authentication">
+    HMAC signing, and why it is not authorisation to trade.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    Deploy, approve and fund — step 1–3 in full.
+  </Card>
+  <Card title="Signed orders" href="/non-custodial/signed-orders">
+    The EIP-712 domain, the Order struct, and the unit rules.
+  </Card>
+  <Card title="WebSocket streams" href="/api-reference/websockets">
+    Every channel, payload and reconnection rule.
+  </Card>
+</CardGroup>
