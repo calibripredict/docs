@@ -198,6 +198,13 @@ def write_overview(by_section, schemas):
 
 
 def update_nav(by_section):
+    """Rewrite the Models group — the last group in the API Reference tab.
+
+    Models belong to the API reference, not beside it: a caller looks a shape up
+    while reading the endpoint that returns it, so it is one sidebar, with the
+    models at the bottom of it. (This lived briefly as a top-level tab. It is
+    not one.)
+    """
     with open(DOCS_JSON) as fh:
         docs = json.load(fh)
 
@@ -212,16 +219,18 @@ def update_nav(by_section):
         ],
     }
 
-    for tab in docs.get("navigation", {}).get("tabs", []):
+    nav = docs.setdefault("navigation", {})
+    tabs = nav.get("tabs", [])
+
+    # Drop the short-lived top-level Models tab, so a rerun cannot leave both.
+    nav["tabs"] = [t for t in tabs if t.get("tab") != "Models"]
+
+    for tab in nav["tabs"]:
         if tab.get("tab") != "API Reference":
             continue
-        groups = tab.setdefault("groups", [])
-        for i, existing in enumerate(groups):
-            if existing.get("group") == "Models":
-                groups[i] = group
-                break
-        else:
-            groups.append(group)
+        groups = [g for g in tab.setdefault("groups", []) if g.get("group") != "Models"]
+        groups.append(group)  # last: after Getting Started, Streaming, Endpoints
+        tab["groups"] = groups
         break
     else:
         sys.exit('docs.json has no "API Reference" tab to add the Models group to')
