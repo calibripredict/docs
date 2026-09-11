@@ -51,7 +51,7 @@ EIP-712 field names are camelCase:
 ```
 Order(
   uint256 salt,
-  address maker,          // your Safe (POLY_GNOSIS_SAFE / POLY_1271) or EOA (EOA-direct)
+  address maker,          // your Safe
   address signer,         // your wallet EOA — or the Safe itself, for POLY_1271
   address taker,          // 0x0 (public)
   uint256 tokenId,        // YES or NO ERC-1155 token id for the order side
@@ -61,7 +61,7 @@ Order(
   uint256 nonce,
   uint256 feeRateBps,     // must be 0
   uint8   side,           // 0 = BUY (both YES and NO legs are BUYs that mint)
-  uint8   signatureType   // 2 = POLY_GNOSIS_SAFE, 3 = POLY_1271, 0 = EOA
+  uint8   signatureType   // 2 = POLY_GNOSIS_SAFE, 3 = POLY_1271
 )
 ```
 
@@ -81,26 +81,21 @@ type requires — an order signed the wrong way is rejected.
   hash, using a [signing key](/non-custodial/signing-keys) you added. Set both
   `maker` and `signer` to your Safe. In the browser your passkey does this for
   you.
-- **`0`** — sign the order with your wallet key. Set both fields to your wallet
-  address.
-
 Your type follows from what owns your Safe: a wallet you hold the key for
-(`2`), a passkey (`3`), or no Safe at all (`0`) — so it is fixed by [how you set
-your wallet up](/non-custodial/wallets#which-signature-type-your-wallet-gets).
-The names below are the exchange contract's enum and mean the same as the
-numbers:
+(`2`) or a passkey (`3`) — so it is fixed by [how you set your wallet
+up](/non-custodial/wallets#which-signature-type-your-wallet-gets). The names
+below are the exchange contract's enum and mean the same as the numbers:
 
 | Type | Owner of the Safe | `maker` / `signer` | How it is signed |
 |---|---|---|---|
 | `2` — `POLY_GNOSIS_SAFE` | Your wallet address (EOA) | `maker` = Safe, `signer` = your EOA | Your wallet signs the typed data; the exchange ECDSA-recovers `signer` and requires `getSafeAddress(signer) == maker` |
 | `3` — `POLY_1271` | A passkey signer contract | `maker` = `signer` = **the Safe** | Anything the Safe accepts: a WebAuthn assertion, a session-key envelope, or a plain ECDSA signature from a second signing key you added. Validated on-chain, not by recovery |
-| `0` — `EOA` | — (no Safe) | Both your EOA | Direct EOA signing; a fallback path |
 
 <Warning>
   For `POLY_1271` the exchange does **no address derivation** — it requires `signer == maker`, that `maker` has code, and that `isValidSignatureNow(maker, hash, sig)` passes. That is exactly what allows a *contract* to own the Safe. A passkey order sent as type `2` cannot work: that path ECDSA-recovers a key which does not exist.
 </Warning>
 
-For types `2` and `0` the signature is your **EOA** signing the typed data above.
+For type `2` the signature is your **EOA** signing the typed data above.
 
 Type `3` has no EOA key *by default* — a passkey owns the Safe. Adding your own
 wallet as a [signing key](/non-custodial/signing-keys) gives it one, and that is
@@ -217,7 +212,7 @@ Calibri fully validates the signed order before anything is placed, rejecting wi
 - `expiration` is non-zero, unexpired, and within 365 days;
 - amounts match the volume and price (see the unit rules above);
 - the maker is a Safe **registered to you** and settlement-ready;
-- for types `2` / `0`, `signer` equals your member EOA and the **signature
+- for type `2`, `signer` equals your member EOA and the **signature
   ECDSA-recovers to `signer`**;
 - for type `3`, `signer == maker` and the **Safe itself verifies the signature**
   (EIP-1271) — plus, for a session-key envelope, the grant is still within its

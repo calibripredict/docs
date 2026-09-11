@@ -175,10 +175,6 @@ Add a [second signing key](/non-custodial/signing-keys) to a passkey wallet and
 you stay on type `3`. The extra key lets your own code sign orders. Your wallet
 is the same wallet.
 
-Type `0` means no Safe was found behind your address. You will see it before
-your wallet setup has finished, or if the lookup failed on that request — read
-the endpoint again before you sign.
-
 <Note>
   Read `signature_type` from `GET /api/v2/atlas/account/wallet` before you sign,
   rather than hardcoding a number. It is the same field the web app reads.
