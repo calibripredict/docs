@@ -85,8 +85,10 @@ type requires — an order signed the wrong way is rejected.
   address.
 
 Your type follows from what owns your Safe: a wallet you hold the key for
-(`2`), a passkey (`3`), or no Safe at all (`0`). The names below are the
-exchange contract's enum and mean the same as the numbers:
+(`2`), a passkey (`3`), or no Safe at all (`0`) — so it is fixed by [how you set
+your wallet up](/non-custodial/wallets#which-signature-type-your-wallet-gets).
+The names below are the exchange contract's enum and mean the same as the
+numbers:
 
 | Type | Owner of the Safe | `maker` / `signer` | How it is signed |
 |---|---|---|---|
