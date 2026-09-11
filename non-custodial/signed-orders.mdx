@@ -38,10 +38,10 @@ maker), `owner_address` (what owns the Safe), `signature_type`,
 ## 2. The EIP-712 domain
 
 ```
-name:              domain_name       (from ctf-config)
+name:              domain_name       (from GET /account/wallet)
 version:           "1"
-chainId:           chain_id          (from ctf-config)
-verifyingContract: exchange_address  (from ctf-config)
+chainId:           chain_id          (from GET /account/wallet)
+verifyingContract: exchange_address  (from GET /account/wallet)
 ```
 
 ## 3. The Order struct
@@ -71,8 +71,20 @@ Order(
 
 ### Signature types
 
-Which type applies depends on **what owns your Safe**. The `signature_type`
-returned by `ctf-config` tells you, so you never have to infer it:
+A signature type is not a choice. It says **what owns your Safe**, which
+decides how the exchange can check a signature at all:
+
+- **`2`** — your own wallet owns it. The exchange recovers your address from
+  the signature and checks it derives your Safe.
+- **`3`** — a passkey owns it. Nothing can be recovered from a contract, so the
+  exchange asks the Safe itself whether the signature is good.
+- **`0`** — there is no Safe. Your wallet trades directly.
+
+`GET /api/v2/atlas/account/wallet` returns yours as `signature_type`, so you
+never have to work it out. Send that value; sending a different one fails.
+
+The names in the table are the exchange contract's own enum, and carry no
+meaning beyond the number:
 
 | Type | Owner of the Safe | `maker` / `signer` | How it is signed |
 |---|---|---|---|

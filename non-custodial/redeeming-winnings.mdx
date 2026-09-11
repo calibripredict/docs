@@ -32,7 +32,7 @@ authorised by you and relayed on your behalf.
     with:
     - `collateralToken` = `usdc_address`
     - `parentCollectionId` = `0x0000…0000` (32 zero bytes)
-    - `conditionId` = `condition_id` (from the market's ctf-config)
+    - `conditionId` = `condition_id` (from GET /account/wallet/markets/{id})
     - `indexSets` = `[1, 2]` — sweeps **both** outcome positions in one
     transaction (the winning side pays out, the losing side is 0)
   </Step>
