@@ -164,6 +164,17 @@ non-custodial order carries **your own EIP-712 signature** as well, and whether
 your client can produce one depends entirely on what owns your Safe. Check
 `signature_type` on `GET /api/v2/atlas/account/wallet` before you build.
 
+The number tells you what owns your Safe, which is what decides how your client
+signs — and whether it can sign at all:
+
+| | What owns your Safe | Can your own code sign orders? |
+|---|---|---|
+| **`3`** | A passkey | Only after you add a [second signing key](/non-custodial/signing-keys) — a passkey cannot sign outside its browser |
+| **`2`** | An address you hold the private key for (MetaMask, Rainbow, WalletConnect) | Yes — your key signs the order directly |
+| **Custodial** | Calibri holds your funds; there is no Safe | No signature is involved — orders are ordinary API calls |
+
+Open your type below.
+
 <Tabs>
   <Tab title="3 — passkey wallet">
     **Reads work as normal.** For writes it depends on whether you have added a
@@ -218,14 +229,13 @@ your client can produce one depends entirely on what owns your Safe. Check
     the same way as signing the raw order hash, so verify once against
     `getMessageHash` if you can reach a node.
   </Tab>
-  <Tab title="2 or 0 — your own wallet">
+  <Tab title="2 — your own wallet">
     **Full access.** Your Safe is owned by an address whose private key you hold,
     so your client signs orders itself — an ordinary EIP-712 secp256k1 signature
     over the exchange `Order` struct.
 
-    `maker` is your Safe (type `2`) or the EOA itself (type `0`); `signer` is
-    always the EOA. The same key signs `execTransaction`, so withdrawals and
-    redemptions are scriptable too. See
+    `maker` is your Safe and `signer` is your wallet address. The same key signs
+    `execTransaction`, so withdrawals and redemptions are scriptable too. See
     [Signed orders](/non-custodial/signed-orders).
 
     A browser wallet like MetaMask will not hand its key to a server — use an
