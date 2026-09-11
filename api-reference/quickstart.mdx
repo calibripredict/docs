@@ -132,6 +132,12 @@ things catch people out:
 - **Units are 6-decimal.** `takerAmount = volume × 1e6`,
   `makerAmount = price × volume × 1e6`.
 - **Sign the served `domain_name`**, never a copied constant.
+- **On a passkey Safe (`signature_type: 3`), sign the SafeMessage — not the
+  order hash.** Safe re-wraps the hash before checking it, so signing
+  `orderHash` directly is rejected as *signed_order signature was not accepted
+  by the maker wallet*, even though the signature recovers to your key when you
+  check it yourself. Recipe under **type 3** in
+  [Authentication](/api-reference/authentication).
 - **Placing locks stake *plus* the maximum taker fee** the fill could incur; the
   unused reserve is released when the order fills, rests or is cancelled. Budget
   `stake + max fee`, not just the stake — see [Fees](/concepts/fees).
