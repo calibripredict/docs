@@ -77,7 +77,7 @@ returned by `ctf-config` tells you, so you never have to infer it:
 | Type | Owner of the Safe | `maker` / `signer` | How it is signed |
 |---|---|---|---|
 | `2` — `POLY_GNOSIS_SAFE` | Your wallet address (EOA) | `maker` = Safe, `signer` = your EOA | Your wallet signs the typed data; the exchange ECDSA-recovers `signer` and requires `getSafeAddress(signer) == maker` |
-| `3` — `POLY_1271` | A passkey signer contract | `maker` = `signer` = **the Safe** | A WebAuthn assertion, wrapped as an EIP-1271 contract signature and validated on-chain |
+| `3` — `POLY_1271` | A passkey signer contract | `maker` = `signer` = **the Safe** | Anything the Safe accepts: a WebAuthn assertion, a session-key envelope, or a plain ECDSA signature from a second signing key you added. Validated on-chain, not by recovery |
 | `0` — `EOA` | — (no Safe) | Both your EOA | Direct EOA signing; a fallback path |
 
 <Warning>
@@ -85,10 +85,13 @@ returned by `ctf-config` tells you, so you never have to infer it:
 </Warning>
 
 For types `2` and `0` the signature is your **EOA** signing the typed data above.
-For type `3` there is no EOA key at all — see
-[Your wallet options](/non-custodial/wallets).
 
-### Type 3: passkey signature or session-key envelope
+Type `3` has no EOA key *by default* — a passkey owns the Safe. Adding your own
+wallet as a [signing key](/non-custodial/signing-keys) gives it one, and that is
+what makes type `3` scriptable: the type does not change, only the signature.
+See [Your wallet options](/non-custodial/wallets).
+
+### Type 3: three signature shapes
 
 A `POLY_1271` order carries one of **three** signature shapes, and the server
 tells them apart by length alone — never by a client-supplied flag:
