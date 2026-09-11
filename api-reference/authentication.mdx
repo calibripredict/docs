@@ -188,7 +188,35 @@ your client can produce one depends entirely on what owns your Safe. Check
     ```
 
     Sign the SafeMessage, not the order hash — the Safe hashes it again itself, so
-    signing the order hash directly always fails validation.
+    signing the order hash directly always fails validation. The symptom is a
+    `422` reading *signed_order signature was not accepted by the maker wallet*,
+    on a signature that recovers to your key perfectly when you check it
+    yourself — the Safe is recovering against a different digest.
+
+    Computed OFFLINE. Your Safe exposes `getMessageHash(bytes)` and will return
+    the same value, but that needs an RPC connection to the chain, which an API
+    client generally has no reason to hold:
+
+    ```js
+    import { ethers } from "ethers";
+
+    // chainId and your Safe both come from GET /api/v2/atlas/account/wallet
+    // (`chain_id` and `proxy_address`). No chain access is required.
+    const data = ethers.AbiCoder.defaultAbiCoder().encode(["bytes32"], [orderHash]);
+
+    const safeMessageHash = ethers.TypedDataEncoder.hash(
+      { chainId, verifyingContract: safeAddress },
+      { SafeMessage: [{ name: "message", type: "bytes" }] },
+      { message: data }
+    );
+
+    const signature = wallet.signingKey.sign(safeMessageHash).serialized;
+    ```
+
+    The domain is `chainId` and `verifyingContract` only — no `name`, no
+    `version`. That is Safe 1.3.0's domain, and getting it wrong fails exactly
+    the same way as signing the raw order hash, so verify once against
+    `getMessageHash` if you can reach a node.
   </Tab>
   <Tab title="2 or 0 — your own wallet">
     **Full access.** Your Safe is owned by an address whose private key you hold,
