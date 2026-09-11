@@ -1,0 +1,118 @@
+---
+title: "Requesting a market"
+description: "Suggest an event for Calibri to list — who can request one, why the gate is ten settled contracts rather than ten trades, and the submission limits that keep the queue readable."
+---
+
+If there's an event you want to trade and Calibri doesn't list it, you can
+suggest it from **Request a Market**. A request is a suggestion to the people who
+build markets, not an order form: approving one records that the idea was good,
+it does not create the market by itself. A listed market still goes through the
+normal build — wording, resolution source, close time — before anyone can trade it.
+
+## You need ten settled contracts
+
+Requests are open to traders with a settled track record. The gate is **ten
+contracts that have settled**, and the page shows your progress toward it.
+
+A contract counts when both things are true:
+
+1. **You were on one side of it** — yes or no, it makes no difference which. It has
+   to have actually matched against a counterparty; an order resting on the book
+   is not a contract.
+2. **The market it was traded in has resolved** — to yes or to no.
+
+<Note>
+  This is the part that surprises people: **trading is not enough on its own.** A
+  contract you traded this morning sits at *pending* until its market resolves, and
+  pending contracts don't count. Trade ten contracts today across markets that close
+  next year and your progress still reads 0 of 10 — it moves as those markets settle.
+</Note>
+
+### What doesn't count
+
+- **Open positions.** They're counted the moment their market resolves, not before.
+- **Voided markets.** A market that was cancelled never reached a verdict, so its
+  contracts stay pending forever and never count. Nothing you did wrong — that
+  contract simply can't be evidence of a completed trade.
+- **Orders that never filled.** No counterparty, no contract.
+
+### It counts contracts, not markets
+
+The threshold is ten *contracts*, and there's no requirement that they come from
+ten different markets. Ten contracts in one market gets you there. One order that
+fills against three separate makers produces three contracts, not one.
+
+### Why settlement and not just trading
+
+The gate is the strongest anti-spam signal available, and it works because
+settlement is expensive to fake. Matched contracts are cheap to manufacture — two
+accounts and a few minutes will produce as many as you like. A *settled* contract
+costs real time, because you have to wait for the event, and real money, because
+a wash trade against yourself still pays the taker fee and still puts one side on
+the losing end. That's what makes it worth requiring.
+
+The cost is borne honestly: a new trader who does everything right still waits for
+their markets to resolve. There's no partial credit for open positions.
+
+## What to submit
+
+| Field | Requirement |
+| --- | --- |
+| **Market question** | 12–500 characters. Frame it as a clear yes/no question. |
+| **Description** | 50–4000 characters, required. What the market means, how it should resolve, and the edge cases you can see. |
+| **Category** | One of Calibri's real top-level categories. Picking the precise home for it is the reviewer's job — top level is enough. |
+| **Resolution date** | Optional. Between tomorrow and 24 months out. |
+| **Resolution source** | Optional but the single most useful thing you can add — the official page or feed that decides the outcome. |
+
+The lower bound on the date keeps out events that have already happened; the upper
+bound keeps *"will humanity colonise Mars by 2300?"* out of the review queue.
+
+<Note>
+  A request with a named resolution source and a stated edge case gets reviewed
+  faster than one without, because it can be assessed rather than researched.
+</Note>
+
+## Submission limits
+
+Beyond the ten-contract gate, four limits shape the queue. Ordinary use never
+touches any of them.
+
+- **10 pending at a time.** Once you have ten unreviewed requests, you wait for
+  review before submitting more.
+- **15 per day**, by default.
+- **A reputation throttle.** Once you have review history, a poor approval ratio
+  lowers that daily cap: 3 or more reviewed with under half approved drops you to
+  3 a day; 5 or more reviewed with under a fifth approved drops you to 1 a day. A
+  clean record never triggers it, and a member with no history yet is on the
+  default cap.
+- **5 submissions an hour**, which mostly exists to absorb accidental double-submits.
+- **No duplicate titles** among your own pending requests.
+
+## After you submit
+
+Your request appears in **Request history** on the same page with one of three
+states:
+
+- **Pending review** — in the queue.
+- **Approved** — the idea was accepted. Reviewer notes, if any, appear with it.
+- **Rejected** — with notes explaining why, where there's something useful to say.
+
+Approval is informational. It means a market builder agreed the event is worth
+listing; the market itself appears when it's been written and sourced.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Core concepts" href="/concepts/core-concepts">
+    Binary markets, prices as probabilities, settlement.
+  </Card>
+  <Card title="How markets are resolved" href="/concepts/resolution-sources">
+    What a market settles against, and why it is never revised.
+  </Card>
+  <Card title="Placing orders" href="/trading-placing-orders">
+    How a matched contract comes about in the first place.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The single taker fee.
+  </Card>
+</CardGroup>
