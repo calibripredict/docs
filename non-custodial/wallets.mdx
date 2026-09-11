@@ -156,6 +156,44 @@ is worth reading what you are agreeing to before you do it.
   What a second key can do, how to add and remove one, and what happens if it removes your passkey.
 </Card>
 
+## Which signature type your wallet gets
+
+Every signed order carries a `signature_type`, and the API rejects an order signed
+the wrong way for its type. In the browser you never choose it — the app reads it
+and signs correctly. It matters the moment you place orders from your own code.
+
+**How you set the wallet up is what decides it:**
+
+| How you set the wallet up | `signature_type` | What produces the signature | What you see in the browser |
+|---|---|---|---|
+| **Passkey wallet** | `3` — `POLY_1271` | The Safe itself (`maker` = `signer` = your Safe) | A Face ID / Touch ID / PIN prompt per order — or nothing at all, if you granted a session key |
+| **Your own wallet** | `2` — `POLY_GNOSIS_SAFE` | Your wallet address, ECDSA (`maker` = Safe, `signer` = your EOA) | A signature request in MetaMask, Rainbow, or your WalletConnect wallet |
+
+Signing up with an email and password does not by itself produce either. It creates
+the Calibri account; the wallet is a separate step, and the step you take there —
+enrol a passkey, or connect a wallet — is what fixes the type. Signing up with a
+passkey does both at once.
+
+**Adding a second signing key does not change the type.** A passkey wallet stays
+`3` after you add one: same Safe, same `maker`, same `signer`. What changes is that
+a script can now produce a signature the Safe accepts, where a passkey and a
+browser-held session key cannot sign outside their browser.
+
+You may also see `signature_type` `0` — `EOA`, meaning `maker` is your wallet
+address with no Safe behind it. Neither sign-up route leaves you there in normal
+operation; it shows up before you have linked a wallet at all, or if Calibri could
+not derive your Safe on that request. Read the endpoint again rather than signing
+as `0`.
+
+<Note>
+  Never hardcode the number. Read `signature_type` from `GET /api/v2/atlas/account/wallet`
+  before you sign — it is the same field the web app reads.
+</Note>
+
+<Card title="Signing an order" href="/non-custodial/signed-orders" icon="signature">
+  What each type requires of the signature itself, and the exact bytes to sign.
+</Card>
+
 ## How this compares to email wallets elsewhere
 
 Most prediction markets that let you sign up with an email address do it the same
