@@ -158,34 +158,30 @@ is worth reading what you are agreeing to before you do it.
 
 ## Which signature type your wallet gets
 
-Every signed order carries a `signature_type`, and the API rejects an order signed
-the wrong way for its type. In the browser you never choose it — the app reads it
-and signs correctly. It matters the moment you place orders from your own code.
+Every order you sign carries a `signature_type`. It tells the exchange how to
+check your signature, and it comes from the wallet you set up — you never pick
+it yourself.
 
-**How you set the wallet up is what decides it:**
+| Your wallet | Your type | Signing an order |
+|---|---|---|
+| **Passkey wallet** | `3` | Face ID, Touch ID, or your device PIN |
+| **Your own wallet** | `2` | Approve the request in MetaMask, Rainbow, or your WalletConnect wallet |
 
-| How you set the wallet up | `signature_type` | What produces the signature | What you see in the browser |
-|---|---|---|---|
-| **Passkey wallet** | `3` — `POLY_1271` | The Safe itself (`maker` = `signer` = your Safe) | A Face ID / Touch ID / PIN prompt per order — or nothing at all, if you granted a session key |
-| **Your own wallet** | `2` — `POLY_GNOSIS_SAFE` | Your wallet address, ECDSA (`maker` = Safe, `signer` = your EOA) | A signature request in MetaMask, Rainbow, or your WalletConnect wallet |
+Sign up with a passkey and you get a passkey wallet in the same step. Sign up
+with an email address and you have no wallet yet — you set one up afterwards in
+**Settings → Wallet**, and that is the moment your type is decided.
 
-An email-and-password sign-up creates your Calibri account. The wallet step that
-follows is what sets the type: enrol a passkey and you get `3`, connect a wallet
-you already use and you get `2`. Signing up with a passkey does both steps at once.
+Add a [second signing key](/non-custodial/signing-keys) to a passkey wallet and
+you stay on type `3`. The extra key lets your own code sign orders. Your wallet
+is the same wallet.
 
-**A second signing key keeps you on type `3`.** Same Safe, same `maker`, same
-`signer` — what changes is who can produce the signature. A passkey and a
-browser-held session key sign only inside their browser; a key you hold signs
-from a script.
-
-You may also see `signature_type` `0` — `EOA`, meaning `maker` is your wallet
-address with no Safe behind it. It appears in two situations: before you have
-linked a wallet, and when Calibri could not derive your Safe on that request.
-Read the endpoint again and sign for the type it returns.
+Type `0` means no Safe was found behind your address. You will see it before
+your wallet setup has finished, or if the lookup failed on that request — read
+the endpoint again before you sign.
 
 <Note>
-  Never hardcode the number. Read `signature_type` from `GET /api/v2/atlas/account/wallet`
-  before you sign — it is the same field the web app reads.
+  Read `signature_type` from `GET /api/v2/atlas/account/wallet` before you sign,
+  rather than hardcoding a number. It is the same field the web app reads.
 </Note>
 
 <Card title="Signing an order" href="/non-custodial/signed-orders" icon="signature">
