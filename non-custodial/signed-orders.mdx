@@ -90,13 +90,26 @@ For type `3` there is no EOA key at all — see
 
 ### Type 3: passkey signature or session-key envelope
 
-A `POLY_1271` order carries one of **two** signature shapes, and the server tells
-them apart by length alone — never by a client-supplied flag:
+A `POLY_1271` order carries one of **three** signature shapes, and the server
+tells them apart by length alone — never by a client-supplied flag:
 
 | Shape | Content |
 |---|---|
 | **Passkey** | The WebAuthn assertion, wrapped as a Safe contract signature. Long |
 | **Session key** | `abi.encode(uint256 keyId, uint256 r, uint256 s)` — exactly **96 bytes** (`0x` + 192 hex chars) |
+| **Safe owner** | A plain ECDSA signature — **65 bytes** (`0x` + 130 hex chars) — from a [second signing key](/non-custodial/signing-keys) you added |
+
+The third is the only one a server-side client can produce: a passkey signs
+only in the browser that registered it, and session keys are generated
+non-extractable. Add your own wallet as a signing key and your code signs as an
+owner of the Safe.
+
+It signs the **SafeMessage**, not the order hash. Safe re-wraps the hash before
+checking it, so signing `orderHash` directly recovers to a different address and
+the Safe rejects it — reported as `422 signed_order signature was not accepted
+by the maker wallet`, on a signature that verifies perfectly if you check it
+yourself. The full recipe, computable without a node, is under **type 3** in
+[Authentication](/api-reference/authentication).
 
 The grant id is read out of the envelope's first word, so a client cannot name a
 live grant while signing with an expired key. A session-signed order is
