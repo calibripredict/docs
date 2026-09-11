@@ -167,7 +167,7 @@ your client can produce one depends entirely on what owns your Safe. Check
 The number tells you what owns your Safe, which is what decides how your client
 signs — and whether it can sign at all:
 
-| | What owns your Safe | Can your own code sign orders? |
+| `signature_type` | What owns your Safe | Can your own code sign orders? |
 |---|---|---|
 | **`3`** | A passkey | Only after you add a [second signing key](/non-custodial/signing-keys) — a passkey cannot sign outside its browser |
 | **`2`** | An address you hold the private key for (MetaMask, Rainbow, WalletConnect) | Yes — your key signs the order directly |
