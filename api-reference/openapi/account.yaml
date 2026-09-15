@@ -164,7 +164,7 @@ components:
           example: false
           type: 'boolean'
         price:
-          description: 'Limit price, `0.01`–`0.99`. Required for a limit order.'
+          description: 'Limit price, `0.01`–`0.99`, in whole cents (e.g. 0.27, not 0.275) — an order finer than the market precision is rejected, not rounded. Required for a limit order.'
           example: '0.60'
           type: 'string'
         side:
@@ -706,7 +706,7 @@ components:
           example: '100'
           type: 'string'
         price:
-          description: 'Limit price, `0.01`–`0.99`.'
+          description: 'Limit price, `0.01`–`0.99`, in whole cents (e.g. 0.27, not 0.275) — finer than the market precision is rejected, not rounded.'
           example: '0.60'
           type: 'string'
         remaining_volume:
