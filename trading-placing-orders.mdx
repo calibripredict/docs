@@ -17,12 +17,20 @@ Every order has:
 | **Market** | The market (event) you are trading. |
 | **Side** | **`yes`** or **`no`** — the outcome you are buying. Not "buy/sell". |
 | **Order type** | **Limit**. Every order carries your signature, which commits to a price. |
-| **Volume** | Number of contracts. |
-| **Price** | Price per contract, `0.01`–`0.99`. |
+| **Volume** | Number of contracts. Must match the market's size precision. |
+| **Price** | Price per contract, `0.01`–`0.99`, in **whole cents** — e.g. `0.27`, not `0.275`. |
 
 <Note>
   On the API these map to the order fields `market`, `side` (`"yes"`/`"no"`), `ord_type` (`"limit"`), `volume`, and `price`. See the [API Overview](/api-reference/introduction) for the exact request shape.
 </Note>
+
+<Warning>
+  **Price and size must match the market's precision — they are rejected, not rounded.**
+  A limit price carries at most the market's price precision (whole cents on a
+  standard market: `0.27` is valid, `0.275` is refused), and volume at most its size
+  precision. An order finer than the market allows is rejected before it is placed, so
+  round to the market's precision yourself rather than relying on the server to.
+</Warning>
 
 ## Limit orders
 
