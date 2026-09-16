@@ -1,5 +1,14 @@
 components:
   schemas:
+    AutoRedeemRequest:
+      properties:
+        enabled:
+          description: 'Turn auto-redeem on or off. Relay `setApprovalForAll(auto_redeemer_address, enabled)` from your Safe first — the chain is read back before this is stored.'
+          example: true
+          type: 'boolean'
+      required:
+        - 'enabled'
+      type: 'object'
     BalanceEntity:
       properties:
         address_eoa:
@@ -2331,6 +2340,11 @@ paths:
     put:
       description: 'Call after relaying `setApprovalForAll(auto_redeemer_address, enabled)` from your Safe. Returns 409 if the chain does not show that approval yet.'
       parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoRedeemRequest'
       responses:
         "200":
           content:
@@ -2338,6 +2352,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/CtfAutoRedeemEntity'
           description: ''
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: '`enabled` is not a boolean'
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: 'Auto-redeem is unavailable for this account, the Safe is not registered yet, or the chain does not show the approval (or its revocation) yet'
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: 'On-chain state could not be read'
       summary: 'Set auto-redeem'
       tags:
         - 'Wallet'
