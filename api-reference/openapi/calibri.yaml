@@ -672,9 +672,7 @@ paths:
           name: limit
           schema:
             type: integer
-        - description: >-
-            `slim` reduces the main list's events to the card fields (rails stay
-            full)
+        - description: '`slim` reduces the main list AND the rails to the card fields'
           in: query
           name: fields
           schema:
