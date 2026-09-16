@@ -215,6 +215,36 @@ components:
           type: array
           uniqueItems: false
       type: object
+    LeaderboardEntry:
+      properties:
+        contracts:
+          example: 30
+          type: integer
+        currency:
+          example: usdc
+          type: string
+        rank:
+          example: 1
+          type: integer
+        total_pnl:
+          example: 4500.75
+          type: number
+        trades:
+          example: 45
+          type: integer
+        uid:
+          example: ID1A2B3C4D5E
+          type: string
+        username:
+          example: alice***
+          type: string
+        win_rate:
+          example: 0.7333
+          type: number
+        wins:
+          example: 22
+          type: integer
+      type: object
     MarketPayload:
       properties:
         amount_precision:
@@ -1777,6 +1807,54 @@ paths:
       summary: Event by slug
       tags:
       - Events
+  /api/v2/pythia/public/leaderboard:
+    get:
+      description: |-
+        Top members by realised PnL on settled contracts. `username` is a
+        privacy-masked display name (or an explicit display name when set).
+        A member with settled contracts in more than one currency appears
+        once per currency. Filter with `period` (`all`, `24h`, `7d`, `30d`).
+      parameters:
+      - description: all (default), 24h, 7d or 30d
+        in: query
+        name: period
+        schema:
+          type: string
+      - description: Page, from 1 (default 1)
+        in: query
+        name: page
+        schema:
+          type: integer
+      - description: Rows per page, 1-100 (default 100)
+        in: query
+        name: limit
+        schema:
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+                type: array
+          description: OK
+          headers:
+            Page:
+              description: The page returned
+              schema:
+                type: integer
+            Per-Page:
+              description: Rows per page
+              schema:
+                type: integer
+            Total:
+              description: Ranked rows on the whole board, at most 100
+              schema:
+                type: integer
+      summary: Leaderboard
+      tags:
+      - Community
   /api/v2/pythia/public/markets:
     get:
       description: |-
