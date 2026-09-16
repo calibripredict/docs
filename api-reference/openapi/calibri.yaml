@@ -1526,6 +1526,11 @@ paths:
         from your Safe. Returns 409 if the chain does not show that approval
         yet.
       parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoRedeemRequest'
       responses:
         '200':
           content:
@@ -1533,6 +1538,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/CtfAutoRedeemEntity'
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: '`enabled` is not a boolean'
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: >-
+            Auto-redeem is unavailable for this account, the Safe is not
+            registered yet, or the chain does not show the approval (or its
+            revocation) yet
+        '503':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: On-chain state could not be read
       summary: Set auto-redeem
       tags:
         - Wallet
@@ -2583,32 +2609,7 @@ components:
           example: active
           type: string
         terms:
-          description: >-
-            Terms is what this market resolves against, as structured fields —
-            the
-
-            conditions `rules` states in prose: kind, strike_type, floor_strike
-            /
-
-            cap_strike, underlying, measure (instant, granularity, basis) and
-            settles_on.
-
-
-            `rules` is for a person and free to change its wording; terms are
-            what code
-
-            reads, so an integrator never parses a title to learn the strike.
-            Kalshi
-
-            publishes the same thing as strike_type / floor_strike / cap_strike.
-
-
-            Stored by atlas (`markets.terms`, derived from the resolution source
-            and its
-
-            params) and published as-is. Omitted for a market with no automated
-            source.
-          type: object
+          $ref: '#/components/schemas/MarketTerms'
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
@@ -3430,35 +3431,64 @@ components:
           example: active
           type: string
         terms:
-          description: >-
-            Terms is what this market resolves against, as structured fields —
-            the
-
-            conditions `rules` states in prose: kind, strike_type, floor_strike
-            /
-
-            cap_strike, underlying, measure (instant, granularity, basis) and
-            settles_on.
-
-
-            `rules` is for a person and free to change its wording; terms are
-            what code
-
-            reads, so an integrator never parses a title to learn the strike.
-            Kalshi
-
-            publishes the same thing as strike_type / floor_strike / cap_strike.
-
-
-            Stored by atlas (`markets.terms`, derived from the resolution source
-            and its
-
-            params) and published as-is. Omitted for a market with no automated
-            source.
-          type: object
+          $ref: '#/components/schemas/MarketTerms'
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+      type: object
+    MarketTerms:
+      description: >-
+        Terms is what this market resolves against, as structured fields — the
+
+        conditions `rules` states in prose: kind, strike_type, floor_strike /
+
+        cap_strike, underlying, measure (instant, granularity, basis) and
+        settles_on.
+
+
+        `rules` is for a person and free to change its wording; terms are what
+        code
+
+        reads, so an integrator never parses a title to learn the strike. Kalshi
+
+        publishes the same thing as strike_type / floor_strike / cap_strike.
+
+
+        Stored by atlas (`markets.terms`, derived from the resolution source and
+        its
+
+        params — atlas owns that derivation) and decoded here only so the
+        published
+
+        schema names every field. Omitted for a market with no automated source.
+      properties:
+        cap_strike:
+          example: 77500
+          type: number
+        floor_strike:
+          description: >-
+            Null when not applicable. A band is half-open: inclusive floor,
+            exclusive cap.
+          example: 70000
+          type: number
+        kind:
+          description: threshold | range | direction | categorical
+          example: threshold
+          type: string
+        measure:
+          $ref: '#/components/schemas/TermsMeasure'
+        settles_on:
+          description: The resolution provider that settles the market, e.g. coinbase_spot.
+          example: coinbase_spot
+          type: string
+        strike_type:
+          description: >-
+            greater | greater_equal | less | less_equal | between | direction |
+            none
+          example: greater_equal
+          type: string
+        underlying:
+          $ref: '#/components/schemas/TermsUnderlying'
       type: object
     PriceSettlement:
       description: >-
@@ -3732,6 +3762,51 @@ components:
         slug:
           example: wimbledon
           type: string
+      type: object
+    TermsMeasure:
+      properties:
+        at:
+          description: >-
+            The instant that decides it: the deciding candle's close, ISO-8601
+            UTC.
+          example: '2026-09-17T00:00:00Z'
+          type: string
+        basis:
+          description: >-
+            close | close_vs_previous_close (this window's close against the
+            previous
+
+            window's close; a tie resolves up)
+          example: close
+          type: string
+        granularity_seconds:
+          example: 60
+          type: integer
+        window_start:
+          description: A direction market's window opens here; `at` is when it closes.
+          example: '2026-09-16T16:00:00Z'
+          type: string
+      type: object
+    TermsUnderlying:
+      properties:
+        source:
+          example: coinbase
+          type: string
+        symbol:
+          example: BTC-USD
+          type: string
+      type: object
+    AutoRedeemRequest:
+      properties:
+        enabled:
+          description: >-
+            Turn auto-redeem on or off. Relay
+            `setApprovalForAll(auto_redeemer_address, enabled)` from your Safe
+            first — the chain is read back before this is stored.
+          example: true
+          type: boolean
+      required:
+        - enabled
       type: object
     BalanceEntity:
       properties:

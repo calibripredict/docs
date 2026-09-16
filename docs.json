@@ -133,6 +133,7 @@
                   "api-reference/models/liquidity-reward",
                   "api-reference/models/market-meta",
                   "api-reference/models/market-payload",
+                  "api-reference/models/market-terms",
                   "api-reference/models/member-order",
                   "api-reference/models/order-book-response",
                   "api-reference/models/order-cancel-result",
@@ -146,6 +147,8 @@
                   "api-reference/models/settlement-source",
                   "api-reference/models/tag-count",
                   "api-reference/models/tag-ref",
+                  "api-reference/models/terms-measure",
+                  "api-reference/models/terms-underlying",
                   "api-reference/models/ticker-entry",
                   "api-reference/models/ticker-response"
                 ]
@@ -153,6 +156,7 @@
               {
                 "group": "Account & wallet",
                 "pages": [
+                  "api-reference/models/auto-redeem-request",
                   "api-reference/models/balance-entity",
                   "api-reference/models/contract-entity",
                   "api-reference/models/create-order-request",
