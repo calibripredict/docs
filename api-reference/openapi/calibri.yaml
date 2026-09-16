@@ -54,6 +54,9 @@ tags:
   - name: Account
     description: Balances, ledger, PnL, limits, preferences, and profile.
     x-displayName: Account
+  - name: Categories
+    description: Categories
+    x-displayName: Categories
 externalDocs:
   description: ''
   url: ''
@@ -437,6 +440,26 @@ paths:
       tags:
         - Assets
       security: []
+  /api/v2/pythia/public/categories:
+    get:
+      description: |-
+        The two-level browse tree — Sports > Soccer — with active-event
+        counts. A parent's count includes its children's.
+        Includes categories with no live events; retired ones are omitted.
+        Use a slug with `GET /public/events?category=` or `?subcategory=`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/CategoryNode'
+                type: array
+          description: OK
+      summary: List browse categories
+      tags:
+        - Categories
+      security: []
   /api/v2/pythia/public/events:
     get:
       description: |-
@@ -465,6 +488,16 @@ paths:
         - description: Filter to one series slug. Expands it rather than collapsing
           in: query
           name: series
+          schema:
+            type: string
+        - description: Filter to one sub-category slug, e.g. tennis
+          in: query
+          name: subcategory
+          schema:
+            type: string
+        - description: Filter by series cadence, e.g. daily / weekly / monthly
+          in: query
+          name: frequency
           schema:
             type: string
         - description: Sort order, e.g. newest
@@ -2387,6 +2420,8 @@ components:
         image_url:
           example: https://cdn.calibri.io/markets/btc-70k.png
           type: string
+        liquidity_reward:
+          $ref: '#/components/schemas/LiquidityReward'
         market_id:
           description: the ID used in the markets/order book
           example: '54321'
@@ -2443,6 +2478,8 @@ components:
           type: integer
         price_settlement:
           $ref: '#/components/schemas/PriceSettlement'
+        price_target:
+          $ref: '#/components/schemas/PriceTarget'
         quote_currency:
           example: usdc
           type: string
@@ -2473,6 +2510,33 @@ components:
             - voided
           example: active
           type: string
+        terms:
+          description: >-
+            Terms is what this market resolves against, as structured fields —
+            the
+
+            conditions `rules` states in prose: kind, strike_type, floor_strike
+            /
+
+            cap_strike, underlying, measure (instant, granularity, basis) and
+            settles_on.
+
+
+            `rules` is for a person and free to change its wording; terms are
+            what code
+
+            reads, so an integrator never parses a title to learn the strike.
+            Kalshi
+
+            publishes the same thing as strike_type / floor_strike / cap_strike.
+
+
+            Stored by atlas (`markets.terms`, derived from the resolution source
+            and its
+
+            params) and published as-is. Omitted for a market with no automated
+            source.
+          type: object
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
@@ -2485,6 +2549,9 @@ components:
         created_at:
           example: '2026-08-07T10:00:00Z'
           type: string
+        event_slug:
+          example: btc-above-70k-december-2026
+          type: string
         filled_volume:
           example: '0'
           type: string
@@ -2496,6 +2563,37 @@ components:
           type: string
         market:
           example: '12'
+          type: string
+        market_title:
+          description: >-
+            MarketTitle / EventSlug are the order's market context, denormalised
+            onto
+
+            the order the same way EventSlug/EventTitle are denormalised onto a
+            market.
+
+
+            Without them `market` is a bare id and nothing else: a client
+            listing a
+
+            member's orders can only print "3573", and has no slug to link with
+            (a
+
+            market is not addressable on its own — the app routes
+
+            /event/{slug}?market={id}). The only alternative is a market read
+            per row,
+
+            which is a fan-out over a paginated list for data this handler
+            already
+
+            holds in memory.
+
+
+            Omitted when the market's metadata is unknown here (an id that is in
+
+            neither the cache nor storage); the row still carries `market`.
+          example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
         ord_type:
           enum:
@@ -2748,6 +2846,119 @@ components:
         ticker:
           $ref: '#/components/schemas/TickerEntry'
       type: object
+    CategoryNode:
+      properties:
+        children:
+          description: >-
+            Present on top-level nodes; always non-nil so a client can range
+            without
+
+            a nil check.
+          items:
+            $ref: '#/components/schemas/CategoryNode'
+          type: array
+          uniqueItems: false
+        event_count:
+          description: >-
+            Active events beneath this node, counted the way the FEED counts
+            them: a
+
+            rolling series contributes ONE, not one per window. For a parent it
+
+            includes its children's, because that is what the number beside a
+            browse
+
+            chip means.
+
+
+            Counted from the same events the feed serves rather than from the
+            database,
+
+            so the two cannot disagree. Counting rows made the Crypto chip read
+            27 and
+
+            open onto 4 cards — the feed collapses a five-minute series to the
+            single
+
+            window a member can act on, and a count that ignores that is a
+            promise the
+
+            page does not keep.
+          example: 492
+          type: integer
+        frequencies:
+          description: |-
+            Cadence facets within this node, present ones only, already ordered
+            shortest-first. The browse sidebar is built from these.
+          items:
+            $ref: '#/components/schemas/FacetCount'
+          type: array
+          uniqueItems: false
+        icon:
+          example: SportsSoccer
+          type: string
+        id:
+          example: 10
+          type: integer
+        label:
+          example: Sports
+          type: string
+        slug:
+          example: sports
+          type: string
+      type: object
+    CategoryParentRef:
+      description: The top-level node this sits under. Absent on a top-level node itself.
+      properties:
+        icon:
+          example: SportsSoccer
+          type: string
+        id:
+          example: 10
+          type: integer
+        label:
+          example: Sports
+          type: string
+        slug:
+          example: sports
+          type: string
+      type: object
+    CategoryRef:
+      description: >-
+        Subcategory is the browse SUBJECT — the leaf of the two-level category
+
+        tree, carrying its parent for a breadcrumb. Exactly one per event and
+
+        often absent, because an event may sit directly under its top-level
+
+        category.
+
+
+        Not a replacement for Category above: that stays the fee key. This is
+        what
+
+        the browse chips and the /categories drilldown are built from.
+      properties:
+        icon:
+          description: >-
+            Icon KEY the frontends map, not an icon. Replaces their hardcoded
+            maps,
+
+            which could not be extended without a deploy.
+          example: SportsSoccer
+          type: string
+        id:
+          example: 15
+          type: integer
+        label:
+          example: Soccer
+          type: string
+        parent:
+          $ref: '#/components/schemas/CategoryParentRef'
+        slug:
+          example: soccer
+          type: string
+      type: object
     Event:
       properties:
         category:
@@ -2860,6 +3071,8 @@ components:
         status:
           example: active
           type: string
+        subcategory:
+          $ref: '#/components/schemas/CategoryRef'
         tags:
           description: >-
             Tags are the editorial SHELVES this event sits on — what puts it on
@@ -2891,6 +3104,45 @@ components:
           type: integer
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+      type: object
+    FacetCount:
+      properties:
+        event_count:
+          example: 8
+          type: integer
+        label:
+          description: Display form, because "five_min" is not what a member reads.
+          example: 5 Min
+          type: string
+        value:
+          description: The filter value, as ?frequency= takes it.
+          example: five_min
+          type: string
+      type: object
+    LiquidityReward:
+      description: |-
+        LiquidityReward is what the market pays makers for resting orders today
+        (UTC). Omitted when no reward period covers today.
+      properties:
+        currency:
+          example: usdc
+          type: string
+        daily_rate:
+          description: The daily pool, summed across every period covering today.
+          example: '3'
+          type: string
+        max_spread:
+          description: >-
+            The widest distance from the midpoint, in probability units, at
+            which a
+
+            resting order still earns.
+          example: '0.045'
+          type: string
+        min_size:
+          description: The smallest resting size, in contracts, that earns.
+          example: '20'
           type: string
       type: object
     MarketMeta:
@@ -3084,6 +3336,8 @@ components:
           uniqueItems: false
         price_settlement:
           $ref: '#/components/schemas/PriceSettlement'
+        price_target:
+          $ref: '#/components/schemas/PriceTarget'
         quote_currency:
           example: usdc
           type: string
@@ -3103,6 +3357,33 @@ components:
         status:
           example: active
           type: string
+        terms:
+          description: >-
+            Terms is what this market resolves against, as structured fields —
+            the
+
+            conditions `rules` states in prose: kind, strike_type, floor_strike
+            /
+
+            cap_strike, underlying, measure (instant, granularity, basis) and
+            settles_on.
+
+
+            `rules` is for a person and free to change its wording; terms are
+            what code
+
+            reads, so an integrator never parses a title to learn the strike.
+            Kalshi
+
+            publishes the same thing as strike_type / floor_strike / cap_strike.
+
+
+            Stored by atlas (`markets.terms`, derived from the resolution source
+            and its
+
+            params) and published as-is. Omitted for a market with no automated
+            source.
+          type: object
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
@@ -3165,6 +3446,84 @@ components:
             on the one market where it decided the answer.
           example: false
           type: boolean
+      type: object
+    PriceTarget:
+      description: >-
+        PriceTarget is the level this market is judged against, published BEFORE
+
+        it settles.
+
+
+        The sibling of PriceSettlement and deliberately not the same thing.
+
+        PriceSettlement is what happened and exists only once a market is
+        decided;
+
+        this is the question, and it is known the moment the market is listed. A
+
+        strike ladder needs it: every rung shares one underlying price chart and
+
+        differs only in where its line sits, so without this the front end has a
+
+        chart and no idea what to draw on it.
+
+
+        nil for anything not judged against a fixed level — an up/down window's
+
+        reference is its own opening price, which is PriceSettlement's business.
+      properties:
+        cap_strike:
+          example: 77500
+          type: number
+        comparator:
+          description: >-
+            How the close is compared to it: gte, gt, lte or lt. Published
+            because
+
+            "above $77,000" and "at or above $77,000" are different markets on a
+            tie,
+
+            and the chart's own label should not have to guess which one this
+            is.
+          example: gte
+          type: string
+        floor_strike:
+          description: >-
+            Band form, half-open [floor, cap): inclusive floor, exclusive cap.
+            That
+
+            convention is not a detail — it is what lets a set of bands cover
+            the
+
+            price line exactly once, with no gap for a close to fall through and
+            no
+
+            overlap where two legs both pay.
+
+
+            Either bound is absent on a wing: a bottom band has only a cap, a
+            top
+
+            band only a floor. Pointers rather than plain floats so "no floor"
+            and "a
+
+            floor of zero" stay distinguishable on the wire.
+          example: 75000
+          type: number
+        threshold:
+          description: >-
+            Threshold form. The level the close is compared against, in the
+            market's
+
+            quote currency. Zero and absent are indistinguishable in Go, so a
+            chart
+
+            must branch on Comparator being set rather than on Threshold being
+
+            non-zero — a strike genuinely at 0 is nonsense, but a FLOOR at 0 is
+            not.
+          example: 77000
+          type: number
       type: object
     SeriesRef:
       description: >-
