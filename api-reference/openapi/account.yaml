@@ -32,10 +32,15 @@ components:
           description: 'Reserved by resting signed orders and their taker-fee reserve. Released when an order fills, rests, or is cancelled.'
           example: '61.68'
           type: 'string'
+        redeemable_safe:
+          description: 'Winnings you have made but NOT yet collected. When a market resolves in your favour the payout stays in the ConditionalTokens contract until you redeem it — only you can, from your own Safe. This is NOT spendable: it is not part of `balance_safe` and cannot back an order until you redeem, at which point it moves into `balance_safe`.'
+          example: '318.00'
+          type: 'string'
       required:
         - 'currency'
         - 'balance_safe'
         - 'locked_safe'
+        - 'redeemable_safe'
         - 'balance'
         - 'locked'
       type: 'object'
@@ -48,12 +53,6 @@ components:
         created_at:
           description: 'ISO-8601.'
           example: '2026-08-07T10:00:00Z'
-          type: 'string'
-        custody:
-          description: 'Always `self` — stamped from your session, never from a request field.'
-          enum:
-            - 'self'
-          example: 'self'
           type: 'string'
         funds_spent:
           description: 'Collateral committed.'
@@ -69,6 +68,14 @@ components:
         market_title:
           example: 'Will BTC close above its open?'
           type: 'string'
+        outcome_labels:
+          description: 'The market’s YES and NO leg names, in that order. Absent on a market using the Yes/No default.'
+          example:
+            - 'Above $77,500'
+            - 'Below $77,500'
+          items:
+            type: 'string'
+          type: 'array'
         price:
           description: 'Fill price, a probability in (0,1).'
           example: 0.6
@@ -136,7 +143,6 @@ components:
         - 'funds_spent'
         - 'taker_fee_amount'
         - 'taker_fee_refunded'
-        - 'custody'
         - 'state'
         - 'created_at'
       type: 'object'
@@ -245,9 +251,8 @@ components:
           example: true
           type: 'boolean'
         signature_type:
-          description: '`2` = POLY_GNOSIS_SAFE (wallet-owned), `3` = POLY_1271 (passkey-owned), `0` = EOA.'
+          description: 'How this account signs orders: `2` = POLY_GNOSIS_SAFE (Safe owned by your wallet), `3` = POLY_1271 (Safe owned by a passkey). Sign the way your type requires. Whether the Safe is usable yet is `safe_status`, not this field.'
           enum:
-            - 0
             - 2
             - 3
           example: 2
@@ -325,9 +330,8 @@ components:
           example: true
           type: 'boolean'
         signature_type:
-          description: '`2` = POLY_GNOSIS_SAFE (wallet-owned), `3` = POLY_1271 (passkey-owned), `0` = EOA.'
+          description: 'How this account signs orders: `2` = POLY_GNOSIS_SAFE (Safe owned by your wallet), `3` = POLY_1271 (Safe owned by a passkey). Sign the way your type requires. Whether the Safe is usable yet is `safe_status`, not this field.'
           enum:
-            - 0
             - 2
             - 3
           example: 2
@@ -358,10 +362,6 @@ components:
         blockchain_key:
           description: 'The chain this currency lives on.'
           example: 'polygon-mainnet'
-          type: 'string'
-        code:
-          description: 'Ticker code.'
-          example: 'usdc'
           type: 'string'
         created_at:
           description: 'ISO-8601.'
@@ -454,7 +454,6 @@ components:
           type: 'boolean'
       required:
         - 'id'
-        - 'code'
         - 'name'
         - 'precision'
       type: 'object'
@@ -605,15 +604,6 @@ components:
         - 'created_at'
         - 'updated_at'
       type: 'object'
-    HealthEntity:
-      properties:
-        status:
-          description: 'Whether the engine is accepting traffic.'
-          example: 'ok'
-          type: 'string'
-      required:
-        - 'status'
-      type: 'object'
     LimitsEntity:
       properties:
         funding_method_limits:
@@ -746,6 +736,14 @@ components:
       type: 'object'
     PasskeyEnrolRequest:
       properties:
+        device:
+          description: 'Platform and browser, for support. No identifiers.'
+          example: 'macOS · Chrome'
+          type: 'string'
+        prf_enabled:
+          description: 'Whether the authenticator reported WebAuthn PRF support at registration. Recorded as reported and never acted on — authenticators are inconsistent about reporting it, so the authoritative test is whether a later assertion returns results.'
+          example: true
+          type: 'boolean'
         x:
           description: 'P-256 public key X coordinate, from the WebAuthn credential.'
           example: '0x2f9a…'
@@ -1001,6 +999,35 @@ components:
           example: false
           type: 'boolean'
       type: 'object'
+    RatesEntity:
+      properties:
+        base:
+          description: 'The currency the rates are quoted against. Always `usd`; USDC is pegged to it.'
+          example: 'usd'
+          type: 'string'
+        rates:
+          additionalProperties:
+            type: 'number'
+          description: 'How many units of each currency one unit of `base` buys. DISPLAY ONLY: every market is priced, collateralised and settled in USDC, and an order signature commits to a USDC amount — these decide what number is printed beside it and nothing else. The base and the stablecoins pegged to it are omitted (they quote at 1.00).'
+          example:
+            eur: 0.85885
+            gbp: 0.736155
+            zar: 16.00105
+          type: 'object'
+        ttl_seconds:
+          description: 'How long this response stays current. Poll no faster than this; a shorter interval returns the same body.'
+          example: 300
+          type: 'number'
+        updated_at:
+          description: 'When the provider struck these prices — not when we fetched them. ISO-8601.'
+          example: '2026-08-28T12:12:03.972Z'
+          type: 'string'
+      required:
+        - 'base'
+        - 'updated_at'
+        - 'ttl_seconds'
+        - 'rates'
+      type: 'object'
     ReferralEarningsEntity:
       properties:
         by_referred:
@@ -1084,6 +1111,73 @@ components:
             - 'null'
       required:
         - 'tx'
+      type: 'object'
+    SafeOwnerPrepareEntity:
+      properties:
+        calls:
+          description: 'The Safe call(s) to sign with your passkey and relay. EMPTY when the request is already satisfied — adding an address that already signs for the wallet changes nothing.'
+          items:
+            $ref: '#/components/schemas/SafeSetupCallEntity'
+          type: 'array'
+        owners:
+          description: 'The owner set as it stands, before this change.'
+          items:
+            type: 'string'
+          type: 'array'
+        safe:
+          description: 'Your wallet (Safe) address.'
+          example: '0x2b01…E22a'
+          type: 'string'
+      required:
+        - 'safe'
+        - 'owners'
+        - 'calls'
+      type: 'object'
+    SafeOwnerRequest:
+      properties:
+        otp:
+          description: 'Your six-digit two-factor code. REQUIRED when adding a key — a key that can withdraw and replace your passkey is not something a hijacked session should be able to grant. Not needed to remove one.'
+          example: '123456'
+          type: 'string'
+        owner:
+          description: 'The address to authorise (or, with `remove`, to revoke).'
+          example: '0x1631794cb5841002a7feaf0cc064a228c0db8e94'
+          type: 'string'
+        remove:
+          description: 'Set to remove this key instead of adding it. Your own passkey cannot be removed this way.'
+          example: false
+          type: 'boolean'
+      required:
+        - 'owner'
+      type: 'object'
+    SafeOwnersEntity:
+      properties:
+        owners:
+          description: 'Every address that can sign for this wallet. Empty until the Safe is deployed, which happens on your first deposit.'
+          example:
+            - '0x7790…e855'
+          items:
+            type: 'string'
+          type: 'array'
+        passkey_active:
+          description: 'False if your passkey is NO LONGER an owner of this wallet — which can only happen if a key you added removed it on-chain. Treat it as urgent: that key is then the only thing that can sign. True when the wallet is not deployed yet, and true if the check could not be made.'
+          example: true
+          type: 'boolean'
+        passkey_signer:
+          description: 'Which of the owners is your passkey — the signer contract derived from your credential. Everything else in `owners` is a key you added.'
+          example: '0x7790…e855'
+          type:
+            - 'string'
+            - 'null'
+        safe:
+          description: 'Your wallet (Safe) address.'
+          example: '0x2b01…E22a'
+          type: 'string'
+      required:
+        - 'safe'
+        - 'owners'
+        - 'passkey_signer'
+        - 'passkey_active'
       type: 'object'
     SafeSetupCallEntity:
       properties:
@@ -1227,6 +1321,99 @@ components:
       required:
         - 'enabled'
       type: 'object'
+    SettledMarketEntity:
+      properties:
+        cost:
+          description: 'What the position cost: collateral plus the fees charged on the fills.'
+          example: '36.22065000'
+          type: 'string'
+        event_id:
+          example: 14710
+          type:
+            - 'number'
+            - 'null'
+        event_image_url:
+          example: null
+          type:
+            - 'string'
+            - 'null'
+        event_title:
+          example: 'Bitcoin Up or Down 5m'
+          type:
+            - 'string'
+            - 'null'
+        fees:
+          description: 'The fee part of `cost`.'
+          example: '0.72065000'
+          type: 'string'
+        market_id:
+          example: '14738'
+          type: 'string'
+        market_title:
+          example: 'Bitcoin Up or Down 5m — 11:15–11:20 UTC'
+          type:
+            - 'string'
+            - 'null'
+        payout:
+          description: 'What it paid. `0` on a market you lost.'
+          example: '50.00000000'
+          type: 'string'
+        quote_currency:
+          example: 'usdc'
+          type:
+            - 'string'
+            - 'null'
+        result:
+          description: 'How the market resolved.'
+          enum:
+            - 'settled_yes'
+            - 'settled_no'
+          example: 'settled_yes'
+          type:
+            - 'string'
+            - 'null'
+        settled_at:
+          example: '2026-09-11T11:21:37.000Z'
+          type:
+            - 'string'
+            - 'null'
+        settlement_status:
+          description: 'On-chain settlement state, or `null` when this holding never touched the chain (a custodial fill has nothing to confirm).'
+          enum:
+            - 'confirmed'
+            - 'pending'
+          example: 'confirmed'
+          type:
+            - 'string'
+            - 'null'
+        side:
+          description: 'The side you held. `both` when you bought both outcomes of the same market — rare, and reported rather than collapsed to the larger leg.'
+          enum:
+            - 'yes'
+            - 'no'
+            - 'both'
+          example: 'yes'
+          type: 'string'
+        volume:
+          description: 'Contracts held at resolution.'
+          example: '50'
+          type: 'string'
+      required:
+        - 'market_id'
+        - 'market_title'
+        - 'event_id'
+        - 'event_title'
+        - 'event_image_url'
+        - 'result'
+        - 'side'
+        - 'volume'
+        - 'cost'
+        - 'fees'
+        - 'payout'
+        - 'quote_currency'
+        - 'settlement_status'
+        - 'settled_at'
+      type: 'object'
     SignedOrderEntity:
       properties:
         expiration:
@@ -1264,9 +1451,8 @@ components:
           example: '0x4f2a…'
           type: 'string'
         signature_type:
-          description: '`2` POLY_GNOSIS_SAFE (wallet-owned Safe), `3` POLY_1271 (passkey-owned), `0` EOA. Take it from `safe_status`/`signature_type` on the wallet config rather than assuming.'
+          description: '`2` POLY_GNOSIS_SAFE (your Safe, owned by your wallet) or `3` POLY_1271 (your Safe, owned by a passkey). Read it from `signature_type` on the wallet config rather than choosing one — an order signed the way the other type requires is rejected.'
           enum:
-            - 0
             - 2
             - 3
           example: 2
@@ -1506,7 +1692,7 @@ openapi: '3.1.0'
 paths:
   /api/v2/atlas/account/balances:
     get:
-      description: 'Your balances per currency. `balance_safe` (available) and `locked_safe` (reserved) are the mirror of the USDC in your own on-chain Safe — those are the figures that matter. `balance` / `locked` / `total` are the operator-held pool, which Calibri does not operate, so they are always "0".'
+      description: 'Your balances per currency. `balance_safe` (available) and `locked_safe` (reserved) are the mirror of the USDC in your own on-chain Safe — those are the figures that matter. `redeemable_safe` is winnings the contract owes you that you have not redeemed yet: not spendable until you do. `balance` / `locked` / `total` are the operator-held pool, which Calibri does not operate, so they are always "0".'
       parameters: []
       responses:
         "200":
@@ -1522,7 +1708,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/balances/{currency}:
     get:
-      description: 'One currency''s balance. Same shape as a list element — prefer `balance_safe` / `locked_safe` over the always-zero operator pool fields.'
+      description: 'One currency''s balance. Same shape as a list element — prefer `balance_safe` / `locked_safe` / `redeemable_safe` over the always-zero operator pool fields.'
       parameters:
         - in: 'path'
           name: 'currency'
@@ -1542,7 +1728,46 @@ paths:
   /api/v2/atlas/account/contracts:
     get:
       description: 'Your matched positions. A winning contract settles to the full 1.00 per share — the fee was taken at trade time — but winnings are NOT auto-paid: you redeem them yourself.'
-      parameters: []
+      parameters:
+        - description: 'Contracts per page. Defaults to 50.'
+          example: 25
+          in: 'query'
+          name: 'limit'
+          required: false
+          schema:
+            default: 50
+            minimum: 1
+            type: 'integer'
+        - description: 'Page number, from 1. Newest contract first.'
+          example: 1
+          in: 'query'
+          name: 'page'
+          required: false
+          schema:
+            default: 1
+            minimum: 1
+            type: 'integer'
+        - description: 'Contracts either leg of which came from this order — useful for following one fill. Matches the yes side or the no side.'
+          example: 90210
+          in: 'query'
+          name: 'order_id'
+          required: false
+          schema:
+            type: 'number'
+        - description: 'Filter to one market, by the engine''s market id.'
+          example: '5871'
+          in: 'query'
+          name: 'market_id'
+          required: false
+          schema:
+            type: 'string'
+        - description: 'Filter by verdict — the same vocabulary the `state` field returns: `active`, `settled_yes`, `settled_no`, `voided`. Two conveniences on top: `settled` is shorthand for both settled values, and a comma-separated list is an OR (`settled_yes,voided`). `pending` is accepted as an alias of `active`. Not an enum in this schema precisely because a list is a legal value.'
+          example: 'settled_yes,voided'
+          in: 'query'
+          name: 'state'
+          required: false
+          schema:
+            type: 'string'
       responses:
         "200":
           content:
@@ -1596,7 +1821,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/orders:
     post:
-      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released.'
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails.'
       parameters: []
       requestBody:
         content:
@@ -1634,7 +1859,7 @@ paths:
           description: ''
       summary: 'Your positions'
       tags:
-        - 'Other'
+        - 'Positions'
   /api/v2/atlas/account/preferences:
     get:
       description: 'Your display preferences. Today: `leaderboard_opt_out` — whether your username appears on the public PnL leaderboard.'
@@ -1711,6 +1936,41 @@ paths:
       summary: 'Pending rewards'
       tags:
         - 'Rewards'
+  /api/v2/atlas/account/settled:
+    get:
+      description: 'Every market you held when it resolved — the position you held, what it cost you (collateral plus fees), and what it paid. A market you lost appears here with a payout of 0, which is why this is not the same as filtering your transactions: a losing position moves no money at settlement and so has no transaction. One row per market, newest first.'
+      parameters:
+        - description: 'Markets per page. Defaults to 25, capped at 100.'
+          example: 25
+          in: 'query'
+          name: 'limit'
+          required: false
+          schema:
+            default: 25
+            maximum: 100
+            minimum: 1
+            type: 'integer'
+        - description: 'Page number, from 1. Most recently settled market first.'
+          example: 1
+          in: 'query'
+          name: 'page'
+          required: false
+          schema:
+            default: 1
+            minimum: 1
+            type: 'integer'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/SettledMarketEntity'
+                type: 'array'
+          description: ''
+      summary: 'Settled markets'
+      tags:
+        - 'Positions'
   /api/v2/atlas/account/stats/pnl:
     get:
       description: 'Realized PnL from settled contracts, per-market breakdown, and capital in/out. Open positions are not valued here — mark them client-side against the live price feed. `pnl_currency` narrows the response to a single collateral currency.'
@@ -1870,6 +2130,38 @@ paths:
       summary: 'CTF config for a market'
       tags:
         - 'Wallet'
+  /api/v2/atlas/account/wallet/owners:
+    get:
+      description: 'Returns the Safe and its current owners. A passkey wallet has exactly one owner (the signer contract derived from your passkey) until you add a signing wallet of your own.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafeOwnersEntity'
+          description: ''
+      summary: 'List the keys that can sign for your wallet'
+      tags:
+        - 'Wallet'
+    post:
+      description: 'Returns the Safe call authorising another address to sign for your wallet (or removing one, with `remove: true`). Sign it with your passkey and relay it — nothing changes until you do. An added key is a full owner: it can place orders, withdraw, redeem, and remove your passkey. Adding a key you already added returns no calls.'
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SafeOwnerRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafeOwnerPrepareEntity'
+          description: ''
+      summary: 'Add or remove a signing key on your wallet'
+      tags:
+        - 'Wallet'
   /api/v2/atlas/account/wallet/passkey:
     post:
       description: 'Registers the PUBLIC half of a WebAuthn credential and derives the signer contract and Safe address from it. The private half never leaves your authenticator, so Calibri holds no key and cannot recover the account — enrol on a platform whose passkeys sync, or the wallet dies with the device.'
@@ -2020,14 +2312,29 @@ paths:
       responses:
         "200":
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/HealthEntity'
-          description: ''
+                type: 'string'
+          description: 'Alive. The body is the literal string `200`, as `text/plain`.'
       security: []
       summary: 'Health check'
       tags:
         - 'Health'
+  /api/v2/atlas/public/rates:
+    get:
+      description: 'USD-based reference rates, refreshed from a price provider on our own clock. DISPLAY ONLY: every market is priced, collateralised and settled in USDC, and an order signature commits to a USDC amount — these decide what number is shown beside it and nothing else. Served from memory, so poll no faster than `ttl_seconds`.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatesEntity'
+          description: ''
+      security: []
+      summary: 'Reference exchange rates'
+      tags:
+        - 'Currencies'
 security:
   - apiKey: []
 servers:
