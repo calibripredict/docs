@@ -157,6 +157,8 @@
                   "api-reference/models/contract-entity",
                   "api-reference/models/create-order-request",
                   "api-reference/models/ctf-config-entity",
+                  "api-reference/models/ctf-redeemable-entity",
+                  "api-reference/models/ctf-redeemable-market-entity",
                   "api-reference/models/ctf-wallet-entity",
                   "api-reference/models/currency-entity",
                   "api-reference/models/error-entity",
