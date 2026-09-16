@@ -162,6 +162,34 @@ components:
           example: "100.50"
           type: string
       type: object
+    BundledOrderBook:
+      description: Exactly `GET /public/markets/{id}/order-book`, plus the book's
+        `sequence`.
+      properties:
+        no_asks:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+        no_bids:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+        sequence:
+          example: 8814
+          type: integer
+        yes_asks:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+        yes_bids:
+          items:
+            $ref: '#/components/schemas/BookLevel'
+          type: array
+          uniqueItems: false
+      type: object
     CandlePoint:
       properties:
         c:
@@ -214,6 +242,328 @@ components:
             type: string
           type: array
           uniqueItems: false
+      type: object
+    EventBundle:
+      properties:
+        category:
+          example: crypto
+          type: string
+        created_at:
+          description: |-
+            CreatedAt (RFC3339, from events.created_at) backs the "newest" list sort.
+            Before it was surfaced, "newest" fell back to id DESC.
+          example: "2026-08-07T10:00:00Z"
+          type: string
+        description:
+          example: Resolves from the final Coinbase BTC-USD trade price before the
+            close date.
+          type: string
+        display_type:
+          description: |-
+            DisplayType (events.display_type) picks the chart SOURCE, not the market
+            shape: "probability" (default) plots the markets' own YES probability,
+            "price_feed" plots an underlying feed with a reference line.
+          example: probability
+          type: string
+        effective_taker_fee_rate_bps:
+          description: |-
+            EffectiveTakerFeeRateBps is the resolved fee rate the matching engine
+            will charge for trades in any of this event's markets. Computed at
+            load time as: COALESCE(override, category default). NULL/nil means
+            UNRESOLVED — no override and no fee_categories row for the category —
+            which order placement rejects (distinct from a resolved 0 = free).
+            Read-only — not persisted as its own column.
+          example: 200
+          type: integer
+        featured:
+          example: false
+          type: boolean
+        id:
+          example: 12345
+          type: integer
+        image_url:
+          example: https://cdn.calibri.io/events/btc-70k.png
+          type: string
+        markets:
+          items:
+            $ref: '#/components/schemas/EventBundleMarket'
+          type: array
+          uniqueItems: false
+        outcome_structure:
+          description: |-
+            OutcomeStructure (events.outcome_structure) says how this event's markets
+            relate to one another. It selects the frontend layout and is deliberately
+            NOT derivable from len(Markets) — a contender race, a strike ladder and a
+            fixture's derivative bundle can all carry a dozen markets and none of them
+            renders like the others.
+
+              independent — one question, or several unrelated ones (the default)
+              one_winner  — at most one market resolves YES; ranked, sums to ~100%
+              ladder      — nested thresholds over one variable ("above $100k",
+                            "above $110k"). Several legs resolve YES together so it is
+                            not one_winner, but the legs are nested so it is not
+                            independent either: prices fall monotonically down the
+                            ladder, ordered by markets.event_rank.
+
+            Kalshi carries the same three as MECNET / DIRECNET / none.
+
+            Display + validation only. Neither Kalshi's collateral netting nor
+            Polymarket's NegRiskAdapter is implemented on our side.
+          example: independent
+          type: string
+        price_feed:
+          description: |-
+            PriceFeed (events.price_feed) carries {source, symbol, reference_price}
+            for the price_feed layout. Passed through opaquely — pythia never
+            interprets it. nil when unset.
+          items:
+            type: integer
+          type: array
+          uniqueItems: false
+        series:
+          $ref: '#/components/schemas/SeriesRef'
+        slug:
+          example: btc-above-70k-december-2026
+          type: string
+        status:
+          example: active
+          type: string
+        subcategory:
+          $ref: '#/components/schemas/CategoryRef'
+        tags:
+          description: |-
+            Tags are the editorial SHELVES this event sits on — what puts it on a hub
+            page. Many-to-many and deliberately not taxonomic: "Wimbledon" collects the
+            men's winner race, the women's winner race and every match, which share no
+            series and no outcome structure. Always present (possibly empty) so the
+            frontend need not nil-check.
+          items:
+            $ref: '#/components/schemas/TagRef'
+          type: array
+          uniqueItems: false
+        taker_fee_rate_bps_override:
+          description: |-
+            TakerFeeRateBpsOverride mirrors events.taker_fee_rate_bps_override
+            (NULL = inherit from category default, or global default if no category row).
+            Persisted to the DB; included in JSON for admin consumers.
+          example: 200
+          type: integer
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+      type: object
+    EventBundleMarket:
+      properties:
+        category:
+          example: crypto
+          type: string
+        close_at:
+          example: "2026-07-22T18:00:00Z"
+          type: string
+        ctf_no_token_id:
+          example: "9876543210987654321098765432109876543210"
+          type: string
+        ctf_yes_token_id:
+          description: |-
+            CTFYesTokenID / CTFNoTokenID are the on-chain ERC-1155 position ids for this
+            market's two legs, once atlas has registered the condition. nil (and omitted)
+            until then, because a market that is not CTF-registered has no tokens — emitting
+            "" would read as "registered with an empty id".
+
+            Published because a token id IS the market-and-outcome identifier: it is derived
+            from (resolver, questionId, collateral), so it names exactly one outcome of one
+            market and never changes. A signed exchange order carries the token id and NO
+            market field — the token id has already answered "which market, which outcome".
+
+            Serving them here is what lets an API client build an order from the market it
+            already fetched, rather than making a second authed per-market call for data that
+            is public, immutable and identical for every member.
+          example: "1234567890123456789012345678901234567890"
+          type: string
+        description:
+          example: Resolves YES if the Coinbase BTC-USD close on 31 Dec 2026 is above
+            $70,000.
+          type: string
+        determination_at:
+          description: |-
+            DeterminationAt is when the outcome is EXPECTED to become knowable —
+            distinct from close, which is only when trading stops.
+
+            Published so a member is told the gap in advance. Kalshi's daily-high
+            temperature markets settle 6–7 hours after close because the authoritative
+            report lands hours after the weather; without this field that reads as a
+            stuck market rather than a documented wait.
+
+            Omitted when the outcome is expected at close.
+          example: "2026-07-23T10:00:00Z"
+          type: string
+        event_id:
+          example: 12345
+          type: integer
+        event_rank:
+          description: |-
+            EventRank is the operator's manual ordering of this market WITHIN its
+            event (`markets.event_rank`), ascending. nil = unranked. It exists because
+            the natural order of a ladder is not derivable from price: a date ladder
+            reads chronologically, a strike ladder by strike, and neither matches
+            probability order. When no market in an event carries a rank, the default
+            sort falls back to probability descending — the right answer for
+            candidate-style events.
+          example: 1
+          type: integer
+        event_slug:
+          description: |-
+            EventSlug / EventTitle are the market's event context, denormalised onto the
+            market itself.
+
+            A market is not addressable on its own — there is no markets.slug column, and the
+            app routes /event/{slug}?market={id} — so without these a client holding a market
+            from the flat /markets list cannot build a link or name what it belongs to, and
+            has to go back for the event.
+
+            Carried even when the market is already nested inside its event (where it is
+            strictly redundant) so a market object means the same thing wherever it is found.
+            A caller that pulls one out of an event payload and passes it on must not end up
+            with something that has quietly lost its context.
+
+            EventID is the durable key; the slug is editable and is for display and routing.
+          example: btc-above-70k-december-2026
+          type: string
+        event_title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        group_item_title:
+          description: |-
+            GroupItemTitle (markets.group_item_title) is this market's short label
+            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the frontend
+            derives one from the title, which is why an unlabelled contender list
+            currently reads "Will Abiy Ahmed be the next Prime Min…".
+          example: Above $70,000
+          type: string
+        id:
+          example: 54321
+          type: integer
+        image_url:
+          example: https://cdn.calibri.io/markets/btc-70k.png
+          type: string
+        kline:
+          description: |-
+            Exactly `GET /public/markets/{id}/k-line?period=&limit=`: rows of
+            [timestamp, open, high, low, close, volume].
+          items:
+            items:
+              type: number
+            type: array
+          type: array
+          uniqueItems: false
+        last_price:
+          example: "0.61"
+          type: string
+        market_id:
+          description: the ID used in the markets/order book
+          example: "54321"
+          type: string
+        no_price:
+          example: "0.38"
+          type: string
+        open_at:
+          example: "2026-07-21T10:00:00Z"
+          type: string
+        order_book:
+          $ref: '#/components/schemas/BundledOrderBook'
+        outcome_labels:
+          description: |-
+            OutcomeLabels are the display names of this market's two legs, index 0 the
+            YES leg and index 1 the NO leg, with the ["Yes","No"] default already
+            applied — consumers never have to handle NULL. Naming them turns a
+            proposition into a head-to-head, so the chart draws two labelled lines
+            instead of one and the buy buttons carry the contestant's name.
+
+            DISPLAY ONLY. The canonical resolution leg is still YES/NO: settlement,
+            the CTF condition and every ledger row are untouched by a relabel.
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price_settlement:
+          $ref: '#/components/schemas/PriceSettlement'
+        price_target:
+          $ref: '#/components/schemas/PriceTarget'
+        quote_currency:
+          example: usdc
+          type: string
+        recent_contracts:
+          description: Exactly `GET /public/markets/{id}/contracts/recent`.
+          items:
+            $ref: '#/components/schemas/PublicContract'
+          type: array
+          uniqueItems: false
+        resolution_source:
+          example: Coinbase BTC-USD
+          type: string
+        result:
+          example: "yes"
+          type: string
+        rules:
+          example: Settles on the final Coinbase BTC-USD trade price before 23:59:59
+            UTC.
+          type: string
+        settlement_panel:
+          $ref: '#/components/schemas/SettlementPanel'
+        status:
+          example: active
+          type: string
+        terms:
+          $ref: '#/components/schemas/MarketTerms'
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        volume_24h:
+          example: "1500.25"
+          type: string
+        yes_price:
+          example: "0.62"
+          type: string
+      type: object
+    HomeRails:
+      properties:
+        ending_soon:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          uniqueItems: false
+        featured:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          uniqueItems: false
+        trending:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          uniqueItems: false
+        volume:
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          uniqueItems: false
+      type: object
+    HomeResponse:
+      properties:
+        categories:
+          description: Exactly what `/public/categories` returns.
+          items:
+            $ref: '#/components/schemas/CategoryNode'
+          type: array
+          uniqueItems: false
+        events:
+          description: Exactly what `/public/events` returns for the same query.
+          items:
+            $ref: '#/components/schemas/Event'
+          type: array
+          uniqueItems: false
+        rails:
+          $ref: '#/components/schemas/HomeRails'
       type: object
     LeaderboardEntry:
       properties:
@@ -1814,6 +2164,12 @@ paths:
         name: limit
         schema:
           type: integer
+      - description: '`slim` reduces each event and market to the card fields (see
+          api.SlimEvent); anything else returns the full object'
+        in: query
+        name: fields
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -1832,6 +2188,15 @@ paths:
         One event with its markets — the same object as a list element.
         Falls back to MySQL for older windows that have left the live
         cache, so bookmarked and historical links keep resolving.
+
+        `include` bundles the per-market live data the event page
+        otherwise fetches one call at a time. The first `include_limit`
+        markets (in response order) each gain `order_book`, `kline` and/or
+        `recent_contracts`, holding exactly what the standalone
+        `/public/markets/{id}/order-book`, `/k-line` and `/contracts/recent`
+        routes return (the book also carries its `sequence`). Markets past
+        the limit carry none of them. Without `include` the response is the
+        plain event.
       parameters:
       - description: Event slug
         in: path
@@ -1839,13 +2204,46 @@ paths:
         required: true
         schema:
           type: string
+      - description: 'Order of markets[]: default (operator rank, else probability
+          desc), az or za'
+        in: query
+        name: market_sort
+        schema:
+          type: string
+      - description: Comma list of `books`, `recent`, `klines`; unknown names are
+          ignored
+        in: query
+        name: include
+        schema:
+          type: string
+      - description: How many leading markets get the bundle, 1-12 (default 6)
+        in: query
+        name: include_limit
+        schema:
+          type: integer
+      - description: k-line period in minutes, as /k-line takes it (default 1)
+        in: query
+        name: period
+        schema:
+          type: integer
+      - description: k-line rows, 1-10000 (default 30)
+        in: query
+        name: kline_limit
+        schema:
+          type: integer
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
+                $ref: '#/components/schemas/EventBundle'
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad Request
         "404":
           content:
             application/json:
@@ -1853,6 +2251,82 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Not Found
       summary: Event by slug
+      tags:
+      - Events
+  /api/v2/pythia/public/home:
+    get:
+      description: |-
+        The main event list for the given query, the four fixed rails
+        (`trending`, `ending_soon`, `volume`, `featured` — each
+        `/public/events?sort=<rail>&limit=5&status=active`) and the
+        category tree, in one response. Each part is exactly what its
+        standalone route returns. Takes the same query parameters as
+        `/public/events` for the main list.
+      parameters:
+      - description: Filter by category
+        in: query
+        name: category
+        schema:
+          type: string
+      - description: Filter by status. `resolved` covers determined and settled
+        in: query
+        name: status
+        schema:
+          type: string
+      - description: Filter to one tag slug
+        in: query
+        name: tag
+        schema:
+          type: string
+      - description: Filter to one series slug. Expands it rather than collapsing
+        in: query
+        name: series
+        schema:
+          type: string
+      - description: Filter to one sub-category slug, e.g. tennis
+        in: query
+        name: subcategory
+        schema:
+          type: string
+      - description: Filter by series cadence, e.g. daily / weekly / monthly
+        in: query
+        name: frequency
+        schema:
+          type: string
+      - description: Sort order, e.g. newest
+        in: query
+        name: sort
+        schema:
+          type: string
+      - description: Reverse the sort
+        in: query
+        name: reverse
+        schema:
+          type: boolean
+      - description: Order of markets[] within each event
+        in: query
+        name: market_sort
+        schema:
+          type: string
+      - description: Page size, applied after collapsing
+        in: query
+        name: limit
+        schema:
+          type: integer
+      - description: '`slim` reduces the main list''s events to the card fields (rails
+          stay full)'
+        in: query
+        name: fields
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+          description: OK
+      summary: Home bundle
       tags:
       - Events
   /api/v2/pythia/public/leaderboard:
