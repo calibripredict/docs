@@ -156,6 +156,7 @@
                   "api-reference/models/balance-entity",
                   "api-reference/models/contract-entity",
                   "api-reference/models/create-order-request",
+                  "api-reference/models/ctf-auto-redeem-entity",
                   "api-reference/models/ctf-config-entity",
                   "api-reference/models/ctf-redeemable-entity",
                   "api-reference/models/ctf-redeemable-market-entity",

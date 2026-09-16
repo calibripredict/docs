@@ -1484,6 +1484,42 @@ paths:
         - Wallet
       security:
         - apiKey: []
+  /api/v2/atlas/account/wallet/auto-redeem:
+    get:
+      description: >-
+        Whether resolved winnings are redeemed into your Safe automatically, and
+        the contract to approve (or revoke) to change it.
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtfAutoRedeemEntity'
+          description: ''
+      summary: Auto-redeem status
+      tags:
+        - Wallet
+      security:
+        - apiKey: []
+    put:
+      description: >-
+        Call after relaying `setApprovalForAll(auto_redeemer_address, enabled)`
+        from your Safe. Returns 409 if the chain does not show that approval
+        yet.
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CtfAutoRedeemEntity'
+          description: ''
+      summary: Set auto-redeem
+      tags:
+        - Wallet
+      security:
+        - apiKey: []
   /api/v2/atlas/account/wallet/markets/{id}:
     get:
       description: >-
@@ -3909,6 +3945,113 @@ components:
         - ord_type
         - volume
         - signed_order
+      type: object
+    CtfAutoRedeemEntity:
+      properties:
+        auto_redeemer_address:
+          description: >-
+            The contract to approve with `setApprovalForAll` on the Conditional
+            Tokens. It can only redeem your resolved positions and return the
+            whole payout to your Safe. Null when auto-redeem is not offered.
+          example: 0x4Fd2…
+          type:
+            - string
+            - 'null'
+        available:
+          description: Whether this account can use auto-redeem.
+          example: true
+          type: boolean
+        blockchain_key:
+          example: polygon-mainnet
+          type: string
+        chain_id:
+          example: 137
+          type: number
+        conditional_tokens_address:
+          description: Gnosis' Conditional Tokens — where your collateral actually sits.
+          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          type: string
+        domain_name:
+          description: >-
+            The EIP-712 domain name this exchange was DEPLOYED with. Hashed into
+            every order signature, and different per network — sign with the
+            served value, never a hard-coded one, or the signature will not
+            recover.
+          example: Calibri CTF Prediction Markets
+          type: string
+        enabled:
+          description: Whether resolved winnings are redeemed into your Safe automatically.
+          example: false
+          type: boolean
+        exchange_address:
+          description: This deployment's CTF Exchange.
+          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          type: string
+        owner_address:
+          description: >-
+            What owns the Safe: your wallet EOA, or for a passkey member the
+            secp256r1 signer contract. Served so a client can spot that a
+            different wallet is connected — only the owner can sign for the
+            Safe.
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - string
+            - 'null'
+        proxy_address:
+          description: Your Safe — the deposit destination and the maker on your orders.
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type:
+            - string
+            - 'null'
+        safe_setup:
+          $ref: '#/components/schemas/SafeSetupEntity'
+        safe_status:
+          description: >-
+            The single field that answers "can this member trade?".
+            `setup_required` means an order would REST AND THEN FAIL TO SETTLE —
+            worse than being rejected, so do not trade on it.
+          enum:
+            - ready
+            - setup_required
+            - error
+            - unavailable
+            - unlinked
+          example: ready
+          type: string
+        session_keys_enabled:
+          description: Whether this deployment has session trading keys switched on.
+          example: true
+          type: boolean
+        signature_type:
+          description: >-
+            How this account signs orders: `2` = POLY_GNOSIS_SAFE (Safe owned by
+            your wallet), `3` = POLY_1271 (Safe owned by a passkey). Sign the
+            way your type requires. Whether the Safe is usable yet is
+            `safe_status`, not this field.
+          enum:
+            - 2
+            - 3
+          example: 2
+          type: number
+        usdc_address:
+          description: The collateral token.
+          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
+          type: string
+      required:
+        - exchange_address
+        - conditional_tokens_address
+        - usdc_address
+        - chain_id
+        - blockchain_key
+        - domain_name
+        - proxy_address
+        - owner_address
+        - signature_type
+        - session_keys_enabled
+        - safe_status
+        - auto_redeemer_address
+        - available
+        - enabled
       type: object
     CtfConfigEntity:
       properties:
