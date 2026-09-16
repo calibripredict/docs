@@ -129,7 +129,6 @@
                   "api-reference/models/error-response",
                   "api-reference/models/event",
                   "api-reference/models/facet-count",
-                  "api-reference/models/leaderboard-entry",
                   "api-reference/models/liquidity-reward",
                   "api-reference/models/market-meta",
                   "api-reference/models/market-payload",
