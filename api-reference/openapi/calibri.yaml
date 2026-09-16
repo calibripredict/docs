@@ -2999,6 +2999,10 @@ components:
         total_pnl:
           example: 4500.75
           type: number
+        total_volume:
+          description: Stake the member put on the settled contracts behind total_pnl.
+          example: 12800.5
+          type: number
         trades:
           example: 45
           type: integer
