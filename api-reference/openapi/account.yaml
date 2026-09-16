@@ -470,6 +470,12 @@ components:
           description: 'yes, no or void. A void redeems at half per token.'
           example: 'no'
           type: 'string'
+        settled_at:
+          description: 'When the market settled and this claim arose. ISO-8601.'
+          example: '2026-09-16T17:35:10Z'
+          type:
+            - 'string'
+            - 'null'
         title:
           example: 'Bitcoin Up or Down 5m — 17:30–17:35 UTC'
           type:
@@ -482,6 +488,7 @@ components:
         - 'result'
         - 'condition_id'
         - 'redeemable'
+        - 'settled_at'
       type: 'object'
     CtfWalletEntity:
       properties:
