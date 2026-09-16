@@ -23,9 +23,10 @@ USDC**.
 |---|---|---|
 | **CTF Exchange** (Calibri) | `0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83` | [View on Polygonscan](https://polygonscan.com/address/0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83) |
 | **USDC** (collateral) | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | [View on Polygonscan](https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359) |
-| **ConditionalTokens** (Gnosis CTF) | read from `ctf/wallet` → `conditional_tokens_address` | `https://polygonscan.com/address/{address}` |
+| **ConditionalTokens** (Gnosis CTF) | read from `GET /account/wallet` → `conditional_tokens_address` | `https://polygonscan.com/address/{address}` |
 | **CalibriResolver** (oracle) | _to be published_ — ask support | `https://polygonscan.com/address/{address}` |
-| **Your Safe** | read from `ctf/wallet` → `proxy_address` | `https://polygonscan.com/address/{address}` |
+| **AutoRedeemer** | read from `GET /account/wallet/auto-redeem` → `auto_redeemer_address` | `https://polygonscan.com/address/{address}` |
+| **Your Safe** | read from `GET /account/wallet` → `proxy_address` | `https://polygonscan.com/address/{address}` |
 
 The CTF Exchange was deployed on **2 August 2026** and carries Calibri's own
 EIP-712 domain name — it is not a shared or third-party exchange. That domain
@@ -82,7 +83,7 @@ outcome tokens for that market.
 
 <Steps>
   <Step title="Check your Safe holds your money">
-    Take `proxy_address` from `ctf/wallet` and open it on Polygonscan. Its USDC
+    Take `proxy_address` from `GET /account/wallet` and open it on Polygonscan. Its USDC
     balance is your money, in a contract only you can authorise. Nothing about
     that depends on Calibri being honest.
   </Step>

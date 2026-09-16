@@ -35,19 +35,22 @@ the candle Coinbase published, unaltered.
 
 ### Up/down markets
 
-The most common recurring market asks: **did this interval close at or above its
-own open?**
+The most common recurring market asks: **did this interval close at or above the
+previous interval's close?**
 
 ```
-YES  if  close >= open
-NO   if  close <  open
+YES  if  close >= previous interval's close
+NO   if  close <  previous interval's close
 ```
 
-Both numbers come out of **the same candle**, so nothing has to be decided in
-advance and nothing depends on a feed being reachable at a particular instant.
+Both numbers are **closes** — the last trade of each interval — so the level to
+beat is known the instant the interval opens, and both can be re-requested from
+Coinbase and checked. A candle's own *open* is not used: Coinbase publishes a
+candle only some seconds after its interval starts, and its opening trade can
+differ between Coinbase's own candle widths.
 
 <Warning>
-  **A tie resolves UP.** `close == open` exactly is a real outcome on a quiet five-minute market, not a rounding artefact — so it has a stated answer rather than being left to chance. An interval that closes exactly where it opened resolves **YES**.
+  **A tie resolves UP.** A close exactly equal to the previous interval's close is a real outcome on a quiet five-minute market, not a rounding artefact — so it has a stated answer. It resolves **YES**.
 </Warning>
 
 ### Threshold markets
@@ -160,10 +163,47 @@ Closing and answering are two different moments.
 - **Close** is when trading stops.
 - **The answer deadline** is when the outcome is expected to become knowable. Markets state it separately when the two differ — some sources publish hours after the event.
 
-Automated settlements carry a short **review window** after the source is read
-(around a minute for crypto), during which an operator can object before the
+Crypto markets settle **shortly after they close** — typically within seconds.
+Calibri waits a few seconds after an interval ends so Coinbase's candle is final,
+reads it, and commits the outcome; there is no further hold for a closed candle.
+An operator can still freeze a suspect settlement. Sources that report
+judgement-based results (sports, events) keep a short review window before the
 outcome is committed. Once committed, resolution is reported on-chain and your
 winning shares become redeemable.
+
+## Market terms — reading a market in code
+
+Every automated market publishes **`terms`** on its public payload
+(`GET /api/v2/pythia/public/markets/{id}` and the event endpoints): the same
+conditions the market's `rules` state in prose, as structured fields. Read these
+instead of parsing a title — titles are written for people and their wording can
+change.
+
+```json
+"terms": {
+  "kind": "threshold",
+  "underlying": { "source": "coinbase", "symbol": "BTC-USD" },
+  "strike_type": "greater_equal",
+  "floor_strike": 70000,
+  "cap_strike": null,
+  "measure": { "at": "2026-09-17T00:00:00Z", "granularity_seconds": 60, "basis": "close" },
+  "settles_on": "coinbase_spot"
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `kind` | `threshold`, `range`, `direction` (up/down) or `categorical` (a named outcome — the leg's `group_item_title` labels it) |
+| `strike_type` | `greater`, `greater_equal`, `less`, `less_equal`, `between`, `direction` or `none` |
+| `floor_strike` / `cap_strike` | The level(s) compared against; `null` when not applicable. A `range` is half-open: inclusive floor, **exclusive** cap |
+| `underlying` | The venue and instrument that decide a price market |
+| `measure.at` | The instant that decides it — the deciding candle's close |
+| `measure.window_start` | For `direction` markets, when the window opens |
+| `measure.basis` | `close`, or `close_vs_previous_close` for up/down markets |
+| `settles_on` | The resolution source that settles the market |
+
+`terms` is omitted for markets settled by hand, which are described by their
+`rules` alone.
 
 ## Related
 

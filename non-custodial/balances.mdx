@@ -1,6 +1,6 @@
 ---
 title: "Balances"
-description: "How your Safe balance (balance_safe / locked_safe) is reported, and how it moves."
+description: "How your Safe balance (balance_safe / locked_safe / redeemable_safe) is reported, and how it moves."
 ---
 
 Your tradeable funds are reported as `balance_safe` and `locked_safe` — an
@@ -21,6 +21,7 @@ Every row reflects the live pools at the time of the request.
 |---|---|
 | `balance_safe` | Available funds mirrored from your on-chain Safe |
 | `locked_safe` | Safe funds locked by your resting orders |
+| `redeemable_safe` | Winnings from settled markets that have **not been redeemed yet**. The USDC is still in the ConditionalTokens contract, so this is **not spendable** until it is redeemed into your Safe — see [Redeeming winnings](/non-custodial/redeeming-winnings) |
 
 <Note>
   The response also carries `balance` and `locked`. These belong to an operator-held balance model that Calibri does not offer — they read `"0"`. The pools that matter to you are `balance_safe` and `locked_safe`.
@@ -34,7 +35,8 @@ Every row reflects the live pools at the time of the request.
   "balance": "0",
   "locked": "0",
   "balance_safe": "150.00",
-  "locked_safe": "40.00"
+  "locked_safe": "40.00",
+  "redeemable_safe": "10.00"
 }
 ```
 
@@ -43,8 +45,11 @@ Every row reflects the live pools at the time of the request.
 - **Funding** — USDC sent to your Safe address on-chain is credited to
   `balance_safe` once the transfer confirms.
 - **Resting order** — placing an order locks collateral against `locked_safe`.
-- **Redemption** — redeemed winnings land in your Safe on-chain and are mirrored
-  back into `balance_safe`.
+- **Settlement** — a winning position is credited to `redeemable_safe`, not
+  `balance_safe`: the payout is still held by the ConditionalTokens contract.
+- **Redemption** — redeeming (by hand or via auto-redeem) moves the USDC into
+  your Safe on-chain; once it confirms, the amount moves from `redeemable_safe`
+  to `balance_safe`.
 - **Withdrawal** — moving USDC out of the Safe on-chain debits `balance_safe`
   and cancels any resting orders those funds collateralised.
 

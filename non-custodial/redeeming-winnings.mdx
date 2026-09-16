@@ -1,14 +1,52 @@
 ---
 title: "Redeeming winnings"
-description: "Self-custody winners are not auto-paid — sign a redeemPositions call, relay it gaslessly, and withdraw USDC from your Safe."
+description: "Resolving a market makes your winnings redeemable. Redeem them yourself with one relayed signature, or turn on auto-redeem and have them land in your Safe automatically."
 ---
 
 Winnings are **claimed, not delivered**. Because your funds and outcome tokens
 live in your own Safe, resolving a market only makes your winning token
-**redeemable** — it does not push USDC to you.
+**redeemable** — the USDC stays in the ConditionalTokens contract until it is
+redeemed into your Safe.
 
-You call `redeemPositions` yourself (relayed, gasless), the USDC lands in your
-Safe, and then you withdraw.
+There are two ways to redeem:
+
+- **Yourself** — sign a `redeemPositions` call and relay it (gasless). See the steps below.
+- **Automatically** — opt in to [auto-redeem](#auto-redeem) once, and winnings are redeemed into your Safe shortly after each market resolves.
+
+Until a win is redeemed it is reported as [`redeemable_safe`](/non-custodial/balances),
+not as spendable `balance_safe`.
+
+## Finding what you can redeem
+
+**`GET /api/v2/atlas/account/wallet/redeemable`**
+
+Lists every settled market whose payout you have not redeemed yet — one row per
+market, with the amount summed across everything you held in it — together with
+the wallet config you need to sign the redeem. Only positive amounts are listed:
+a market where you hold only losing tokens pays nothing and does not appear.
+
+```json
+{
+  "proxy_address": "0x… (your Safe)",
+  "conditional_tokens_address": "0x…",
+  "usdc_address": "0x…",
+  "chain_id": 137,
+  "markets": [
+    {
+      "market_id": "120",
+      "title": "Bitcoin Up or Down 5m — 17:30–17:35 UTC",
+      "event_slug": "btc-updown-5m-1730",
+      "result": "no",
+      "condition_id": "0x…",
+      "redeemable": "10",
+      "settled_at": "2026-09-16T17:35:10Z"
+    }
+  ]
+}
+```
+
+A market is listed once its outcome has been reported on-chain, and drops off once
+the redemption confirms. The sum of `redeemable` matches your `redeemable_safe`.
 
 ## Full 1.00 per share — no settlement fee
 
@@ -45,8 +83,9 @@ authorised by you and relayed on your behalf.
     `Safe.execTransaction` and pays gas.
   </Step>
   <Step title="USDC lands in your Safe">
-    The redeemed USDC is transferred **into your Safe** and mirrored to your
-    off-chain [`balance_safe`](/non-custodial/balances).
+    The redeemed USDC is transferred **into your Safe**. Once the transaction
+    confirms, the amount moves from `redeemable_safe` to your spendable
+    [`balance_safe`](/non-custodial/balances).
   </Step>
   <Step title="Withdraw">
     Move the USDC from your Safe to an external wallet (see below).
@@ -77,18 +116,74 @@ your own derived Safe. Response:
 { "tx": "0x… (submitted tx hash, or null)" }
 ```
 
+## Auto-redeem
+
+Turn on auto-redeem and you never have to redeem by hand: after a market
+resolves, Calibri redeems your winnings **into your own Safe** and they are
+credited to `balance_safe` like a manual redeem.
+
+### How it works
+
+You approve Calibri's **AutoRedeemer** contract as an operator for your outcome
+tokens on the ConditionalTokens contract — one `setApprovalForAll` signature,
+relayed gaslessly like any Safe transaction. After each market resolves, the
+operator calls the AutoRedeemer, which redeems your positions and sends the
+**whole payout straight back to your Safe** in the same transaction.
+
+<Note>
+  The AutoRedeemer has no owner and no upgrade path. The only thing it can do with your approval is redeem your **resolved** positions and return the full payout to the Safe they came from — it cannot send funds anywhere else, touch unresolved markets, or move your USDC. Losing tokens are burned in the same call. Revoke the approval at any time to opt out.
+</Note>
+
+On Polygon a winning position is typically redeemed within a minute or so of the
+market resolving. If you press Redeem yourself first, whichever redemption lands
+first is paid and the other pays nothing — you cannot be paid twice.
+
+### Check whether it is on
+
+**`GET /api/v2/atlas/account/wallet/auto-redeem`**
+
+```json
+{
+  "proxy_address": "0x… (your Safe)",
+  "conditional_tokens_address": "0x…",
+  "auto_redeemer_address": "0x…",
+  "available": true,
+  "enabled": false
+}
+```
+
+`available` is `false` when auto-redeem is not offered on your account (for
+example, before your Safe exists). The response also carries the usual wallet
+config for signing.
+
+### Turn it on or off
+
+<Steps>
+  <Step title="Relay the approval">
+    Encode `setApprovalForAll(auto_redeemer_address, true)` (or `false` to opt
+    out), wrap it in a Safe `SafeTx` with `to` = `conditional_tokens_address`,
+    sign it, and relay it through **`POST /api/v2/atlas/account/wallet/relay`**.
+  </Step>
+  <Step title="Record your choice">
+    **`PUT /api/v2/atlas/account/wallet/auto-redeem`** with `{ "enabled": true }`
+    (or `false`). Calibri reads the approval back from the chain before storing
+    it, and answers `409` if the chain does not show it yet — relay first, then
+    call this.
+  </Step>
+</Steps>
+
 ## Withdrawing from the Safe
 
 Because funds live in your own Safe, a withdrawal is a **member-controlled
 on-chain USDC transfer out of the Safe** — a Safe `SafeTx` executing
 `USDC.transfer(to, amount)`, relayed gaslessly through the same
-`ctf/relay` endpoint used for redemption.
+`POST /api/v2/atlas/account/wallet/relay` endpoint used for redemption.
 
 When funds leave the Safe on-chain, Calibri reconciles the off-chain mirror: it
 debits `balance_safe` and cancels any resting orders those funds collateralised.
 
 <Note>
-  Withdrawals are done through the generic `ctf/relay` USDC-transfer path described above.
+  Withdrawals go through the same relay endpoint as a USDC transfer, as described above.
 </Note>
 
 ## Void
