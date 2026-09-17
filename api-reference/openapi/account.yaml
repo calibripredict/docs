@@ -63,6 +63,13 @@ components:
           description: 'ISO-8601.'
           example: '2026-08-07T10:00:00Z'
           type: 'string'
+        direction:
+          description: 'Whether you bought or sold `side` on this contract. Always `buy` on a mint.'
+          enum:
+            - 'buy'
+            - 'sell'
+          example: 'buy'
+          type: 'string'
         event_slug:
           description: 'The parent event''s slug — what a portfolio row links to.'
           example: 'btc-updown-5m-1730'
@@ -75,7 +82,7 @@ components:
             - 'string'
             - 'null'
         funds_spent:
-          description: 'Collateral committed.'
+          description: 'Cash paid, on a buy. 0 on a sell.'
           example: 60
           type: 'number'
         id:
@@ -88,6 +95,14 @@ components:
         market_title:
           example: 'Will BTC close above its open?'
           type: 'string'
+        match_type:
+          description: '`mint` creates a YES/NO pair from two buys; `transfer` moves an existing token from a seller to a buyer; `merge` redeems a YES and a NO from two sellers.'
+          enum:
+            - 'mint'
+            - 'transfer'
+            - 'merge'
+          example: 'mint'
+          type: 'string'
         outcome_labels:
           description: 'The market’s YES and NO leg names, in that order. Absent on a market using the Yes/No default.'
           example:
@@ -99,6 +114,10 @@ components:
         price:
           description: 'Fill price, a probability in (0,1).'
           example: 0.6
+          type: 'number'
+        proceeds:
+          description: 'Cash received before fees, on a sell. 0 on a buy.'
+          example: 0
           type: 'number'
         quote_currency:
           example: 'usdc'
@@ -124,7 +143,7 @@ components:
           example: 'matched'
           type: 'string'
         side:
-          description: 'Your side of the contract.'
+          description: 'The outcome you traded on this contract. On an exit this is the outcome you sold or bought, not the book side.'
           enum:
             - 'yes'
             - 'no'
@@ -159,10 +178,13 @@ components:
         - 'event_title'
         - 'quote_currency'
         - 'side'
+        - 'direction'
+        - 'match_type'
         - 'price'
         - 'avg_price'
         - 'volume'
         - 'funds_spent'
+        - 'proceeds'
         - 'taker_fee_amount'
         - 'taker_fee_refunded'
         - 'state'
@@ -1258,6 +1280,17 @@ components:
             - 'self'
           example: 'self'
           type: 'string'
+        event_slug:
+          description: 'The parent event''s slug — what a portfolio row links to.'
+          example: 'btc-updown-5m-1730'
+          type:
+            - 'string'
+            - 'null'
+        event_title:
+          example: 'Bitcoin Up or Down 5m'
+          type:
+            - 'string'
+            - 'null'
         locked_qty:
           description: 'Contracts reserved by your resting sell orders.'
           example: '50'
@@ -1282,6 +1315,14 @@ components:
           description: 'The market''s own label for this outcome (e.g. a team name).'
           example: 'Yes'
           type: 'string'
+        outcome_labels:
+          description: 'The market''s labels for its two outcomes, `[yes, no]`.'
+          example:
+            - 'Yes'
+            - 'No'
+          items:
+            type: 'string'
+          type: 'array'
         qty:
           description: 'Contracts held.'
           example: '300'
@@ -1302,6 +1343,9 @@ components:
       required:
         - 'market_id'
         - 'market_title'
+        - 'event_slug'
+        - 'event_title'
+        - 'outcome_labels'
         - 'outcome'
         - 'outcome_label'
         - 'custody'
