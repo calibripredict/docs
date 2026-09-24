@@ -1,0 +1,254 @@
+---
+title: "Deposits from other networks"
+description: "Send USDC to your Safe address on Ethereum, Base, Arbitrum or Optimism and it arrives in the same Safe on Polygon — how it works, what it costs, what not to send, and why it stays non-custodial."
+---
+
+Calibri trades on **Polygon**, but you do not have to fund your account from Polygon.
+Your Safe has **the same address on every supported network**. Send USDC to that address
+on **Ethereum, Base, Arbitrum or Optimism** and it is moved to **the same Safe on
+Polygon** automatically, through Circle's own bridge. You sign nothing.
+
+It arrives as an ordinary deposit, exactly as if you had sent it on Polygon.
+
+<Note>
+  Sending USDC on **Polygon** is unchanged: no fee, no minimum, usually credited within a minute. Everything on this page is about the other networks.
+</Note>
+
+## Supported networks
+
+| Network | Minimum before we bridge | Fee | Typical time |
+|---|---|---|---|
+| **Polygon** | None | None | About a minute |
+| **Ethereum** | 20 USDC | Covers network gas — at most 10 USDC and at most 20% | About 15–20 minutes |
+| **Base** | 5 USDC | Same rule | About 15–20 minutes |
+| **Arbitrum** | 5 USDC | Same rule | About 15–20 minutes |
+| **Optimism** | 5 USDC | Same rule | About 15–20 minutes |
+
+The Wallet page shows the current minimum, fee estimate and arrival time for each network.
+If it and this page ever disagree, the Wallet page is right.
+
+<Warning>
+  **Only USDC, and only on the networks above.** Other tokens — ETH, USDT, or bridged versions of USDC such as USDC.e — and USDC on any other network, **including Solana**, are **not recovered automatically**. See [What not to send](#what-not-to-send).
+</Warning>
+
+## How it works
+
+<Steps>
+  <Step title="You send USDC to your Safe address">
+    On Ethereum, Base, Arbitrum or Optimism — from an exchange or any wallet. It is the
+    same address as on Polygon, and the same one the Wallet page shows.
+  </Step>
+  <Step title="We wait for the minimum">
+    Below the minimum for that network, the USDC waits at your address. Send more and the
+    deposits are combined; once the total reaches the minimum, it all moves together, for
+    one fee.
+  </Step>
+  <Step title="Your Safe is created on that network, if needed">
+    Your Safe's address is fixed in advance, but the contract only exists on a network once
+    something needs it. On your first bridge from a network, Calibri creates it there —
+    owned by exactly the same owner as your Safe on Polygon, and nobody else.
+  </Step>
+  <Step title="The USDC is bridged">
+    One transaction on that network pays the fee and hands the rest to **Circle's
+    Cross-Chain Transfer Protocol (CCTP)**, which burns it there with your Safe's own
+    Polygon address as the only recipient.
+  </Step>
+  <Step title="Circle attests the burn">
+    Circle waits for the burn to be final on Ethereum and signs an attestation. This is
+    most of the wait — it is Circle's **Standard** transfer, which Circle does not charge
+    for today.
+  </Step>
+  <Step title="It arrives on Polygon">
+    The attestation is submitted on Polygon and Circle mints the same amount of native
+    USDC directly into your Safe there.
+  </Step>
+  <Step title="It is credited as a normal deposit">
+    The mint lands in your Safe like any other Polygon deposit, and is credited to your
+    balance the same way. From here on it is ordinary USDC in your Safe.
+  </Step>
+</Steps>
+
+## What the Wallet page shows
+
+- **A network picker** above your deposit address — Polygon first, then the other
+  networks. The address itself **does not change** when you switch; it is labelled
+  *Same address on every network*. Only the notes under it change: the network's
+  **minimum**, its **fee** estimate with the cap, and **roughly how long it takes**.
+- If you use your own wallet, the same address is under **Deposit from another network**,
+  below the deposit form.
+- **From other networks** — each USDC transfer on its way in, with four steps:
+  **Received on (network) → Bridging → Arriving on Polygon → Credited**. A transfer
+  below the minimum says how much more to send. Each one links to its transactions on the
+  block explorers: your deposit, the bridge, and the arrival on Polygon.
+- **Credited** is shown only once the Polygon deposit has been accepted into your
+  balance. Transfers stay under **History** afterwards.
+
+If a transfer stops, it says so and gives you a reference. Contact support and quote it.
+
+<Note>
+  If the Wallet page offers only Polygon, deposits from other networks are not available for your wallet. Send USDC on Polygon.
+</Note>
+
+## Fees, minimums and timing
+
+**The fee covers the network gas** of moving your USDC — the bridge transaction, the
+delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
+It is not a trading fee and it is not a percentage we set per deposit. It is capped by the
+contract itself:
+
+- **At most 10 USDC**, and
+- **At most 20% of the amount** being bridged,
+- **One fee per bridge.** Deposits combined while waiting for the minimum are bridged
+  together, for one fee.
+
+The fee is taken **before** the burn, in USDC, on the network you sent from. The rest is
+what arrives on Polygon. Circle charges nothing for Standard transfers today; if that ever
+changes, Circle's own fee would come out of the amount it mints.
+
+| You send | Fee can be at most | You receive at least |
+|---|---|---|
+| 5 USDC on an L2 | 1.00 USDC (20%) | 4.00 USDC |
+| 20 USDC on Ethereum | 4.00 USDC (20%) | 16.00 USDC |
+| 100 USDC on any network | 10.00 USDC (the absolute cap) | 90.00 USDC |
+
+Those are ceilings, not estimates, and they assume Circle still charges nothing. The fee
+charged is the gas cost at the time, and the Wallet page shows the current estimate before
+you send.
+
+**Minimums** are Calibri's, not the contract's: 20 USDC on Ethereum, where gas is
+expensive, and 5 USDC on the L2s. Below it nothing is lost — the USDC waits at your address
+until more arrives. You can also move it yourself at any time for no fee (see
+[Moving it yourself](#moving-it-yourself)).
+
+**Timing.** About 15–20 minutes from any of the four networks. That time is **Circle's
+finality wait, not ours**: a Standard transfer is attested only once the burn is final on
+Ethereum — and Base, Arbitrum and Optimism settle to Ethereum, so they take about as long.
+Below the minimum, the clock starts when the total reaches it.
+
+## What not to send
+
+<Warning>
+  **Only native USDC, issued by Circle, on Ethereum, Base, Arbitrum or Optimism** is moved automatically. Anything else sent to your Safe address on those networks stays there:
+
+  - **Other tokens** — ETH, USDT, or bridged USDC such as USDC.e.
+  - **USDC on any network not listed** — including **Solana**, which has a different address format altogether.
+
+  None of it is recovered automatically. If you use a **passkey**, it cannot be moved at all today (see [The caveats](#the-caveats)). If you use **your own wallet**, you can move it yourself by signing a Safe transaction on that network.
+</Warning>
+
+## Why this is still non-custodial
+
+Moving money between networks without asking you to sign sounds like the one thing a
+non-custodial service should not be able to do. Here is exactly what makes it possible,
+and exactly what it is limited to.
+
+### One module, one job
+
+Every Safe is created with one **module** enabled — the **CctpBridgeModule**. A Safe module
+is a contract the Safe allows to act without owner signatures, so everything depends on
+what the module's own code allows. That code is immutable, and it can do **exactly one
+thing**: move that network's USDC through Circle to **the same Safe address on Polygon**.
+
+| The module can | The module cannot |
+|---|---|
+| Move that network's **USDC** out of your Safe | Move any other token, or ETH |
+| Send it through **Circle's CCTP**, to **your own Safe address on Polygon** | Send it anywhere else — the destination is fixed in code, never a parameter, never a setting |
+| Pay **one capped fee** to Calibri's treasury, only when Calibri's relayer is the caller | Take more than 10 USDC, or more than 20% of the amount, per bridge |
+| — | Delegatecall, or change your Safe's owners or settings |
+
+There is no argument to point the funds somewhere else, no stored destination, and no
+admin switch that changes it. The mint recipient is the address of the Safe the USDC came
+out of.
+
+### It is there from the start
+
+The module is switched on **when the Safe is created**, in the same transaction, by the
+Safe factory. There is never a moment when your Safe exists without it, and nobody can
+create your Safe differently first. Your Safe on Polygon has it too; there it does nothing,
+because there is no route from Polygon to itself.
+
+### The fee is bounded in code
+
+Two addresses are configurable — the **relayer** allowed to charge the fee, and the
+**treasury** it is paid to — and only by the fee-configuration admin. Everything that
+decides where your money ends up is not configurable at all: the destination, the token,
+Circle's contract and the fee caps are fixed in the module. Changing any of them would take
+a new module at a new address, and so a different Safe address.
+
+### Anyone can move it — including you
+
+Anyone may call the bridge with **a zero fee**. That is deliberate. If Calibri
+disappeared, you — or anyone — could still move USDC stranded on another network to your
+Safe on Polygon, and the worst a stranger could do is move your USDC to where you meant it
+to go. See [Moving it yourself](#moving-it-yourself).
+
+### Calibri never holds a key
+
+Calibri creates your Safe on the other network through a **permissionless** factory:
+`createProxyFor(owner)` makes a Safe owned solely by `owner`, whoever pays for it. The
+owner is your own — your wallet, or your passkey's signer — exactly as on Polygon.
+Calibri is never an owner, on any network, and holds no key that could sign for your Safe.
+
+### Who can do what
+
+| Who | Can | Cannot |
+|---|---|---|
+| **Anyone** | Bridge your Safe's USDC with no fee; create your Safe on another network | Send it anywhere but your Safe on Polygon; take a fee; touch other tokens or ETH |
+| **Calibri's relayer** | The above, plus **one** fee per bridge of the whole balance, capped at 10 USDC and 20% | Take a fee on part of the balance; exceed the caps; redirect the USDC or the fee |
+| **Fee-configuration admin** | Change the relayer and the treasury | Change the caps, the destination, the token or Circle's contract |
+| **You** (your wallet) | Anything a Safe owner can do, on every network — including switching the module off | — |
+| **You** (a passkey) | Everything on Polygon | Sign anything on another network — see below |
+| **Circle** | Operate the bridge: burn on one side, mint to the recipient on the other | — |
+
+Circle is trusted here in the same way it is trusted with USDC itself: it issues the
+token, and it runs the bridge that burns and mints it.
+
+## The caveats
+
+<Warning>
+  **Passkey wallets: on other networks, the module is the only way out.** Your passkey's signer contract exists only on Polygon. On any other network your Safe's owner is an address with no contract behind it, so **no signature from you can ever be verified there**. That means:
+
+  - The module **cannot be switched off** on those networks.
+  - It is the **only** way USDC there can move — which is why it is limited to sending it to your own Safe, and why anyone can trigger it.
+  - **Anything other than USDC** sent to your address there needs your signature to move, and that signature **cannot be produced today**. Treat it as lost.
+</Warning>
+
+- **Signing keys and owner changes do not carry over.** Your Safe on another network is
+  created with the owner your Polygon Safe was created with. A
+  [signing key](/non-custodial/signing-keys) you add on Polygon cannot sign there, and if
+  the original owner is later replaced on Polygon, it still controls the Safe on the other
+  networks. The module still moves USDC there to Polygon either way.
+- **Someone can bridge before we do.** Anyone can call the bridge with no fee ahead of
+  Calibri's relayer. You lose nothing — the USDC still goes only to your Safe on Polygon,
+  and no fee is charged on what they move.
+- **Anyone can trigger the bridge.** USDC sitting in your Safe on another network can be
+  bridged by anyone, even if you wanted it to stay there. It can only ever go to your own
+  Safe on Polygon. If you use your own wallet and object, you can switch the module off on
+  that network — automatic bridging from it then stops.
+- **If Calibri's relayer key were stolen**, the most it could do is bridge a Safe's whole
+  USDC balance to that same Safe on Polygon, taking one capped fee — at most 10 USDC and 20%
+  — per bridge. It could not redirect the USDC or the fee, and could not drain a Safe
+  through repeated small calls.
+
+## Moving it yourself
+
+You never need Calibri to move USDC from another network to your Safe on Polygon. Anyone
+with a little gas on that network can call the module with no fee. The steps are on
+[Withdrawing without Calibri](/non-custodial/withdraw-without-calibri#usdc-on-another-network).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Funding your account" href="/wallet-deposits">
+    The deposit address, the network picker, and what to send.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    What your Safe is, and what can act on it.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The trading fee, and the bridge fee on other networks.
+  </Card>
+  <Card title="Smart Contracts" href="/smart-contracts/overview">
+    The bridge contracts and their trust model.
+  </Card>
+</CardGroup>

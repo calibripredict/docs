@@ -1,6 +1,6 @@
 ---
 title: "Smart Contracts"
-description: "The on-chain contracts behind non-custodial trading — USDC, ConditionalTokens (CTF), the CTF Exchange, CalibriResolver, and your per-member Gnosis Safe — and how to verify the live addresses."
+description: "The on-chain contracts behind non-custodial trading — USDC, ConditionalTokens (CTF), the CTF Exchange, CalibriResolver, your per-member Gnosis Safe, and the bridge that brings USDC in from other networks — and how to verify the live addresses."
 ---
 
 Trading on Calibri runs on a **Conditional Token Framework (CTF)** deployment on
@@ -27,10 +27,59 @@ values and how to verify them.
 
 ## What "non-custodial" actually guarantees
 
-- **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature.
+- **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature. The one thing that moves without it is the [bridge module](#cross-network-deposits), and all it can do is carry USDC sent to your address on another network to **your own Safe on Polygon**.
 - **The operator can only report** — CalibriResolver reports outcomes; it can't seize collateral. Redemption of winnings happens **directly from the CTF**, so your winnings are never custodied by the operator between resolution and redeem.
 - **You sign, the operator pays gas** — Deploying your Safe, approvals, order settlement, and redemption are all **relayed** by the operator. You sign; you never need to hold gas. The one exception you can opt in to is auto-redeem, where a single approval lets winnings be redeemed back into your Safe without signing each one.
 - **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or refunds. See [Market resolution](/non-custodial/resolution).
+
+## Cross-network deposits
+
+Four contracts let USDC sent to your Safe address on **Ethereum, Base, Arbitrum or
+Optimism** reach the same Safe on Polygon without you signing anything. Each is deployed at
+**the same address on every supported network**, which is what gives your Safe the same
+address everywhere. See [Deposits from other networks](/non-custodial/deposits-from-other-networks)
+for the member-facing flow.
+
+| Contract | Plain-English role |
+|---|---|
+| **CalibriSafeFactoryV2** | Creates member Safes. Same address formula as before, but every Safe it creates has the bridge module enabled **in the same transaction** — a Safe never exists without it. **Permissionless**: `createProxyFor(owner)` makes a Safe owned solely by `owner`, whoever calls it. |
+| **SafeModuleSetup** | A stateless helper the Safe runs during its own setup to switch the module on. It holds nothing and does nothing if called directly. |
+| **CctpBridgeModule** | The module on every Safe. One entry point, `bridge(safe, amount, fee, maxCctpFee)`: it moves that network's USDC through **Circle's CCTP** to **the same Safe address on Polygon**. The destination is fixed in code, never a parameter. No storage, no owner, no upgrade path. On Polygon itself it is inert. |
+| **BridgeFeeConfig** | Holds two addresses: the **relayer** allowed to charge the bridge fee, and the **treasury** the fee is paid to. Its admin can change those two and nothing else. |
+
+### What the module can and cannot do
+
+The module can act on a Safe without owner signatures — that is what a Safe module is — so
+its limits are enforced by its own immutable code:
+
+- **One token:** the network's native USDC, as linked by Circle's own contracts. Never a
+  token the caller names; never ETH.
+- **One destination:** a CCTP burn whose recipient is the Safe's own address on Polygon.
+- **One kind of call:** plain calls to USDC and to Circle's messenger. It never
+  delegatecalls.
+- **One capped fee:** only when the configured relayer calls it, only on a bridge of the
+  Safe's **whole** balance, at most **10 USDC** and at most **20%** of that balance, paid
+  to the configured treasury.
+- **Open to anyone at zero fee:** so a member can always move stranded USDC to their
+  Polygon Safe, with or without Calibri.
+
+Changing any of those limits would take a new module at a new address, and therefore a new
+factory and different Safe addresses.
+
+### Trust model
+
+| Who | Can | Cannot |
+|---|---|---|
+| **Anyone** | Call `bridge` with `fee = 0` for any Safe; create any member's Safe with `createProxyFor` | Send funds anywhere but the Safe's own address on Polygon; take a fee; move any token but USDC; send ETH; delegatecall |
+| **Relayer** (set in BridgeFeeConfig) | Everything anyone can, plus one fee per whole-balance bridge, at most `min(10 USDC, 20%)`, paid to the treasury | Take a fee on part of the balance; exceed the caps; redirect the burn or the fee |
+| **Fee-config admin** | Change the relayer and the treasury; hand the admin role over (two-step) | Change the fee caps, destination, token or Circle's messenger — all fixed in the module; renounce the role |
+| **Safe owner — your wallet** | Everything a Safe owner can, on every network, including switching the module off | — |
+| **Safe owner — a passkey** | Everything, on Polygon | Anything on another network: the passkey's signer contract exists only on Polygon, so the module cannot be switched off there and is the only way USDC leaves |
+| **Circle (CCTP)** | Burn on the source network and mint to the recipient on Polygon; decide which token is USDC on each network; set its own transfer fee, which is zero for Standard transfers today | — |
+
+<Warning>
+  On other networks, **anything other than USDC** sent to a passkey member's Safe cannot be moved today — it needs an owner signature that cannot be produced there. The module never moves it.
+</Warning>
 
 ## Verifying and interacting on-chain
 
@@ -74,6 +123,9 @@ values and walks through verifying each one on the explorer.
   </Card>
   <Card title="Resolution & recovery" href="/non-custodial/resolution">
     Operator → UMA → deadman void.
+  </Card>
+  <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
+    How the bridge module moves USDC to your Safe on Polygon.
   </Card>
 </CardGroup>
 

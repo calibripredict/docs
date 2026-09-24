@@ -38,8 +38,35 @@ required to do so or where these terms are breached.
 Calibri is **fully self-custodial**. Your USDC sits in a **Gnosis Safe that only
 you control**, on-chain — owned by your passkey or your wallet, and by any
 additional signing key you choose to add. Calibri is never an owner, never takes
-custody, never holds a balance for you, and cannot move your funds. Every order is a signature you
-produce; every transfer out of your Safe is a transaction you sign.
+custody, never holds a balance for you, and cannot move your funds, except as set out in
+clause 3.1. Every order is a signature you produce; every other transfer out of your Safe is
+a transaction you sign.
+
+### 3.1 Deposits from other networks
+
+(a) **Authorisation.** You expressly authorise Calibri to trigger, on your behalf and
+without further signature from you, the bridging through Circle's Cross-Chain Transfer
+Protocol (CCTP) of USDC you send to your Safe address on a supported network other than
+Polygon.
+
+(b) **Limits.** The bridge module attached to your Safe can transfer such USDC only to the
+same Safe address on Polygon, which is owned and controlled solely by you. It cannot
+transfer funds to any other address and cannot access any other token or ETH. Calibri
+never holds your keys.
+
+(c) **Fees.** Calibri may deduct a service fee from the amount bridged, within the limits
+published in [Fees](/concepts/fees) — at most 10 USDC and at most 20% of the amount per
+bridge — together with Circle's network fee, if any.
+
+(d) **Conditions.** Bridging is subject to the published minimums and timing. Any party,
+including you, may trigger it at zero fee. Assets other than USDC, and USDC sent on a
+network that is not supported, are not bridged automatically, and Calibri is not
+responsible for them.
+
+(e) **Passkey wallets.** If your Safe is owned by a passkey, the bridge module cannot be
+disabled on networks other than Polygon and is the only mechanism able to move USDC there.
+
+See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 The consequences of that are yours as well:
 

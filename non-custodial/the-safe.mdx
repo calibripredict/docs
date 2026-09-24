@@ -30,6 +30,38 @@ contract. The config below tells you which — see
 
 A member with neither a linked wallet nor a passkey is custodial-only.
 
+## The bridge module
+
+Every Safe is created with **one module** enabled: the **CctpBridgeModule**. It is
+switched on by the Safe factory **in the same transaction that creates the Safe**, so no
+Safe ever exists without it and nobody can set one up differently first.
+
+A Safe module is a contract the Safe lets act **without owner signatures** — so what
+matters is what the module's own, immutable code allows. This one allows exactly one
+thing: moving that network's **USDC**, through Circle's CCTP, to **the same Safe address
+on Polygon**. That is what lets USDC sent to your address on Ethereum, Base, Arbitrum or
+Optimism reach your Safe on Polygon without you signing anything — see
+[Deposits from other networks](/non-custodial/deposits-from-other-networks).
+
+| The module can | The module cannot |
+|---|---|
+| Move the network's USDC to **your own Safe address on Polygon**, through Circle | Send funds anywhere else — the destination is fixed in code, not a parameter or a setting |
+| Pay **one** fee per bridge to Calibri's treasury, only when Calibri's relayer calls it — at most 10 USDC and at most 20% of the amount | Move any other token, or ETH |
+| Be called by **anyone** with a zero fee — including you, if Calibri is gone | Delegatecall, or change your Safe's owners or settings |
+
+On **Polygon** the module is present but does nothing: there is no route from Polygon to
+itself.
+
+Your Safe has **the same address on every supported network**, because the factory and
+the Safe implementation sit at the same address on each. On a network other than Polygon
+the Safe is created only when it is first needed, by the same permissionless factory, with
+**the same owner** your Polygon Safe was created with. Calibri is never an owner there
+either.
+
+<Warning>
+  **Passkey wallets:** your signer contract exists only on Polygon, so no signature from you can be checked on another network. There, the module cannot be switched off and is the only way USDC can leave your Safe — and anything other than USDC sent there cannot be moved today. A [signing key](/non-custodial/signing-keys) added on Polygon does not carry over to other networks. See [the caveats](/non-custodial/deposits-from-other-networks#the-caveats).
+</Warning>
+
 ## 1. Deploy & register (operator-gasless)
 
 You do not deploy the Safe yourself. When you first read your CTF config, Calibri
@@ -86,6 +118,10 @@ Returns your funding config: `proxy_address` (your Safe), `owner_address` (your 
 Send USDC to your Safe address (`proxy_address`) on-chain — from any wallet or
 exchange. Your off-chain [`balance_safe`](/non-custodial/balances) mirror is
 credited once the transfer confirms.
+
+USDC sent to the same address on Ethereum, Base, Arbitrum or Optimism is bridged to
+this Safe on Polygon by the module above and credited the same way, less a capped fee —
+see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 <Warning>
   The Safe must **actually hold USDC on-chain**. On-chain settlement pulls your real collateral from the Safe when a trade matches; `balance_safe` is only Calibri's mirror of that on-chain balance.
@@ -171,3 +207,4 @@ Use `value = safeTxGas = baseGas = gasPrice = 0`, `gasToken = refundReceiver =
 
 - [Signed orders](/non-custodial/signed-orders) — build and sign an EIP-712 order once the Safe is ready
 - [Redeeming winnings](/non-custodial/redeeming-winnings) — the same relay path is used to claim payouts
+- [Deposits from other networks](/non-custodial/deposits-from-other-networks) — USDC on Ethereum, Base, Arbitrum or Optimism, bridged here

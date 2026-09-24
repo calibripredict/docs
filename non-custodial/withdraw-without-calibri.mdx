@@ -90,6 +90,42 @@ private key you hold, so you can move it from **any** Safe interface, or by
 calling `execTransaction` yourself. Nothing about that depends on Calibri or on
 this domain.
 
+## USDC on another network
+
+USDC you sent to your Safe address on Ethereum, Base, Arbitrum or Optimism that has not
+reached Polygon yet can be moved there **without Calibri and without a signature** —
+not even your passkey's. The bridge module on your Safe lets anyone call it with a zero
+fee, and it can only send the USDC to your own Safe on Polygon.
+
+<Steps>
+  <Step title="Make sure your Safe exists on that network">
+    Calibri creates it there on the first bridge. If it was never created, call
+    `createProxyFor(owner)` on **CalibriSafeFactoryV2** on that network, with `owner` set
+    to your Safe owner from the Wallet page (your wallet address, or your passkey's signer
+    contract). Anyone can call it; the Safe it creates is at your address and owned only
+    by that owner.
+  </Step>
+  <Step title="Bridge the balance">
+    Call `bridge(safe, FULL_BALANCE, 0, maxCctpFee)` on **CctpBridgeModule** on that
+    network, from any account with a little gas there. `safe` is your Safe address,
+    `FULL_BALANCE` is `type(uint256).max` (the whole USDC balance at execution), the fee
+    is `0`, and `maxCctpFee` is `0` while Circle charges nothing for Standard transfers —
+    otherwise at least Circle's current minimum fee for that amount. The contract needs at
+    least 1 USDC; Calibri's minimums do not apply.
+  </Step>
+  <Step title="Deliver it on Polygon">
+    Once Circle has attested the burn, submit the message and Circle's attestation with
+    `receiveMessage` on Circle's MessageTransmitterV2 on Polygon. Anyone can deliver it.
+    Circle mints the USDC into your Safe on Polygon, and from there it is an ordinary
+    balance you can withdraw as above.
+  </Step>
+</Steps>
+
+The module and factory addresses are listed under
+[Cross-network deposits](/smart-contracts/deployed-addresses#cross-network-deposits),
+published there once they are deployed. If you use **your own wallet**, you can also move
+funds from your Safe on that network by signing a Safe transaction there, as on Polygon.
+
 ## What this does not cover
 
 - **Redeeming a winning position.** Settlement pays into your Safe, and redeeming is a

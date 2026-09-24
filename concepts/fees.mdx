@@ -152,8 +152,31 @@ See [Self-custody](/non-custodial/overview) for the full model.
 |---|---|
 | Maker fee | **None.** Only the taker pays — and the maker earns a [rebate](/concepts/maker-rebates) |
 | Settlement / redemption fee | **None.** Winners redeem the full `1.00 USDC` per share |
-| Deposit fee | **None.** Funding is an ordinary on-chain transfer to your Safe; you pay only the network's gas to send it |
+| Deposit fee | **None on Polygon.** Funding is an ordinary on-chain transfer to your Safe; you pay only the network's gas to send it. USDC sent on another network carries a capped [bridge fee](#deposits-from-other-networks) |
 | Withdrawal fee | **None.** Moving USDC out of your Safe is relayed for you and the operator pays the gas |
+
+## Deposits from other networks
+
+Depositing USDC **on Polygon is free**, with no minimum. USDC you send to your Safe
+address on **Ethereum, Base, Arbitrum or Optimism** is bridged to your Safe on Polygon, and
+that bridge carries one fee. It is not a trading fee and is not shared with makers or
+referrers:
+
+- **It covers network gas** — the bridge transaction on the network you sent from, the
+  delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
+- **At most 10 USDC, and at most 20% of the amount** bridged. Both caps are fixed in the
+  bridge contract; Calibri cannot raise them.
+- **One fee per bridge.** Below the network's minimum — **20 USDC on Ethereum, 5 USDC on
+  Base, Arbitrum and Optimism** — deposits wait and are combined, then bridged together
+  for one fee.
+- **Taken before the bridge**, in USDC, on the network you sent from. The rest is what
+  arrives in your Safe on Polygon.
+- **Circle charges nothing** for its Standard transfers today. If that changes, Circle's
+  own fee comes out of the amount it mints on Polygon.
+
+The Wallet page shows the current estimate for each network before you send. If anyone
+bridges your USDC before Calibri does — including you, which you can do at any time — no
+fee is charged on what they move. See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 ## In short
 
@@ -173,6 +196,9 @@ See [Self-custody](/non-custodial/overview) for the full model.
   </Card>
   <Card title="Account fees endpoint" href="/api-reference/introduction">
     Read resolved fees programmatically in the API Reference.
+  </Card>
+  <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
+    The bridge fee, minimums and timing for USDC sent on another network.
   </Card>
 </CardGroup>
 

@@ -40,7 +40,7 @@ Prices move as opinion moves, so the odds you see change right up until the mark
 
 ## Your money is yours
 
-Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it.
+Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it — with one narrow exception: the bridge module can move USDC you sent to your address on another supported network, and only to your own Safe on Polygon. See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 That means:
 
@@ -110,7 +110,7 @@ Everything above is enforced by contracts you can read yourself. Nothing about c
 
 | Contract | What it does |
 | --- | --- |
-| **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds |
+| **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds — except that the bridge module can carry USDC sent on another supported network to your own Safe on Polygon |
 | **ConditionalTokens** | Gnosis' audited framework. Holds the collateral and mints the YES / NO outcome tokens. Winnings redeem straight from it |
 | **CTF Exchange** | Matches and settles signed orders on-chain |
 | **CalibriResolver** | Reports each market's outcome. It can **only report** — it cannot take or freeze funds |

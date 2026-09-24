@@ -16,8 +16,11 @@ its address:
   signer contract derived from your passkey, plus any
   [signing key](/non-custodial/signing-keys) you add yourself. The operator
   deploys it and relays your signed orders, but **can never move funds without
-  your signature**.
-- You fund it by holding **USDC** in the Safe on the relevant network.
+  your signature** — except to carry USDC sent to your address on another network
+  to your own Safe on Polygon (see [Choosing a network](#choosing-a-network)).
+- You fund it by holding **USDC** in the Safe on **Polygon**. USDC you send to the
+  same address on Ethereum, Base, Arbitrum or Optimism is moved there for you — see
+  [Choosing a network](#choosing-a-network).
 - As part of Safe setup, the Safe **pre-approves** the operator to pull the taker
   fee at settlement, up to a capped amount — so you only ever *sign*; the
   operator pays gas. See [The Safe](/non-custodial/the-safe) and
@@ -31,10 +34,36 @@ How you get USDC in depends on which wallet you use
 - **Your own wallet** — move USDC from your wallet into your Safe in the app.
   That transfer comes from your own wallet, so it needs a small amount of the
   network's gas token (POL on Polygon). It is the only transaction you ever pay
-  for — everything after it is relayed by the operator.
+  for — everything after it is relayed by the operator. To fund the Safe from an
+  exchange, another wallet or another network instead, open **Deposit from another
+  network** under the deposit form for the address.
 
 Because the funds are on-chain and controlled by your wallet, they remain
 withdrawable and redeemable even if the operator is offline.
+
+## Choosing a network
+
+Your Safe has **the same address on every supported network**. The Wallet page shows a
+**network picker** above your deposit address — the address stays the same whichever you
+pick, labelled *Same address on every network*; only the notes under it change.
+
+| Network | Minimum | Fee | Typical time |
+|---|---|---|---|
+| **Polygon** | None | None | About a minute |
+| **Ethereum** | 20 USDC | Network gas, at most 10 USDC and at most 20% | About 15–20 minutes |
+| **Base, Arbitrum, Optimism** | 5 USDC | Network gas, at most 10 USDC and at most 20% | About 15–20 minutes |
+
+USDC sent on Ethereum, Base, Arbitrum or Optimism is **bridged automatically** to the same
+Safe on Polygon through Circle's CCTP, with no signature from you, and credited as a normal
+Polygon deposit. Below the minimum it waits, and later deposits are combined with it. The
+Wallet page shows the current minimum, fee estimate and arrival time for the network you
+pick, and tracks each transfer until it is credited. See
+[Deposits from other networks](/non-custodial/deposits-from-other-networks) for how it
+works and why it stays non-custodial.
+
+<Warning>
+  **Send USDC only.** Other tokens — ETH, USDT, bridged USDC such as USDC.e — and USDC on any network not in the picker, **including Solana**, are **not recovered automatically**. If the picker shows only Polygon, send USDC on Polygon only.
+</Warning>
 
 <Note>
   The live contract and token addresses for your network (USDC, the Conditional Token Framework, the exchange) are served by the app's CTF-config API — the app reads them per network rather than hard-coding them. See [Deployed addresses](/smart-contracts/deployed-addresses).
@@ -60,6 +89,9 @@ fee at the moment your order fills.
   </Card>
   <Card title="Your wallet options" href="/non-custodial/wallets">
     Passkey or your own wallet.
+  </Card>
+  <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
+    USDC on Ethereum, Base, Arbitrum or Optimism, bridged to your Safe on Polygon.
   </Card>
 </CardGroup>
 

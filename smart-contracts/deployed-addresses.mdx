@@ -59,6 +59,32 @@ wallet we never got around to creating.
   The mainnet values are published here once the production contracts are deployed. Until then, ask support — they are fixed per network, identical for every member, and not secret: the Safe factory is readable from the exchange's own `safeFactory` view, and the singleton and handler from any deployed Safe's storage.
 </Note>
 
+## Cross-network deposits
+
+These contracts let USDC sent to your Safe address on another network reach your Safe on
+Polygon — see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
+Each is deployed at **the same address on Polygon, Ethereum, Base, Arbitrum and
+Optimism**, which is what makes your Safe's address the same on all of them. When they are
+live, **CalibriSafeFactoryV2** is the Safe factory listed above.
+
+| Contract | Address | What it does |
+|---|---|---|
+| **CalibriSafeFactoryV2** | _Not yet deployed_ | Creates member Safes with the bridge module enabled; permissionless |
+| **SafeModuleSetup** | _Not yet deployed_ | Switches the module on during a Safe's setup |
+| **CctpBridgeModule** | _Not yet deployed_ | Moves a Safe's USDC through Circle's CCTP to the same Safe on Polygon |
+| **BridgeFeeConfig** | _Not yet deployed_ | Holds the relayer allowed to charge the bridge fee, and the treasury it is paid to |
+
+<Note>
+  **These contracts are not deployed to mainnet yet.** Addresses are published here once they are. Until then, deposits from other networks are not available — send USDC on Polygon only.
+</Note>
+
+When they are live, you can check a module against its limits yourself. `CctpBridgeModule`
+exposes `MAX_FEE_ABS`, `MAX_FEE_BPS`, `MIN_AMOUNT`, `DEST_DOMAIN` (`7`, Polygon) and
+`TOKEN_MESSENGER` (Circle's TokenMessengerV2) as public views, and `localUsdc()` returns the
+USDC it moves on that network. `CalibriSafeFactoryV2.module()` names the module every Safe
+is created with, and `computeProxyAddress(owner)` returns your Safe's address — the same
+answer on every network.
+
 ## Reading the live values
 
 Signed in, these two endpoints return the exact addresses your account is
