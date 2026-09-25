@@ -182,17 +182,24 @@ on-chain USDC transfer out of the Safe** — a Safe `SafeTx` executing
 When funds leave the Safe on-chain, Calibri reconciles the off-chain mirror: it
 debits `balance_safe` and cancels any resting orders those funds collateralised.
 
+A withdrawal on Polygon has no fee. To withdraw to an address on Ethereum, Base, Arbitrum
+or Optimism instead, see
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
+
 <Note>
   Withdrawals go through the same relay endpoint as a USDC transfer, as described above.
 </Note>
 
 ## Void
 
-If a contract is voided, the resolution unwinds the position on-chain — a 50/50
-unwind of the minted set — returning each side its own collateral.
+If the market is voided, the condition resolves on-chain to the payout vector
+`[1,1]`: every YES and every NO share redeems for **0.50 USDC**, whatever you paid
+for it. Redeem exactly as you would a win. The taker fee is refunded to your Safe
+mirror. See [Voids and postponements](/non-custodial/resolution#voids-and-postponements).
 
 ## Related
 
 - [The Safe](/non-custodial/the-safe) — the relay endpoint and SafeTx structure
 - [Balances](/non-custodial/balances) — where redeemed USDC appears (`balance_safe`)
 - [Self-custody](/non-custodial/overview) — the full model end to end
+- [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks) — withdrawing to Ethereum, Base, Arbitrum or Optimism

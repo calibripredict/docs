@@ -100,12 +100,12 @@ The rules that matter most:
 - **Settlement is final.** A settled market is terminal. If the source later restates its data, or there was an outage, an unusual print, or any other issue at or around the deciding moment, **the settlement stands.** Calibri does not retroactively correct a settled market.
 - **Ties on up/down markets resolve up.** An interval closing exactly where it opened resolves YES.
 - **Manual settlements go through two-person review**, with escalation to a senior adjudicator where reviewers disagree.
-- **A market that cannot be resolved fairly is voided**, and voiding refunds every position's collateral and taker fee in full.
+- **A market that cannot be resolved fairly is voided.** A void pays 0.50 per share on both outcomes and refunds the taker fee. It is not a refund of the price paid.
 
 Resolution is reported **on-chain**, and the escalation ladder that follows it is
 permissionless: if Calibri fails to report, anyone can escalate the question, and
-past a hard deadline anyone can force a 50/50 void so collateral is reclaimable
-directly from the contracts. See [Market resolution](/non-custodial/resolution).
+past a hard deadline anyone can force a 50/50 void so the 0.50 per share is
+redeemable directly from the contracts. See [Market resolution](/non-custodial/resolution).
 
 ## 6. Winnings must be claimed
 

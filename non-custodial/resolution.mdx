@@ -64,8 +64,8 @@ That is why this is published rather than internal.
   <Step title="Deadman forceVoid → 50/50 (hard cap, ≈ 30 days)">
     As a last resort, once `resolveBy + grace window + UMA extension` has elapsed
     (a strictly-later hard cap), anyone may call `forceVoid`. This resolves the
-    market to an **equal `[1,1]` payout** — no winners, no losers — and every
-    position reclaims its collateral directly from the on-chain contracts.
+    market to an **equal `[1,1]` payout**: every YES and every NO share redeems
+    for 0.50 USDC directly from the on-chain contracts.
   </Step>
 </Steps>
 
@@ -75,7 +75,7 @@ That is why this is published rather than internal.
 | --- | --- | --- | --- |
 | Report | `resolveBy` | Calibri (operator) | Winners redeem 1.00/share |
 | UMA escalation | `resolveBy` + **~7 days** (grace window) | Anyone | UMA settles the true outcome |
-| Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, collateral reclaimable |
+| Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, 0.50 per share redeemable |
 
 <Note>
   These windows (≈7-day grace, ≈30-day hard cap) are the resolver's configured defaults; the contract bounds the grace window to 1 hour–14 days.
@@ -85,12 +85,43 @@ That is why this is published rather than internal.
   Reaching step 2 or 3 means Calibri failed to report. They are a **safety net**, not the normal path — and they exist so that your funds never depend on Calibri continuing to operate.
 </Warning>
 
-A **voided** market (admin- or deadman-voided) returns every position's
-collateral. Because each step is permissionless and enforced on-chain, your funds
-are always recoverable: you either get paid the correct outcome (operator or UMA),
-or — once the deadman cap elapses — you reclaim your collateral straight from the
-contracts. This is the liveness guarantee that makes the model genuinely
+A **voided** market (admin- or deadman-voided) pays 0.50 per share on both sides
+(see [Voids and postponements](#voids-and-postponements) below). Because each step
+is permissionless and enforced on-chain, your funds are never frozen: you either
+get paid the correct outcome (operator or UMA), or — once the deadman cap elapses —
+you redeem the 0.50 per share straight from the contracts. This is the liveness guarantee that makes the model genuinely
 self-custodial.
+
+## Voids and postponements
+
+A market is **voided** when its question can no longer be answered: the fixture is
+abandoned, the event is cancelled, or nobody reported an outcome before the deadman
+cap elapsed. A void is the same whichever way it happens.
+
+- **Every share pays 0.50 USDC, YES and NO alike.** The on-chain payout vector is
+  `[1,1]`; the off-chain ledger pays the same figure from the market's escrow.
+- **The taker fee on every matched trade is refunded.**
+- **Resting (unmatched) orders are cancelled** and their locked collateral released
+  in full. They never became positions.
+- **You redeem the 0.50 per share yourself**, exactly like a win. See
+  [Redeeming winnings](/non-custodial/redeeming-winnings).
+
+<Warning>
+  A void is **not** a refund of what you paid. Buy YES at 0.20 and you receive 0.50
+  per share; buy at 0.90 and you receive 0.50. Outcome tokens carry no record of
+  purchase price, so the chain can only pay one figure per outcome, and once shares
+  have changed hands on the book there is no single "stake" to return. Price in
+  cancellation risk when you buy far from 0.50.
+</Warning>
+
+**Postponed, not cancelled.** When a fixture is delayed rather than abandoned,
+Calibri can **reschedule** the market instead of voiding it: trading reopens, every
+position stays exactly as traded, and the close moves to the new fixture time. Open
+orders were cancelled when the market first closed, so re-place any you still want.
+A reschedule is bounded by the on-chain clock: the new close must fall no later than
+**7 days after the market's original `resolveBy`**, because past that point UMA
+escalation is open to anyone. A fixture pushed further out than that is voided at
+0.50 per share.
 
 ## Related
 
