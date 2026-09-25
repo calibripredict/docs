@@ -1,0 +1,209 @@
+---
+title: "Withdrawals to other networks"
+description: "Withdraw USDC from your Safe on Polygon to an address on Ethereum, Base, Arbitrum or Optimism — one signature, the fee shown before you sign, how long it takes, what happens if gas rises, and why Calibri cannot redirect it."
+---
+
+Your Safe is on **Polygon**, but you do not have to withdraw on Polygon. You can send USDC
+from your Safe to an address on **Ethereum, Base, Arbitrum or Optimism** with **one
+signature**. It is moved through **Circle's own bridge** and arrives as native USDC at the
+address you entered, on the network you chose.
+
+<Note>
+  Withdrawing on **Polygon** is unchanged: no fee, no minimum, usually confirmed within a minute. Many exchanges accept USDC on Polygon — check yours before choosing another network. Everything on this page is about the other networks.
+</Note>
+
+## Supported networks
+
+| Network | Minimum withdrawal | Fee | Typical time |
+|---|---|---|---|
+| **Polygon** | None | None | About a minute |
+| **Ethereum** | 20 USDC | Network cost plus a margin — at least 3 USDC, no maximum | About 15–20 minutes, longer during Ethereum congestion |
+| **Base** | 5 USDC | Network cost plus a margin — at least 0.50 USDC, no maximum | About 15–20 minutes |
+| **Arbitrum** | 5 USDC | Same as Base | About 15–20 minutes |
+| **Optimism** | 5 USDC | Same as Base | About 15–20 minutes |
+
+The withdraw form shows the minimum, the fee, what you receive and the arrival time for the
+network you pick, **before you sign**. If it and this page ever disagree, the form is right.
+
+<Warning>
+  **Check the address and the network.** A withdrawal cannot be reversed. The address must be able to receive native USDC on the network you pick: if it is an exchange deposit address, the exchange must accept USDC on that network; if it is a smart-contract wallet, it must exist at that address on that network. USDC sent to an address that cannot use it is not recoverable by Calibri.
+</Warning>
+
+## How it works
+
+<Steps>
+  <Step title="You choose the network, amount and address">
+    On the Wallet page, pick the network in the withdraw form and enter the amount. With a
+    passkey wallet you also enter the destination address; with your own wallet, the
+    withdrawal goes to that wallet's address, as on Polygon.
+  </Step>
+  <Step title="You see the fee before you sign">
+    The form shows the **fee**, what **you receive**, the **minimum** and the expected
+    time. The figures are valid for a few minutes. If they lapse or change before your
+    withdrawal is sent, you are shown the new fee and asked again — nothing leaves your
+    Safe in the meantime.
+  </Step>
+  <Step title="You sign once">
+    One passkey prompt, or one signature from your wallet. What you sign is a single Safe
+    transaction on Polygon that does three things: pays the fee to Calibri's treasury,
+    approves Circle's contract to take the rest, and hands the rest to **Circle's
+    Cross-Chain Transfer Protocol (CCTP)** with **your address on the chosen network** as
+    the only recipient.
+  </Step>
+  <Step title="It leaves your Safe on Polygon">
+    Calibri relays the transaction and pays the Polygon gas. The fee is taken **before**
+    the burn, in **USDC on Polygon**; Circle burns the rest. Your balance is reduced by the
+    full amount — fee plus what is sent — once it confirms, and resting orders that relied
+    on those funds are cancelled, as with any withdrawal.
+  </Step>
+  <Step title="Circle attests the burn">
+    Circle waits for the burn to be final and signs an attestation. This is most of the
+    wait — it is Circle's **Standard** transfer, which Circle does not charge for today.
+  </Step>
+  <Step title="It arrives on the other network">
+    Calibri submits the attestation on the destination network and pays the gas there.
+    Circle mints the same amount of native USDC directly to your address.
+  </Step>
+</Steps>
+
+## What the Wallet page shows
+
+- **A network picker** in the withdraw form — Polygon first, which is the ordinary
+  withdrawal, then the other networks. For another network the form shows the fee, what
+  you receive, the expected time and the minimum.
+- **Withdrawals in progress**, under the form — each withdrawal on its way out, from the
+  burn on Polygon to delivery at your address, and each one finished in the last day.
+- **A withdrawal waiting on gas**, if gas rose after you sent it, with the time by which
+  it will be completed. See [If gas rises after you send it](#if-gas-rises-after-you-send-it).
+
+If a withdrawal stops, it says so. Contact support and quote the transaction.
+
+<Note>
+  If the network picker offers only Polygon, withdrawals to other networks are not available for your wallet. Withdraw on Polygon.
+</Note>
+
+## Fees, minimums and timing
+
+**The fee covers the cost of the withdrawal** — the transaction on Polygon and the delivery
+on the destination network — **plus a margin**. It is not a trading fee and is not shared
+with makers or referrers.
+
+- **One fee per withdrawal**, taken **before** the burn, in USDC on Polygon. The rest is
+  what arrives at your address.
+- **A minimum fee** of **3 USDC on Ethereum** and **0.50 USDC on Base, Arbitrum and
+  Optimism**. When the cost is lower, the minimum applies.
+- **No maximum.** The fee follows gas on the destination network, and on Ethereum that
+  can be high. It is always the figure shown before you sign — **you are never charged
+  more than that**.
+- **Minimum withdrawals** are **20 USDC to Ethereum** and **5 USDC to Base, Arbitrum and
+  Optimism**. The form does not offer a withdrawal below the minimum, or one where the fee
+  would take the whole amount.
+
+The fee is priced for gas **higher than now**, so that delivery is still covered if gas
+moves while the transfer is on its way. Circle charges nothing for Standard transfers
+today; if that ever changes, Circle's own fee would come out of the amount it mints.
+
+**Timing.** About 15–20 minutes, and **longer during Ethereum congestion**. Most of that is
+**Circle's finality wait, not ours**: Circle attests a Standard transfer only once the burn
+is final.
+
+<Note>
+  **Withdraw on Polygon to avoid this fee.** A withdrawal on Polygon has no fee and no minimum, and many exchanges accept USDC on Polygon.
+</Note>
+
+## If gas rises after you send it
+
+The fee is fixed when you sign. If gas on the destination network rises so far after that
+that delivering now would cost more than your fee covers, we hold the delivery instead of
+charging you again:
+
+- The withdrawal shows as waiting, with the time by which it will be completed.
+- We re-check every 10 minutes and deliver as soon as the cost is covered again.
+- **At the latest six hours after it starts waiting**, we deliver it **at our own cost**,
+  whatever gas is doing then.
+- **You are never charged more** than the fee you signed for.
+
+Your USDC is not at risk while it waits: the burn has already named your address as the
+only recipient, and anyone — including you — can complete the delivery (see
+[Delivering it yourself](#delivering-it-yourself)).
+
+## Delivering it yourself
+
+Delivery on the destination network is **open to anyone**. Once Circle has attested the
+burn, the attestation is **public**, and anyone can submit it to Circle's contract on that
+network. Circle then mints the USDC to the address named in the burn — whoever submits it
+cannot change that address.
+
+You would do this yourself if Calibri were unreachable, or if you do not want to wait:
+
+<Steps>
+  <Step title="Find the burn transaction">
+    The Polygon transaction that left your Safe. The Wallet page links to it from
+    **Withdrawals in progress**.
+  </Step>
+  <Step title="Fetch Circle's attestation">
+    From Circle's public attestation service, for source domain `7` (Polygon) and that
+    transaction hash. It returns the **message** and the **attestation** once Circle has
+    signed it.
+  </Step>
+  <Step title="Submit it on the destination network">
+    Call `receiveMessage(message, attestation)` on Circle's **MessageTransmitterV2** on
+    that network, from any account with a little gas there. Circle mints the USDC to your
+    address.
+  </Step>
+</Steps>
+
+<Warning>
+  **We deliver only withdrawals made through the withdraw form, with the fee it shows.** A burn you send any other way — for example a transfer you build yourself, or one that pays less than the minimum fee — is recorded against your balance but **not delivered by Calibri**. Your USDC is still yours: deliver it yourself with the steps above.
+</Warning>
+
+## Why this is still non-custodial
+
+A withdrawal to another network is **your transaction**, exactly like a withdrawal on
+Polygon. Here is what that means in practice.
+
+- **You sign the burn.** Nothing leaves your Safe without your signature. The fee, the
+  amount and the destination are all inside the transaction you sign.
+- **The destination is in the signed message.** Your address on the chosen network is
+  written into the Circle burn you sign, and Circle mints only to that address. Calibri
+  cannot redirect it — not before it is sent, because that would change what you signed,
+  and not after, because the burn and Circle's attestation fix the recipient.
+- **No module, no Calibri contract.** Unlike [deposits from other networks](/non-custodial/deposits-from-other-networks),
+  a withdrawal does not use the bridge module. Your Safe calls **Circle's messenger
+  directly**, batched through Safe's own **MultiSendCallOnly** contract, which can make
+  only plain calls. The batch is exactly three calls: the fee to Calibri's treasury, the
+  approval to Circle, and Circle's burn.
+- **Calibri relays only what it quoted you.** The batch is built with your quote, and
+  Calibri relays it only if what you signed matches that quote exactly, once. It pays the
+  gas on Polygon and on the destination network.
+
+| Who | Can | Cannot |
+|---|---|---|
+| **You** | Sign a withdrawal to any network and address you choose; deliver it yourself | — |
+| **Calibri** | Relay the transaction you signed; deliver it on the destination network | Change the fee, the amount or the destination you signed; send it anywhere else |
+| **Anyone** | Deliver an attested withdrawal on the destination network | Change the address it is minted to |
+| **Circle** | Burn on Polygon and mint to the recipient named in the burn; set its own transfer fee, which is zero for Standard transfers today | — |
+
+Circle is trusted here in the same way it is trusted with USDC itself: it issues the
+token, and it runs the bridge that burns and mints it.
+
+<Note>
+  **Your Safe only.** Withdrawals to other networks are available from your Safe. They are not available for a custodial balance — one Calibri holds for you — which withdraws on Polygon only.
+</Note>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
+    The other direction: USDC sent to your address elsewhere, bridged to Polygon.
+  </Card>
+  <Card title="Fees" href="/concepts/fees">
+    The trading fee, and the bridge fees in both directions.
+  </Card>
+  <Card title="The Safe" href="/non-custodial/the-safe">
+    What your Safe is, and what can act on it.
+  </Card>
+  <Card title="Withdrawing without Calibri" href="/non-custodial/withdraw-without-calibri">
+    Moving funds out of your Safe if Calibri is unreachable.
+  </Card>
+</CardGroup>

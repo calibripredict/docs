@@ -58,6 +58,7 @@
               "non-custodial/balances",
               "non-custodial/the-safe",
               "non-custodial/deposits-from-other-networks",
+              "non-custodial/withdrawals-to-other-networks",
               "non-custodial/signed-orders",
               "non-custodial/session-keys",
               "non-custodial/signing-keys",

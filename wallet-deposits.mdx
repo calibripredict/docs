@@ -57,7 +57,10 @@ USDC sent on Ethereum, Base, Arbitrum or Optimism is **bridged automatically** t
 Safe on Polygon through Circle's CCTP, with no signature from you, and credited as a normal
 Polygon deposit. Below the minimum it waits, and later deposits are combined with it. The
 Wallet page shows the current minimum, fee estimate and arrival time for the network you
-pick, and tracks each transfer until it is credited. See
+pick, and tracks each transfer until it is credited. When gas costs more than the caps
+allow — mostly on Ethereum — the transfer waits and the Wallet page asks whether to bridge
+now at the higher fee or wait for gas to drop; nothing above the cap is charged unless you
+accept it. Deposit on Polygon to avoid the fee altogether. See
 [Deposits from other networks](/non-custodial/deposits-from-other-networks) for how it
 works and why it stays non-custodial.
 

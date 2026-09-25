@@ -46,11 +46,17 @@ Optimism reach your Safe on Polygon without you signing anything — see
 | The module can | The module cannot |
 |---|---|
 | Move the network's USDC to **your own Safe address on Polygon**, through Circle | Send funds anywhere else — the destination is fixed in code, not a parameter or a setting |
-| Pay **one** fee per bridge to Calibri's treasury, only when Calibri's relayer calls it — at most 10 USDC and at most 20% of the amount | Move any other token, or ETH |
+| Pay **one** fee per bridge to Calibri's treasury, only when Calibri's relayer calls it — at most 10 USDC and at most 20% of the amount, unless you accepted a higher fee for that deposit ([when gas is high](/non-custodial/deposits-from-other-networks#when-ethereum-gas-is-high)) | Move any other token, or ETH |
 | Be called by **anyone** with a zero fee — including you, if Calibri is gone | Delegatecall, or change your Safe's owners or settings |
 
 On **Polygon** the module is present but does nothing: there is no route from Polygon to
 itself.
+
+**Withdrawals to other networks do not use the module.** They leave your Safe on Polygon as
+an ordinary Safe transaction you sign, which calls **Circle's messenger directly from the
+Safe** — no module and no Calibri contract is involved, and the destination address is
+part of what you sign. See
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
 Your Safe has **the same address on every supported network**, because the factory and
 the Safe implementation sit at the same address on each. On a network other than Polygon
@@ -120,7 +126,7 @@ exchange. Your off-chain [`balance_safe`](/non-custodial/balances) mirror is
 credited once the transfer confirms.
 
 USDC sent to the same address on Ethereum, Base, Arbitrum or Optimism is bridged to
-this Safe on Polygon by the module above and credited the same way, less a capped fee —
+this Safe on Polygon by the module above and credited the same way, less the bridge fee —
 see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 <Warning>
@@ -203,8 +209,16 @@ Use `value = safeTxGas = baseGas = gasPrice = 0`, `gasToken = refundReceiver =
 0x0`, `operation = 0` (CALL), and `nonce` = the Safe's current on-chain
 `nonce()`.
 
+A withdrawal to another network is the exception: Calibri builds it for you as one
+**MultiSendCallOnly** batch (`operation = 1`) returned with its quote — the fee transfer,
+the USDC approval to Circle's messenger, and Circle's `depositForBurn`. Sign it exactly as
+returned and relay it with the quote's `quote_id`; Calibri relays such a batch only when it
+matches that quote byte for byte, once. See
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
+
 ## Next steps
 
 - [Signed orders](/non-custodial/signed-orders) — build and sign an EIP-712 order once the Safe is ready
 - [Redeeming winnings](/non-custodial/redeeming-winnings) — the same relay path is used to claim payouts
 - [Deposits from other networks](/non-custodial/deposits-from-other-networks) — USDC on Ethereum, Base, Arbitrum or Optimism, bridged here
+- [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks) — USDC from this Safe to an address on Ethereum, Base, Arbitrum or Optimism

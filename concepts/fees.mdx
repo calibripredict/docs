@@ -152,8 +152,8 @@ See [Self-custody](/non-custodial/overview) for the full model.
 |---|---|
 | Maker fee | **None.** Only the taker pays — and the maker earns a [rebate](/concepts/maker-rebates) |
 | Settlement / redemption fee | **None.** Winners redeem the full `1.00 USDC` per share |
-| Deposit fee | **None on Polygon.** Funding is an ordinary on-chain transfer to your Safe; you pay only the network's gas to send it. USDC sent on another network carries a capped [bridge fee](#deposits-from-other-networks) |
-| Withdrawal fee | **None.** Moving USDC out of your Safe is relayed for you and the operator pays the gas |
+| Deposit fee | **None on Polygon.** Funding is an ordinary on-chain transfer to your Safe; you pay only the network's gas to send it. USDC sent on another network carries a [bridge fee](#deposits-from-other-networks), capped unless you accept a higher one |
+| Withdrawal fee | **None on Polygon.** Moving USDC out of your Safe is relayed for you and the operator pays the gas. A withdrawal to another network carries a [withdrawal fee](#withdrawals-to-other-networks) |
 
 ## Deposits from other networks
 
@@ -166,6 +166,12 @@ referrers:
   delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
 - **At most 10 USDC, and at most 20% of the amount** bridged. Both caps are fixed in the
   bridge contract; Calibri cannot raise them.
+- **Above the cap only with your acceptance.** When gas — mostly on Ethereum — costs more
+  than the caps allow, the deposit waits and the Wallet page shows the fee it would cost
+  now. You can accept it and bridge now, or wait: we bridge automatically at the standard
+  fee once it covers the cost. A fee you accept is taken from that deposit and is
+  non-refundable once the bridge is sent. See
+  [When Ethereum gas is high](/non-custodial/deposits-from-other-networks#when-ethereum-gas-is-high).
 - **One fee per bridge.** Below the network's minimum — **20 USDC on Ethereum, 5 USDC on
   Base, Arbitrum and Optimism** — deposits wait and are combined, then bridged together
   for one fee.
@@ -177,6 +183,35 @@ referrers:
 The Wallet page shows the current estimate for each network before you send. If anyone
 bridges your USDC before Calibri does — including you, which you can do at any time — no
 fee is charged on what they move. See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
+
+<Note>
+  **Deposit on Polygon to avoid this fee.** USDC sent on Polygon is credited directly, with no bridge, no fee and no minimum.
+</Note>
+
+## Withdrawals to other networks
+
+Withdrawing USDC **on Polygon is free**, with no minimum. A withdrawal from your Safe to an
+address on **Ethereum, Base, Arbitrum or Optimism** goes through Circle's bridge and carries
+one fee. It is not a trading fee and is not shared with makers or referrers:
+
+- **It covers the cost** — the transaction on Polygon and the delivery on the destination
+  network — **plus a margin**.
+- **At least 3 USDC to Ethereum, and at least 0.50 USDC to Base, Arbitrum and Optimism.**
+  There is **no maximum**: the fee follows gas on the destination network.
+- **Shown before you sign.** The withdraw form shows the fee and what you receive, and the
+  fee is part of the transaction you sign. You are never charged more than that — if gas
+  rises after you send it, we complete the delivery at our own cost.
+- **Taken before the transfer**, in USDC on Polygon. The rest is what arrives at your
+  address.
+- **Minimum withdrawals** are **20 USDC to Ethereum** and **5 USDC to Base, Arbitrum and
+  Optimism**.
+- **Non-refundable** once the withdrawal is sent.
+
+See [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
+
+<Note>
+  **Withdraw on Polygon to avoid this fee.** A withdrawal on Polygon has no fee and no minimum, and many exchanges accept USDC on Polygon.
+</Note>
 
 ## In short
 
@@ -199,6 +234,9 @@ fee is charged on what they move. See [Deposits from other networks](/non-custod
   </Card>
   <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
     The bridge fee, minimums and timing for USDC sent on another network.
+  </Card>
+  <Card title="Withdrawals to other networks" href="/non-custodial/withdrawals-to-other-networks">
+    The withdrawal fee, minimums and timing for USDC sent to another network.
   </Card>
 </CardGroup>
 

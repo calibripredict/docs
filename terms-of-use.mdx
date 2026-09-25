@@ -42,7 +42,7 @@ custody, never holds a balance for you, and cannot move your funds, except as se
 clause 3.1. Every order is a signature you produce; every other transfer out of your Safe is
 a transaction you sign.
 
-### 3.1 Deposits from other networks
+### 3.1 Deposits from and withdrawals to other networks
 
 (a) **Authorisation.** You expressly authorise Calibri to trigger, on your behalf and
 without further signature from you, the bridging through Circle's Cross-Chain Transfer
@@ -56,17 +56,64 @@ never holds your keys.
 
 (c) **Fees.** Calibri may deduct a service fee from the amount bridged, within the limits
 published in [Fees](/concepts/fees) — at most 10 USDC and at most 20% of the amount per
-bridge — together with Circle's network fee, if any.
+bridge — together with Circle's network fee, if any. These limits are not changed by
+paragraph (d).
 
-(d) **Conditions.** Bridging is subject to the published minimums and timing. Any party,
-including you, may trigger it at zero fee. Assets other than USDC, and USDC sent on a
-network that is not supported, are not bridged automatically, and Calibri is not
-responsible for them.
+(d) **Fees above the standard limits.** Where the cost of bridging a deposit exceeds the
+limits in paragraph (c), Calibri will charge a higher fee only if you accept it in the app
+for that deposit. If you accept:
 
-(e) **Passkey wallets.** If your Safe is owned by a passkey, the bridge module cannot be
+- the fee is deducted from that deposit, in USDC, before the remainder is bridged, and is
+  never more than the fee shown to you when you accepted;
+- your acceptance applies to that deposit only, and lapses if the bridge is not sent
+  within one hour of your acceptance, in which case you will be asked again;
+- once the bridge transaction is sent, the fee is non-refundable.
+
+If you do not accept, the deposit remains at your Safe address until the cost falls within
+the limits in paragraph (c), you send more USDC so that the fee can be offered again, or
+you bridge it yourself at zero fee. Your acceptance is countersigned by a dedicated
+Calibri key and checked by the bridge module on-chain, which charges exactly the signed
+amount. If that key were misused, Calibri could charge a fee up to the full amount of a
+deposit it countersigns; the remainder would still reach only your Safe on Polygon.
+
+(e) **Conditions.** Bridging under paragraph (a) is subject to the published minimums and
+timing. Any party, including you, may trigger it at zero fee. Assets other than USDC, and
+USDC sent on a network that is not supported, are not bridged automatically, and Calibri
+is not responsible for them.
+
+(f) **Passkey wallets.** If your Safe is owned by a passkey, the bridge module cannot be
 disabled on networks other than Polygon and is the only mechanism able to move USDC there.
 
-See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
+(g) **Withdrawals to other networks.** You may withdraw USDC from your Safe to an address
+on a supported network other than Polygon. The withdrawal is a transaction you sign, which
+Calibri relays: it pays a fee to Calibri and passes the remainder to Circle's CCTP, which
+burns it on Polygon and mints it to the address you entered, on the network you chose. That
+address is part of the transaction you sign, and Calibri cannot change it. For such a
+withdrawal:
+
+- the fee covers the cost of sending and delivering the withdrawal plus a margin, is
+  subject to the minimum published in [Fees](/concepts/fees), and has no maximum. It is
+  shown to you before you sign, and by signing the withdrawal you accept it;
+- the fee is deducted in USDC on Polygon from the amount you withdraw, before the
+  remainder is transferred; Circle's network fee, if any, is deducted by Circle from the
+  amount it mints;
+- once the withdrawal transaction is sent, the fee is non-refundable;
+- Calibri will deliver the withdrawal on the destination network once Circle has attested
+  it, typically within 15 to 20 minutes and longer when the network is congested. If the
+  cost of delivery rises after you sign, Calibri will not charge you more, and will
+  complete delivery at its own cost no later than six hours after the withdrawal begins
+  waiting for that reason. Calibri is not responsible for delays caused by Circle or by
+  the destination network. Anyone, including you, may complete the delivery using
+  Circle's published attestation;
+- Calibri delivers only withdrawals made through the app with the fee it shows. A
+  transfer sent by other means, or without that fee, is not delivered by Calibri, and you
+  may deliver it yourself;
+- withdrawals to other networks are subject to the published minimums, and are available
+  only from your Safe, not for any custodial balance. Withdrawals on Polygon do not carry
+  this fee.
+
+See [Deposits from other networks](/non-custodial/deposits-from-other-networks) and
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
 The consequences of that are yours as well:
 
@@ -126,6 +173,10 @@ into the order you sign, so you always sign for the fee you will pay. See
 
 Rates may change. Changes apply to future trades, never retroactively to trades
 already filled.
+
+USDC deposited on a network other than Polygon may carry a bridge fee, and a withdrawal to
+a network other than Polygon carries a withdrawal fee, as set out in clause 3.1.
+Withdrawals on Polygon carry no fee.
 
 ## 8. Fair use
 

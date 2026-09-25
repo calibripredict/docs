@@ -44,8 +44,8 @@ for the member-facing flow.
 |---|---|
 | **CalibriSafeFactoryV2** | Creates member Safes. Same address formula as before, but every Safe it creates has the bridge module enabled **in the same transaction** — a Safe never exists without it. **Permissionless**: `createProxyFor(owner)` makes a Safe owned solely by `owner`, whoever calls it. |
 | **SafeModuleSetup** | A stateless helper the Safe runs during its own setup to switch the module on. It holds nothing and does nothing if called directly. |
-| **CctpBridgeModule** | The module on every Safe. One entry point, `bridge(safe, amount, fee, maxCctpFee)`: it moves that network's USDC through **Circle's CCTP** to **the same Safe address on Polygon**. The destination is fixed in code, never a parameter. No storage, no owner, no upgrade path. On Polygon itself it is inert. |
-| **BridgeFeeConfig** | Holds two addresses: the **relayer** allowed to charge the bridge fee, and the **treasury** the fee is paid to. Its admin can change those two and nothing else. |
+| **CctpBridgeModule** | The module on every Safe. Two entry points: `bridge(safe, amount, fee, maxCctpFee)` for the standard capped fee, and `bridgeWithConsent(consent, sig)` for a higher fee a member accepted in the app. Both move that network's USDC through **Circle's CCTP** to **the same Safe address on Polygon**. The destination is fixed in code, never a parameter. No owner, no upgrade path; its only storage is the one-time-use record for accepted fees. On Polygon itself it is inert. |
+| **BridgeFeeConfig** | Holds three addresses: the **relayer** allowed to charge the bridge fee, the **treasury** the fee is paid to, and the dedicated **consent signer** that countersigns a fee a member accepted above the cap. Its admin can change those three and nothing else. |
 
 ### What the module can and cannot do
 
@@ -60,6 +60,10 @@ its limits are enforced by its own immutable code:
 - **One capped fee:** only when the configured relayer calls it, only on a bridge of the
   Safe's **whole** balance, at most **10 USDC** and at most **20%** of that balance, paid
   to the configured treasury.
+- **Above the cap, only a fee the member accepted:** `bridgeWithConsent` charges exactly
+  the fee in an acceptance countersigned by the consent signer — for one Safe, once, before
+  its deadline, and only if the Safe has not been bridged since. See
+  [When Ethereum gas is high](/non-custodial/deposits-from-other-networks#when-ethereum-gas-is-high).
 - **Open to anyone at zero fee:** so a member can always move stranded USDC to their
   Polygon Safe, with or without Calibri.
 
@@ -71,8 +75,9 @@ factory and different Safe addresses.
 | Who | Can | Cannot |
 |---|---|---|
 | **Anyone** | Call `bridge` with `fee = 0` for any Safe; create any member's Safe with `createProxyFor` | Send funds anywhere but the Safe's own address on Polygon; take a fee; move any token but USDC; send ETH; delegatecall |
-| **Relayer** (set in BridgeFeeConfig) | Everything anyone can, plus one fee per whole-balance bridge, at most `min(10 USDC, 20%)`, paid to the treasury | Take a fee on part of the balance; exceed the caps; redirect the burn or the fee |
-| **Fee-config admin** | Change the relayer and the treasury; hand the admin role over (two-step) | Change the fee caps, destination, token or Circle's messenger — all fixed in the module; renounce the role |
+| **Relayer** (set in BridgeFeeConfig) | Everything anyone can, plus one fee per whole-balance bridge, at most `min(10 USDC, 20%)`, paid to the treasury; and submit an accepted fee the consent signer countersigned | Take a fee on part of the balance; exceed the caps without a countersigned acceptance; redirect the burn or the fee |
+| **Consent signer** (set in BridgeFeeConfig, a dedicated key) | Countersign a member's accepted fee: with the relayer, charge that fee — up to the Safe's balance — once | Submit anything itself; redirect the burn or the fee |
+| **Fee-config admin** | Change the relayer, the treasury and the consent signer; hand the admin role over (two-step) | Change the fee caps, destination, token or Circle's messenger — all fixed in the module; renounce the role |
 | **Safe owner — your wallet** | Everything a Safe owner can, on every network, including switching the module off | — |
 | **Safe owner — a passkey** | Everything, on Polygon | Anything on another network: the passkey's signer contract exists only on Polygon, so the module cannot be switched off there and is the only way USDC leaves |
 | **Circle (CCTP)** | Burn on the source network and mint to the recipient on Polygon; decide which token is USDC on each network; set its own transfer fee, which is zero for Standard transfers today | — |
@@ -80,6 +85,18 @@ factory and different Safe addresses.
 <Warning>
   On other networks, **anything other than USDC** sent to a passkey member's Safe cannot be moved today — it needs an owner signature that cannot be produced there. The module never moves it.
 </Warning>
+
+### Withdrawals to other networks
+
+The outbound direction uses **none of the contracts above**. A withdrawal from your Safe on
+Polygon to Ethereum, Base, Arbitrum or Optimism is a Safe transaction you sign, which calls
+**Circle's messenger directly from the Safe** — no module. It is batched through Safe's own
+**MultiSendCallOnly** contract, which can make only plain calls, and the batch is exactly
+three of them: USDC to Calibri's treasury for the fee, a USDC approval to Circle's
+TokenMessengerV2, and `depositForBurn` naming the destination network and **your address**
+as the mint recipient. Circle mints only to that address; delivery on the destination
+network is open to anyone. See
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
 ## Verifying and interacting on-chain
 
@@ -126,6 +143,9 @@ values and walks through verifying each one on the explorer.
   </Card>
   <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
     How the bridge module moves USDC to your Safe on Polygon.
+  </Card>
+  <Card title="Withdrawals to other networks" href="/non-custodial/withdrawals-to-other-networks">
+    How a withdrawal leaves your Safe through Circle, with no module.
   </Card>
 </CardGroup>
 

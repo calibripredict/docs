@@ -14,6 +14,9 @@ It arrives as an ordinary deposit, exactly as if you had sent it on Polygon.
   Sending USDC on **Polygon** is unchanged: no fee, no minimum, usually credited within a minute. Everything on this page is about the other networks.
 </Note>
 
+To send USDC the other way — from your Safe to an address on another network — see
+[Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
+
 ## Supported networks
 
 | Network | Minimum before we bridge | Fee | Typical time |
@@ -26,6 +29,10 @@ It arrives as an ordinary deposit, exactly as if you had sent it on Polygon.
 
 The Wallet page shows the current minimum, fee estimate and arrival time for each network.
 If it and this page ever disagree, the Wallet page is right.
+
+When gas costs more than those caps allow — mostly on Ethereum — nothing is charged above
+them without your say-so: the deposit waits and the Wallet page asks you. See
+[When Ethereum gas is high](#when-ethereum-gas-is-high).
 
 <Warning>
   **Only USDC, and only on the networks above.** Other tokens — ETH, USDT, or bridged versions of USDC such as USDC.e — and USDC on any other network, **including Solana**, are **not recovered automatically**. See [What not to send](#what-not-to-send).
@@ -80,6 +87,11 @@ If it and this page ever disagree, the Wallet page is right.
   **Received on (network) → Bridging → Arriving on Polygon → Credited**. A transfer
   below the minimum says how much more to send. Each one links to its transactions on the
   block explorers: your deposit, the bridge, and the arrival on Polygon.
+- **A transfer waiting on gas** — when bridging it would cost more than the standard fee,
+  it says *Ethereum gas is high right now* and shows the amount, the fee and what you
+  would receive, with **Bridge now** and **Wait for lower gas**. One too small to cover
+  the cost at current gas says so, and how much the cost is. See
+  [When Ethereum gas is high](#when-ethereum-gas-is-high).
 - **Credited** is shown only once the Polygon deposit has been accepted into your
   balance. Transfers stay under **History** afterwards.
 
@@ -93,8 +105,8 @@ If a transfer stops, it says so and gives you a reference. Contact support and q
 
 **The fee covers the network gas** of moving your USDC — the bridge transaction, the
 delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
-It is not a trading fee and it is not a percentage we set per deposit. It is capped by the
-contract itself:
+It is not a trading fee and it is not a percentage we set per deposit. The standard fee is
+capped by the contract itself:
 
 - **At most 10 USDC**, and
 - **At most 20% of the amount** being bridged,
@@ -111,9 +123,10 @@ changes, Circle's own fee would come out of the amount it mints.
 | 20 USDC on Ethereum | 4.00 USDC (20%) | 16.00 USDC |
 | 100 USDC on any network | 10.00 USDC (the absolute cap) | 90.00 USDC |
 
-Those are ceilings, not estimates, and they assume Circle still charges nothing. The fee
-charged is the gas cost at the time, and the Wallet page shows the current estimate before
-you send.
+Those are the standard fee's ceilings, not estimates, and they assume Circle still charges
+nothing. The fee charged is the gas cost at the time, and the Wallet page shows the current
+estimate before you send. A fee above them is charged only if you accept it for that
+deposit — see [When Ethereum gas is high](#when-ethereum-gas-is-high).
 
 **Minimums** are Calibri's, not the contract's: 20 USDC on Ethereum, where gas is
 expensive, and 5 USDC on the L2s. Below it nothing is lost — the USDC waits at your address
@@ -124,6 +137,64 @@ until more arrives. You can also move it yourself at any time for no fee (see
 finality wait, not ours**: a Standard transfer is attested only once the burn is final on
 Ethereum — and Base, Arbitrum and Optimism settle to Ethereum, so they take about as long.
 Below the minimum, the clock starts when the total reaches it.
+
+## When Ethereum gas is high
+
+Sometimes moving a deposit costs more than the standard fee is allowed to cover. This is
+mostly Ethereum: at ordinary Ethereum gas prices it applies to most deposits there,
+especially small ones and your first from Ethereum, which also creates your Safe there. On
+Base, Arbitrum and Optimism it is rare.
+
+Calibri does not cover the difference, and does not charge above the cap without asking. The
+deposit waits at your address, and the Wallet page shows it with the **amount**, the
+**fee** it would cost now, and what **you receive**. You choose:
+
+- **Bridge now** — accept the fee shown. It is taken from that deposit, in USDC, and the
+  rest is bridged to your Safe on Polygon as usual. If the fee is more than half the
+  amount, the app asks you to confirm separately that you will receive only what is shown.
+- **Wait for lower gas** — do nothing. We re-check every 10 minutes and bridge
+  automatically, at the standard fee, as soon as it covers the cost.
+
+The offer shows how long it is valid for. If it lapses, or gas rises before the bridge is
+sent, you are shown the new fee and asked again. You are never charged more than the fee
+you accepted.
+
+**A deposit too small to cover the cost** at current gas cannot be offered at all: the fee
+would be the whole amount or more. It waits at your address. Send more USDC to the same
+address — it is combined with what is there — or wait for gas to drop; either one brings it
+back to the choice above, or bridges it automatically at the standard fee.
+
+We email you and send a notification when a deposit first needs your decision, and remind
+you at most once a day while it waits. A changed fee on its own does not trigger another
+message.
+
+**Timing.** The 15–20 minutes start when the bridge is sent — when you accept, or when gas
+drops. A deposit waiting for lower gas can wait hours or longer; it is safe at your address
+the whole time, and you can [move it yourself](#moving-it-yourself) for no fee.
+
+<Note>
+  **Deposit on Polygon to avoid this fee.** USDC sent on Polygon is credited directly, with no bridge, no fee and no minimum.
+</Note>
+
+### How your acceptance is checked
+
+Above the standard cap, a fee is charged only after you accept it in the app. The
+acceptance is countersigned by a dedicated Calibri key and checked by the module on-chain;
+the fee charged is exactly the signed amount, tied to that deposit, and expires within an
+hour. Calibri could, if that key were misused, charge a fee up to the full amount of a
+deposit it countersigns — the same class of trust as the relayer key; you can always
+bridge yourself for free with your own ETH.
+
+In practice:
+
+- **Tied to that deposit.** A countersigned fee names your Safe and the balance you were
+  quoted, and is spent once. If the Safe is bridged in the meantime by anyone — including
+  you, for free — it can no longer be used, so it can never be reused on USDC you send
+  after that deposit has moved.
+- **Not the relayer's key.** The key that countersigns is separate from the relayer that
+  sends the bridge. The relayer alone can still take at most the standard capped fee.
+- **The destination does not change.** Whatever the fee, the rest goes only to your own
+  Safe on Polygon.
 
 ## What not to send
 
@@ -153,7 +224,7 @@ thing**: move that network's USDC through Circle to **the same Safe address on P
 |---|---|
 | Move that network's **USDC** out of your Safe | Move any other token, or ETH |
 | Send it through **Circle's CCTP**, to **your own Safe address on Polygon** | Send it anywhere else — the destination is fixed in code, never a parameter, never a setting |
-| Pay **one capped fee** to Calibri's treasury, only when Calibri's relayer is the caller | Take more than 10 USDC, or more than 20% of the amount, per bridge |
+| Pay **one capped fee** to Calibri's treasury, only when Calibri's relayer is the caller | Take more than 10 USDC, or more than 20% of the amount, per bridge — unless you accepted a higher fee for that deposit (see [How your acceptance is checked](#how-your-acceptance-is-checked)) |
 | — | Delegatecall, or change your Safe's owners or settings |
 
 There is no argument to point the funds somewhere else, no stored destination, and no
@@ -169,8 +240,9 @@ because there is no route from Polygon to itself.
 
 ### The fee is bounded in code
 
-Two addresses are configurable — the **relayer** allowed to charge the fee, and the
-**treasury** it is paid to — and only by the fee-configuration admin. Everything that
+Three addresses are configurable — the **relayer** allowed to charge the fee, the
+**treasury** it is paid to, and the dedicated **consent key** that countersigns a fee you
+accepted above the cap — and only by the fee-configuration admin. Everything that
 decides where your money ends up is not configurable at all: the destination, the token,
 Circle's contract and the fee caps are fixed in the module. Changing any of them would take
 a new module at a new address, and so a different Safe address.
@@ -194,8 +266,9 @@ Calibri is never an owner, on any network, and holds no key that could sign for 
 | Who | Can | Cannot |
 |---|---|---|
 | **Anyone** | Bridge your Safe's USDC with no fee; create your Safe on another network | Send it anywhere but your Safe on Polygon; take a fee; touch other tokens or ETH |
-| **Calibri's relayer** | The above, plus **one** fee per bridge of the whole balance, capped at 10 USDC and 20% | Take a fee on part of the balance; exceed the caps; redirect the USDC or the fee |
-| **Fee-configuration admin** | Change the relayer and the treasury | Change the caps, the destination, the token or Circle's contract |
+| **Calibri's relayer** | The above, plus **one** fee per bridge of the whole balance, capped at 10 USDC and 20%; and send a higher fee you accepted, once it is countersigned | Take a fee on part of the balance; exceed the caps without a countersigned acceptance; redirect the USDC or the fee |
+| **Calibri's consent key** | Countersign a fee above the cap for one deposit, once; with the relayer, that fee can be up to the deposit's full amount | Send a bridge itself; redirect the USDC or the fee |
+| **Fee-configuration admin** | Change the relayer, the treasury and the consent key | Change the caps, the destination, the token or Circle's contract |
 | **You** (your wallet) | Anything a Safe owner can do, on every network — including switching the module off | — |
 | **You** (a passkey) | Everything on Polygon | Sign anything on another network — see below |
 | **Circle** | Operate the bridge: burn on one side, mint to the recipient on the other | — |
@@ -228,7 +301,8 @@ token, and it runs the bridge that burns and mints it.
 - **If Calibri's relayer key were stolen**, the most it could do is bridge a Safe's whole
   USDC balance to that same Safe on Polygon, taking one capped fee — at most 10 USDC and 20%
   — per bridge. It could not redirect the USDC or the fee, and could not drain a Safe
-  through repeated small calls.
+  through repeated small calls. Charging more takes the separate consent key as well (see
+  [How your acceptance is checked](#how-your-acceptance-is-checked)).
 
 ## Moving it yourself
 
@@ -244,6 +318,9 @@ with a little gas on that network can call the module with no fee. The steps are
   </Card>
   <Card title="The Safe" href="/non-custodial/the-safe">
     What your Safe is, and what can act on it.
+  </Card>
+  <Card title="Withdrawals to other networks" href="/non-custodial/withdrawals-to-other-networks">
+    The other direction: from your Safe to an address on another network.
   </Card>
   <Card title="Fees" href="/concepts/fees">
     The trading fee, and the bridge fee on other networks.
