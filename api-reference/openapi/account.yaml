@@ -53,6 +53,558 @@ components:
         - 'balance'
         - 'locked'
       type: 'object'
+    BridgeChainEntity:
+      properties:
+        chain_id:
+          description: 'EVM chain id of the source chain.'
+          example: 1
+          type: 'number'
+        deposits_enabled:
+          description: 'Whether you can deposit from this chain. A chain can be listed for withdrawals only (then `false`, and `fee_estimate` is `null`); show only these on the deposit page.'
+          example: true
+          type: 'boolean'
+        eta_minutes:
+          description: 'Typical minutes from deposit to credit.'
+          example: 17
+          type: 'number'
+        explorer_address:
+          description: 'Block-explorer URL template for an address on this chain, with an `#{address}` placeholder. `null` when not configured.'
+          example: 'https://etherscan.io/address/#{address}'
+          type:
+            - 'string'
+            - 'null'
+        explorer_transaction:
+          description: 'Block-explorer URL template for a transaction on this chain, with a `#{txid}` placeholder. `null` when not configured.'
+          example: 'https://etherscan.io/tx/#{txid}'
+          type:
+            - 'string'
+            - 'null'
+        fee_cap_abs:
+          description: 'Absolute fee cap in USDC.'
+          example: '10'
+          type: 'string'
+        fee_cap_bps:
+          description: 'Fee cap as basis points of the bridged amount. The fee is at most the smaller of the two caps.'
+          example: 2000
+          type: 'number'
+        fee_estimate:
+          description: 'Current fee estimate in USDC for a deposit from this chain (cached up to 60 s). `null` when no estimate is available — the fee is then at most the cap.'
+          example: '1.84'
+          type:
+            - 'string'
+            - 'null'
+        key:
+          description: 'Source chain key.'
+          example: 'ethereum'
+          type: 'string'
+        min_amount:
+          description: 'Smallest total, in USDC, that is bridged. Below it the deposit waits; later deposits on the same chain are added to it and bridged together, for one fee.'
+          example: '20'
+          type: 'string'
+        name:
+          description: 'Display name.'
+          example: 'Ethereum'
+          type: 'string'
+        withdraw_min_amount:
+          description: 'Smallest withdrawal to this chain, in USDC. `null` when not set.'
+          example: '20'
+          type:
+            - 'string'
+            - 'null'
+        withdraw_min_fee:
+          description: 'Withdrawal fee floor in USDC: the fee is never below it. `null` when not set.'
+          example: '3'
+          type:
+            - 'string'
+            - 'null'
+        withdrawals_enabled:
+          description: 'Whether you can withdraw to this chain (`GET /account/bridge/withdraw/quote`).'
+          example: true
+          type: 'boolean'
+      required:
+        - 'key'
+        - 'name'
+        - 'chain_id'
+        - 'min_amount'
+        - 'eta_minutes'
+        - 'fee_estimate'
+        - 'fee_cap_abs'
+        - 'fee_cap_bps'
+        - 'deposits_enabled'
+        - 'withdrawals_enabled'
+        - 'withdraw_min_amount'
+        - 'withdraw_min_fee'
+        - 'explorer_transaction'
+        - 'explorer_address'
+      type: 'object'
+    BridgeConfigEntity:
+      properties:
+        address:
+          description: 'Your Safe, checksummed — the same address on every supported chain. Send USDC here on any listed chain. `null` when there is no address you can safely deposit to from another chain; `reason` says why.'
+          example: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'
+          type:
+            - 'string'
+            - 'null'
+        chains:
+          description: 'Chains you can deposit from (`deposits_enabled`) or withdraw to (`withdrawals_enabled`). Deposit chains are listed only when `address` is set, and a chain is not offered for deposits when a deposit from it to your address cannot currently be confirmed to work. Every active chain that takes withdrawals is listed, whether or not it is offered for deposits.'
+          items:
+            $ref: '#/components/schemas/BridgeChainEntity'
+          type: 'array'
+        custodial_address:
+          description: 'Your custodial deposit address, if you have one (same on every chain).'
+          example: null
+          type:
+            - 'string'
+            - 'null'
+        polygon:
+          $ref: '#/components/schemas/BridgePolygonEntity'
+          description: 'Polygon, the chain your wallet is on: its chain id and explorer templates.'
+        reason:
+          description: '`null` when the addresses are shown. Otherwise why they are not: `not_supported_for_this_wallet` (deposits from other chains cannot reach this wallet), `quote_unavailable` (temporarily — try again shortly), `no_deposit_address` (no wallet set up yet), or another code from the relayer.'
+          example: null
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'chains'
+        - 'address'
+        - 'custodial_address'
+        - 'reason'
+        - 'polygon'
+      type: 'object'
+    BridgeConsentEntity:
+      properties:
+        bridge_id:
+          example: 'cctp-bridge:ethereum:0x5aae…:0192f3a1-…'
+          type: 'string'
+        consent_fee:
+          description: 'The fee you accepted, in USDC.'
+          example: '6.72'
+          type: 'string'
+        consent_id:
+          description: 'Id of your consent.'
+          example: '0b6f1d7e-…'
+          type: 'string'
+        state:
+          description: 'Where the bridge is now (usually still `awaiting_consent` for a moment, then `bridging`). Refetch the list for the row.'
+          example: 'bridging'
+          type: 'string'
+      required:
+        - 'bridge_id'
+        - 'consent_id'
+        - 'consent_fee'
+        - 'state'
+      type: 'object'
+    BridgeConsentRequest:
+      properties:
+        max_fee:
+          description: 'The fee you accept, in USDC: exactly the `target_fee` of the bridge''s current `quote`.'
+          example: '6.72'
+          type: 'string'
+      required:
+        - 'max_fee'
+      type: 'object'
+    BridgePolygonEntity:
+      properties:
+        chain_id:
+          description: 'EVM chain id of Polygon (where your wallet lives). `null` when unavailable.'
+          example: 137
+          type:
+            - 'number'
+            - 'null'
+        explorer_address:
+          description: 'Explorer URL template for a Polygon address (`#{address}`), or `null`.'
+          example: 'https://polygonscan.com/address/#{address}'
+          type:
+            - 'string'
+            - 'null'
+        explorer_transaction:
+          description: 'Explorer URL template for a Polygon transaction (`#{txid}`), or `null`.'
+          example: 'https://polygonscan.com/tx/#{txid}'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'chain_id'
+        - 'explorer_transaction'
+        - 'explorer_address'
+      type: 'object'
+    BridgeQuoteEntity:
+      properties:
+        capped_fee:
+          description: 'The most the standard fee caps allow without your consent, in USDC.'
+          example: '2'
+          type: 'string'
+        expense:
+          description: 'Estimated cost of the bridge in USDC (gas on both chains plus the Circle fee).'
+          example: '6.1'
+          type: 'string'
+        expires_at:
+          description: 'Until when the offer is expected to hold. It is re-checked every 10 minutes.'
+          example: '2026-09-24T10:10:00Z'
+          type: 'string'
+        gas_price_wei:
+          description: 'Source-chain gas price, in wei.'
+          example: '17000000000'
+          type: 'string'
+        includes_deploy:
+          description: 'True when the cost includes deploying your Safe on the source chain.'
+          example: false
+          type: 'boolean'
+        native_usd:
+          description: 'Native token price in USD.'
+          example: '2450.12'
+          type: 'string'
+        quote_hash:
+          description: 'Identifies this quote.'
+          example: '0x9f…'
+          type: 'string'
+        quoted_at:
+          example: '2026-09-24T10:00:00Z'
+          type: 'string'
+        target_fee:
+          description: 'The fee you are asked to accept, in USDC (cost plus margin).'
+          example: '6.72'
+          type: 'string'
+      required:
+        - 'expense'
+        - 'target_fee'
+        - 'capped_fee'
+        - 'gas_price_wei'
+        - 'native_usd'
+        - 'includes_deploy'
+        - 'quoted_at'
+        - 'expires_at'
+        - 'quote_hash'
+      type: 'object'
+    BridgeTransferEntity:
+      properties:
+        address:
+          description: 'The receiving address (lowercase).'
+          example: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          type: 'string'
+        amount:
+          description: 'USDC received on the source chain (so far, until bridged).'
+          example: '50'
+          type: 'string'
+        amount_out:
+          description: 'USDC minted on Polygon.'
+          example: '48'
+          type:
+            - 'string'
+            - 'null'
+        bridge_id:
+          description: 'Stable id of this bridge: `cctp-bridge:{chain_key}:{address}:{run_id}`.'
+          example: 'cctp-bridge:ethereum:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed:0192f3a1-7c1e-7d2a-9b4e-5f6a7b8c9d0e'
+          type: 'string'
+        burn_tx_hash:
+          description: 'Source-chain burn transaction.'
+          type:
+            - 'string'
+            - 'null'
+        cctp_fee:
+          description: 'What Circle kept, once known.'
+          example: '0'
+          type:
+            - 'string'
+            - 'null'
+        charged_fee:
+          description: 'The fee actually charged.'
+          type:
+            - 'string'
+            - 'null'
+        consent_fee:
+          description: 'The fee you accepted.'
+          type:
+            - 'string'
+            - 'null'
+        consent_id:
+          description: 'Your current consent, if any.'
+          type:
+            - 'string'
+            - 'null'
+        consent_reason:
+          description: '`accepted`, `stale` (the fee rose before it could be used: a new offer is waiting), `expired`, or `released` (bridged at the standard fee).'
+          type:
+            - 'string'
+            - 'null'
+        consented_at:
+          example: '2026-09-24T10:03:00Z'
+          type:
+            - 'string'
+            - 'null'
+        created_at:
+          example: '2026-09-24T10:00:00Z'
+          type: 'string'
+        custody:
+          description: '`safe` or `custodial`.'
+          example: 'safe'
+          type: 'string'
+        deliver_by:
+          description: 'Withdrawals held for gas (`waiting_gas` / `gas_above_fee`): the latest the delivery completes, whatever gas does. `null` otherwise.'
+          example: '2026-09-24T16:00:00Z'
+          type:
+            - 'string'
+            - 'null'
+        deposit_amount:
+          description: 'Amount of that deposit in USDC — what was credited. `null` until the deposit is linked.'
+          example: '48'
+          type:
+            - 'string'
+            - 'null'
+        deposit_credited:
+          description: 'True once that deposit has credited your balance (it was accepted, or later). Use this rather than `deposit_state`: `false` while unlinked, still being checked, on hold, held in suspense, or rejected.'
+          example: true
+          type: 'boolean'
+        deposit_id:
+          description: 'The Polygon deposit the mint created, once it is linked (it appears in your deposits). `null` until then.'
+          example: 48213
+          type:
+            - 'number'
+            - 'null'
+        deposit_rejected:
+          description: 'True when that deposit will never be credited: it was rejected, or its funds were returned to the sender. `false` otherwise.'
+          example: false
+          type: 'boolean'
+        deposit_state:
+          description: 'State of that deposit (e.g. `submitted`, `accepted`). The USDC is credited only once it is `accepted` — a linked deposit is not yet a credited one. `null` until the deposit is linked.'
+          example: 'accepted'
+          type:
+            - 'string'
+            - 'null'
+        destination:
+          description: 'Withdrawals: the recipient there. `null` on a deposit.'
+          example: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          type:
+            - 'string'
+            - 'null'
+        destination_chain_key:
+          description: 'Withdrawals: the network the USDC is sent to. `null` on a deposit.'
+          example: 'ethereum'
+          type:
+            - 'string'
+            - 'null'
+        direction:
+          description: '`in` (a deposit) or `out` (a withdrawal to another network).'
+          example: 'in'
+          type: 'string'
+        error:
+          description: 'Why the bridge failed, when it did.'
+          type:
+            - 'string'
+            - 'null'
+        expense_now:
+          description: 'Withdrawals: the relayer''s current estimate of the delivery cost on the destination chain, in USDC. `null` when not reported.'
+          example: '1.1'
+          type:
+            - 'string'
+            - 'null'
+        fee:
+          description: 'Our fee in USDC.'
+          example: '2'
+          type:
+            - 'string'
+            - 'null'
+        fee_paid:
+          description: 'Withdrawals: the fee you paid in the withdrawal, in USDC.'
+          example: '3'
+          type:
+            - 'string'
+            - 'null'
+        gross:
+          description: 'Withdrawals: fee + amount burned — what left your wallet, in USDC.'
+          example: '50'
+          type:
+            - 'string'
+            - 'null'
+        inbound_from_addresses:
+          description: 'Deposits: the address that sent each inbound transfer on the source network (lowercase), in the order of `inbound_tx_hashes`; an entry is `null` when that sender is unknown. `null` until reported, and on withdrawals.'
+          example:
+            - '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          items:
+            type: 'string'
+          type:
+            - 'array'
+            - 'null'
+        inbound_tx_hashes:
+          description: 'Deposits received on the source chain that this bridge carries.'
+          example:
+            - '0x4f3c0d6b0b4a2c5e9b0a3f1d2e6c7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f'
+          items:
+            type: 'string'
+          type: 'array'
+        mint_tx_hash:
+          description: 'Polygon mint transaction.'
+          type:
+            - 'string'
+            - 'null'
+        minted_at:
+          description: 'When the USDC arrived on Polygon.'
+          example: '2026-09-24T10:17:00Z'
+          type:
+            - 'string'
+            - 'null'
+        quote:
+          $ref: '#/components/schemas/BridgeQuoteEntity'
+          description: 'The current fee quote while the bridge waits on gas; `null` otherwise.'
+        quote_expires_at:
+          example: '2026-09-24T10:10:00Z'
+          type:
+            - 'string'
+            - 'null'
+        source_chain_key:
+          description: 'Source chain key.'
+          example: 'ethereum'
+          type: 'string'
+        source_chain_name:
+          description: 'Source chain display name.'
+          example: 'Ethereum'
+          type:
+            - 'string'
+            - 'null'
+        state:
+          description: 'Deposits: `waiting_minimum` → `bridging` → `attesting` → `minting` → `completed`, or `failed`. While gas is high: `awaiting_consent` (accept the fee in `quote`, or wait) or `waiting_gas` (the fee is not below the amount: send more USDC to the same address, or wait; see `wait_reason`). Withdrawals: `burned` → `attesting` → `minting` → `completed`, or `failed`; `waiting_gas` (`gas_above_fee`) while destination gas is above what the fee covers — completed by `deliver_by` at the latest. A withdrawal `failed` with `unsponsored` was sent without our fee and is not delivered by us.'
+          example: 'completed'
+          type: 'string'
+        updated_at:
+          example: '2026-09-24T10:17:00Z'
+          type: 'string'
+        wait_reason:
+          description: 'Why a waiting bridge waits: `fee_exceeds_amount`, `budget_exhausted`, `consent_stale`, `fee_unavailable` (the fee cannot be priced right now); for a withdrawal `gas_above_fee` or `unsponsored`; or `null`.'
+          example: null
+          type:
+            - 'string'
+            - 'null'
+        withdraw_id:
+          description: 'Withdrawals: the withdrawal record in your withdrawal history.'
+          example: 9121
+          type:
+            - 'number'
+            - 'null'
+      required:
+        - 'bridge_id'
+        - 'custody'
+        - 'source_chain_key'
+        - 'source_chain_name'
+        - 'address'
+        - 'inbound_tx_hashes'
+        - 'amount'
+        - 'fee'
+        - 'cctp_fee'
+        - 'amount_out'
+        - 'state'
+        - 'inbound_from_addresses'
+        - 'direction'
+        - 'destination_chain_key'
+        - 'destination'
+        - 'fee_paid'
+        - 'gross'
+        - 'withdraw_id'
+        - 'deliver_by'
+        - 'expense_now'
+        - 'wait_reason'
+        - 'quote'
+        - 'quote_expires_at'
+        - 'consent_id'
+        - 'consent_fee'
+        - 'consented_at'
+        - 'consent_reason'
+        - 'charged_fee'
+        - 'burn_tx_hash'
+        - 'mint_tx_hash'
+        - 'error'
+        - 'created_at'
+        - 'updated_at'
+        - 'minted_at'
+        - 'deposit_id'
+        - 'deposit_amount'
+        - 'deposit_state'
+        - 'deposit_credited'
+        - 'deposit_rejected'
+      type: 'object'
+    BridgeWithdrawQuoteEntity:
+      properties:
+        amount:
+          description: 'What leaves your wallet, in USDC (fee included).'
+          example: '50'
+          type: 'string'
+        chain_key:
+          description: 'Destination chain key.'
+          example: 'ethereum'
+          type: 'string'
+        destination:
+          description: 'The recipient, checksummed.'
+          example: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'
+          type: 'string'
+        expires_at:
+          description: 'Sign and relay before this.'
+          example: '2026-09-24T10:05:00Z'
+          type: 'string'
+        fee:
+          description: 'Our fee, in USDC.'
+          example: '3'
+          type: 'string'
+        max_cctp_fee:
+          description: 'The most Circle may keep of the transfer, in USDC.'
+          example: '0.01'
+          type: 'string'
+        min_amount:
+          description: 'Smallest withdrawal to this chain, in USDC.'
+          example: '20'
+          type:
+            - 'string'
+            - 'null'
+        quote_id:
+          description: 'Relay the signed `safe_tx` with this id.'
+          example: '6c1f0a52-…'
+          type: 'string'
+        receive:
+          description: 'The minimum you receive on the destination chain, in USDC.'
+          example: '46.99'
+          type: 'string'
+        safe:
+          description: 'Your wallet (the Safe that signs), checksummed.'
+          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
+          type: 'string'
+        safe_tx:
+          $ref: '#/components/schemas/BridgeWithdrawSafeTxEntity'
+          description: 'The wallet transaction to sign.'
+      required:
+        - 'quote_id'
+        - 'chain_key'
+        - 'amount'
+        - 'fee'
+        - 'max_cctp_fee'
+        - 'receive'
+        - 'expires_at'
+        - 'min_amount'
+        - 'destination'
+        - 'safe'
+        - 'safe_tx'
+      type: 'object'
+    BridgeWithdrawSafeTxEntity:
+      properties:
+        data:
+          description: '`multiSend(bytes)` calldata of the three calls.'
+          example: '0x8d80ff0a…'
+          type: 'string'
+        operation:
+          description: '`1` (DELEGATECALL).'
+          example: 1
+          type: 'number'
+        to:
+          description: 'MultiSendCallOnly — the batch is delegatecalled from your wallet.'
+          example: '0x40A2aCCbd92BCA938b02010E17A5b8929b49130D'
+          type: 'string'
+        value:
+          example: '0'
+          type: 'string'
+      required:
+        - 'to'
+        - 'value'
+        - 'data'
+        - 'operation'
+      type: 'object'
     ContractEntity:
       properties:
         avg_price:
@@ -1451,6 +2003,10 @@ components:
           description: '`0` CALL (default), `1` DELEGATECALL for a MultiSend batch.'
           example: 0
           type: 'number'
+        quote_id:
+          description: 'Cross-chain withdrawal: the `quote_id` of `GET /account/bridge/withdraw/quote`; `to` / `value` / `data` / `operation` must be its `safe_tx` exactly. Required for any transaction that burns USDC over CCTP (else 422 `bridge_quote_required`). A quote is used once: 422 `quote_used`, `quote_expired`, `quote_not_found`, 409 `quote_mismatch` — request a new quote.'
+          example: '6c1f0a52-4b1e-4f0e-9d7a-2a1b3c4d5e6f'
+          type: 'string'
         safe:
           description: 'Your own Safe. The server rejects a Safe registered to anyone else.'
           example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
@@ -1867,6 +2423,75 @@ components:
         - 'signature_type'
         - 'signature'
       type: 'object'
+    TransactionBridgeEntity:
+      properties:
+        amount:
+          description: 'USDC that left the source network: what you deposited, or the total a withdrawal took from your wallet (fee included). `null` when unknown.'
+          example: '50'
+          type:
+            - 'string'
+            - 'null'
+        direction:
+          description: '`in`: a deposit bridged from another network. `out`: a withdrawal delivered to one.'
+          example: 'out'
+          type: 'string'
+        fee:
+          description: 'Our bridge fee in USDC. `null` when there was none or it is not known yet.'
+          example: '3'
+          type:
+            - 'string'
+            - 'null'
+        other_chain_key:
+          description: 'The other network: a deposit''s source, a withdrawal''s destination.'
+          example: 'ethereum'
+          type:
+            - 'string'
+            - 'null'
+        other_chain_name:
+          example: 'Ethereum'
+          type:
+            - 'string'
+            - 'null'
+        other_from_address:
+          description: 'A deposit: the address that sent it on the source network (the first sender when several transfers were bridged together). `null` for a withdrawal, or until known.'
+          example: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          type:
+            - 'string'
+            - 'null'
+        other_tx_explorer_url:
+          description: 'Block-explorer URL of `other_tx_hash`, or `null`.'
+          example: 'https://etherscan.io/tx/0x4be1…'
+          type:
+            - 'string'
+            - 'null'
+        other_tx_hash:
+          description: 'A deposit: the transaction that sent it on the source network. A withdrawal: the transaction that delivered it (`null` until delivered).'
+          example: '0x4be1…'
+          type:
+            - 'string'
+            - 'null'
+        received:
+          description: 'USDC that arrived on the other side. `null` until it has.'
+          example: '46.99'
+          type:
+            - 'string'
+            - 'null'
+        state:
+          description: 'Where the bridge is (see the bridge transfers list for the states).'
+          example: 'completed'
+          type: 'string'
+      required:
+        - 'direction'
+        - 'other_chain_key'
+        - 'other_chain_name'
+        - 'other_tx_hash'
+        - 'other_tx_explorer_url'
+        - 'other_from_address'
+        - 'amount'
+        - 'fee'
+        - 'received'
+        - 'state'
+      type: 'object'
     TransactionEntity:
       properties:
         address:
@@ -1883,6 +2508,9 @@ components:
         blockchain_name:
           example: 'Polygon'
           type: 'string'
+        bridge:
+          $ref: '#/components/schemas/TransactionBridgeEntity'
+          description: 'Deposits and withdrawals that crossed chains: the other side of the bridge. `null` otherwise.'
         change_voucher_amount:
           description: 'Voucher flow — not used on Calibri.'
           example: '0'
@@ -1941,6 +2569,12 @@ components:
         fee_currency:
           example: 'usdc'
           type: 'string'
+        from_address:
+          description: 'Deposits: the address that sent it (lowercase). `null` for other entries or when not recorded.'
+          example: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          type:
+            - 'string'
+            - 'null'
         id:
           example: 90231
           type: 'number'
@@ -2029,6 +2663,12 @@ components:
           description: 'Blockchain txid or internal reference.'
           example: '0x9f2c…'
           type: 'string'
+        txid_explorer_url:
+          description: 'Deposits and withdrawals: the full block-explorer URL of `txid`, on the chain that transaction is actually on (for a wallet deposit or withdrawal always Polygon, even when `blockchain_key` names the network a cross-chain withdrawal went to). `null` for other entries, or when there is no txid or explorer.'
+          example: 'https://polygonscan.com/tx/0x9f2c…'
+          type:
+            - 'string'
+            - 'null'
         type:
           description: 'One of `trade`, `referral`, `maker_reward`.'
           example: 'trade'
@@ -2045,6 +2685,9 @@ components:
         - 'id'
         - 'type'
         - 'created_at'
+        - 'txid_explorer_url'
+        - 'bridge'
+        - 'from_address'
       type: 'object'
   securitySchemes:
     apiKey:
@@ -2104,6 +2747,124 @@ paths:
       summary: 'Balance by currency'
       tags:
         - 'Account'
+  /api/v2/atlas/account/bridge/config:
+    get:
+      description: 'The chains you can deposit USDC from besides Polygon, each with its minimum, typical time to credit and current fee estimate, plus your deposit address (the same on every chain). USDC sent to that address on a listed chain is bridged to Polygon and credited automatically. Only USDC, and only on the listed chains.'
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BridgeConfigEntity'
+          description: ''
+      summary: 'Cross-chain deposit config'
+      tags:
+        - 'Other'
+  /api/v2/atlas/account/bridge/transfers:
+    get:
+      description: 'Your cross-chain USDC bridges, newest first — one row per bridge: deposits (`direction: in`, from arrival on the source chain to credit on Polygon) and withdrawals (`direction: out`, from the burn on Polygon to the mint on the destination chain). `direction` filters to one of them. Pagination in the `Page`, `Per-Page` and `Total` headers. The list is not pushed live: refetch it, e.g. when the regular deposit notification for the credited mint arrives.'
+      parameters:
+        - description: 'Rows per page. Defaults to 25, capped at 100.'
+          example: 25
+          in: 'query'
+          name: 'limit'
+          required: false
+          schema:
+            default: 25
+            maximum: 100
+            minimum: 1
+            type: 'integer'
+        - description: 'Page number, from 1.'
+          example: 1
+          in: 'query'
+          name: 'page'
+          required: false
+          schema:
+            default: 1
+            minimum: 1
+            type: 'integer'
+        - description: '`in` (deposits) or `out` (withdrawals). Both when omitted.'
+          example: 'out'
+          in: 'query'
+          name: 'direction'
+          required: false
+          schema:
+            enum:
+              - 'in'
+              - 'out'
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/BridgeTransferEntity'
+                type: 'array'
+          description: ''
+      summary: 'Cross-chain deposits and withdrawals'
+      tags:
+        - 'Other'
+  /api/v2/atlas/account/bridge/transfers/{id}/consent:
+    post:
+      description: 'When gas is high, a cross-chain deposit waits in `awaiting_consent` with a `quote`: bridging now costs `quote.target_fee`, more than the standard fee. Send that exact amount as `max_fee` to accept it; the deposit is then bridged and you receive the amount minus that fee. If the fee has changed since you saw it, the answer is 409 with the current `quote` (and `code`: `quote_changed`, `stale_quote` or `not_awaiting_consent`) — show it and ask again. Not accepting is fine: the bridge re-checks gas every 10 minutes and bridges on its own once the standard fee covers the cost. Rate limited to 10 per minute.'
+      parameters:
+        - in: 'path'
+          name: 'id'
+          required: true
+          schema:
+            type: 'string'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BridgeConsentRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BridgeConsentEntity'
+          description: ''
+      summary: 'Accept a cross-chain deposit fee'
+      tags:
+        - 'Other'
+  /api/v2/atlas/account/bridge/withdraw/quote:
+    get:
+      description: 'Prices a withdrawal of `amount` USDC from your wallet on Polygon to `destination` on another network (`chain_key`, a chain from the bridge config), and returns the wallet transaction to sign for it (`safe_tx`: one batch that pays the fee, approves and burns the rest over Circle CCTP). Sign `safe_tx` and relay it through `POST /account/wallet/relay` with this `quote_id` before `expires_at` (5 minutes); a quote can be used once. `fee` is ours, `max_cctp_fee` the most Circle may keep, `receive` the minimum you receive. `destination` must be a checksummed address other than your wallet; a wallet (not passkey) account can withdraw only to its linked wallet. Refusals are 422 with `code`: `below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`. Rate limited to 10 per minute.'
+      parameters:
+        - description: 'Recipient on the destination chain, checksummed.'
+          example: '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed'
+          in: 'query'
+          name: 'destination'
+          required: true
+          schema:
+            type: 'string'
+        - description: 'USDC to withdraw (fee included).'
+          example: '50'
+          in: 'query'
+          name: 'amount'
+          required: true
+          schema:
+            type: 'string'
+        - description: 'Destination chain key.'
+          example: 'ethereum'
+          in: 'query'
+          name: 'chain_key'
+          required: true
+          schema:
+            type: 'string'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BridgeWithdrawQuoteEntity'
+          description: ''
+      summary: 'Quote a cross-chain withdrawal'
+      tags:
+        - 'Other'
   /api/v2/atlas/account/contracts:
     get:
       description: 'Your matched positions. A winning contract settles to the full 1.00 per share — the fee was taken at trade time — but winnings are NOT auto-paid: you redeem them yourself.'
@@ -2330,7 +3091,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/referrals/earnings:
     get:
-      description: 'Lifetime commission from members you referred: totals by currency, plus a per-referred-member breakdown with last fee-paying trade time. Funded from the taker fee they paid on fills.'
+      description: 'Commission from members you referred, funded from the taker fee they pay on fills. Lifetime totals by currency, split into what is still waiting for the daily payout (`pending_by_currency`) and what has already been paid to your wallet (`paid_by_currency`); the same per referred member; the payout history, one entry per payout sweep; when the next payout is due; and how often the sweep runs.'
       parameters: []
       responses:
         "200":
