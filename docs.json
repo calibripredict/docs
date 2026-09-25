@@ -165,6 +165,15 @@
                 "pages": [
                   "api-reference/models/auto-redeem-request",
                   "api-reference/models/balance-entity",
+                  "api-reference/models/bridge-chain-entity",
+                  "api-reference/models/bridge-config-entity",
+                  "api-reference/models/bridge-consent-entity",
+                  "api-reference/models/bridge-consent-request",
+                  "api-reference/models/bridge-polygon-entity",
+                  "api-reference/models/bridge-quote-entity",
+                  "api-reference/models/bridge-transfer-entity",
+                  "api-reference/models/bridge-withdraw-quote-entity",
+                  "api-reference/models/bridge-withdraw-safe-tx-entity",
                   "api-reference/models/contract-entity",
                   "api-reference/models/create-order-request",
                   "api-reference/models/ctf-auto-redeem-entity",
@@ -207,6 +216,7 @@
                   "api-reference/models/session-key-status-entity",
                   "api-reference/models/settled-market-entity",
                   "api-reference/models/signed-order-entity",
+                  "api-reference/models/transaction-bridge-entity",
                   "api-reference/models/transaction-entity"
                 ]
               },
