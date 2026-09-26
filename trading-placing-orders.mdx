@@ -50,16 +50,28 @@ You place: BUY 100 YES, limit, price 0.60
 A `post_only` limit order is **rejected if it would immediately take liquidity** —
 use it when you only want to rest in the book and never cross the spread.
 
-## Why there are no market orders
+## Market orders are signed limits
 
 Every order you place is signed by your own key, and the signature commits to a
 specific price — that is what lets the exchange match your order without ever
-holding your funds. A market order names no price, so there would be nothing to
-sign.
+holding your funds. "Spend $10 at whatever it costs" is not something a key can
+sign, so a **Market** order in the app is a *marketable limit*:
 
-To fill immediately, place a limit order at or through the best resting price:
-a buy at `0.62` when the best ask is `0.60` fills at `0.60`, not `0.62`. You get
-immediate execution and still cap what you can pay.
+1. You name a **max spend**. The app walks the order book and works out how many
+   contracts that buys at the resting prices.
+2. It signs a limit at the **worst price the sweep reaches, plus a small slippage
+   bound**. That price is a ceiling, never a target: the exchange fills you at the
+   book price or better, and anything left of your max spend is not taken.
+3. The signature **expires after 60 seconds**. If the book moves past your ceiling
+   before it fills, the order lapses rather than filling at a price you never saw.
+
+The confirm screen states the exact ceiling and quantity before you sign. A
+market **sell** is the mirror image: it signs a floor, and fills at the book
+price or higher.
+
+If you would rather name the price yourself, a limit order at or through the best
+resting price does the same job: a buy at `0.62` when the best ask is `0.60` fills
+at `0.60`, not `0.62`.
 
 ## The combined order book
 
