@@ -240,6 +240,97 @@ components:
         - 'old_password'
         - 'new_password'
       type: 'object'
+    PhoneEntity:
+      properties:
+        country:
+          description: 'ISO 3166-1 alpha-3.'
+          example: 'ZAF'
+          type: 'string'
+        number:
+          description: 'E.164, without the leading +.'
+          example: '27821234567'
+          type: 'string'
+        validated_at:
+          description: 'Null until the SMS code is confirmed.'
+          example: '2026-07-02T14:30:00Z'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'country'
+        - 'number'
+      type: 'object'
+    ProfileEntity:
+      properties:
+        address:
+          example: '12 Long Street'
+          type:
+            - 'string'
+            - 'null'
+        city:
+          example: 'Cape Town'
+          type:
+            - 'string'
+            - 'null'
+        country:
+          description: 'ISO 3166-1 alpha-3.'
+          example: 'ZAF'
+          type:
+            - 'string'
+            - 'null'
+        created_at:
+          example: '2026-07-01T09:12:00Z'
+          type: 'string'
+        dob:
+          description: 'Date of birth, `YYYY-MM-DD`.'
+          example: '1990-04-17'
+          type:
+            - 'string'
+            - 'null'
+        first_name:
+          example: 'Alex'
+          type:
+            - 'string'
+            - 'null'
+        last_name:
+          example: 'Mwangi'
+          type:
+            - 'string'
+            - 'null'
+        metadata:
+          description: 'A JSON *string*, not an object — the serializer calls JSON.stringify on it. Parse before use.'
+          example: '{"nationality":"ZA"}'
+          type:
+            - 'string'
+            - 'null'
+        occupation:
+          example: 'engineer'
+          type:
+            - 'string'
+            - 'null'
+        postcode:
+          example: '8001'
+          type:
+            - 'string'
+            - 'null'
+        source_of_funds:
+          example: 'salary'
+          type:
+            - 'string'
+            - 'null'
+        state:
+          description: 'Review state of this profile submission.'
+          example: 'verified'
+          type:
+            - 'string'
+            - 'null'
+        updated_at:
+          example: '2026-07-02T14:30:00Z'
+          type: 'string'
+      required:
+        - 'created_at'
+        - 'updated_at'
+      type: 'object'
     RegisterRequest:
       properties:
         captcha_response:
@@ -262,6 +353,139 @@ components:
       required:
         - 'email'
         - 'password'
+      type: 'object'
+    SessionUserEntity:
+      properties:
+        advisory_id:
+          example: null
+          type:
+            - 'number'
+            - 'null'
+        base_currency_id:
+          example: 'usdc'
+          type: 'string'
+        can_change_password:
+          example: true
+          type: 'boolean'
+        can_link_wallet:
+          example: false
+          type: 'boolean'
+        created_at:
+          example: '2026-07-01T09:12:00Z'
+          type: 'string'
+        csrf_token:
+          description: 'Present on login only. Echo it as `X-CSRF-Token` on every unsafe request for the life of the session.'
+          example: 'lJ8xQ2...f41'
+          type: 'string'
+        data:
+          additionalProperties:
+            type: 'string'
+          example: {}
+          type: 'object'
+        email:
+          example: 'alex@example.com'
+          type: 'string'
+        entity_type:
+          enum:
+            - 'individual'
+            - 'business'
+          example: 'individual'
+          type: 'string'
+        id:
+          example: 4821
+          type: 'number'
+        is_withdrawal_hold_exempt:
+          example: false
+          type: 'boolean'
+        labels:
+          items:
+            $ref: '#/components/schemas/LabelEntity'
+          type: 'array'
+        last_doc_submitted_at:
+          example: '2026-07-01T09:12:00Z'
+          type:
+            - 'string'
+            - 'null'
+        last_doc_type_submitted:
+          example: 'Passport'
+          type:
+            - 'string'
+            - 'null'
+        level:
+          example: 2
+          type: 'number'
+        otp:
+          example: true
+          type: 'boolean'
+        phones:
+          items:
+            $ref: '#/components/schemas/PhoneEntity'
+          type: 'array'
+        profiles:
+          items:
+            $ref: '#/components/schemas/ProfileEntity'
+          type: 'array'
+        referral_code:
+          example: 'CAL7X2QM'
+          type:
+            - 'string'
+            - 'null'
+        referral_id:
+          description: 'The account that referred YOU, if any.'
+          example: null
+          type:
+            - 'number'
+            - 'null'
+        referral_link:
+          example: 'https://calibri.io/?ref=CAL7X2QM'
+          type:
+            - 'string'
+            - 'null'
+        role:
+          example: 'member'
+          type: 'string'
+        state:
+          enum:
+            - 'pending'
+            - 'active'
+            - 'banned'
+            - 'deleted'
+          example: 'active'
+          type: 'string'
+        uid:
+          example: 'ID1A2B3C4D5E'
+          type: 'string'
+        updated_at:
+          example: '2026-07-02T14:30:00Z'
+          type: 'string'
+        username:
+          example: 'brisk_otter_41'
+          type:
+            - 'string'
+            - 'null'
+        wallet_address:
+          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
+          type:
+            - 'string'
+            - 'null'
+      required:
+        - 'id'
+        - 'email'
+        - 'can_change_password'
+        - 'can_link_wallet'
+        - 'uid'
+        - 'role'
+        - 'entity_type'
+        - 'base_currency_id'
+        - 'level'
+        - 'otp'
+        - 'state'
+        - 'is_withdrawal_hold_exempt'
+        - 'created_at'
+        - 'updated_at'
+        - 'labels'
+        - 'phones'
+        - 'profiles'
       type: 'object'
     UserEntity:
       properties:
@@ -454,11 +678,11 @@ paths:
             schema:
               $ref: '#/components/schemas/EmailConfirmRequest'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageEntity'
+                $ref: '#/components/schemas/SessionUserEntity'
           description: ''
       security: []
       summary: 'Confirm an email address'
@@ -469,7 +693,7 @@ paths:
       description: 'Issues a fresh confirmation link for an account that has not confirmed yet. Fails if the email is already verified.'
       parameters: []
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -502,7 +726,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PasswordResetConfirmRequest'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
@@ -522,7 +746,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PasswordResetRequest'
       responses:
-        "200":
+        "201":
           content:
             application/json:
               schema:
