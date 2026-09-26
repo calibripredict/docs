@@ -232,7 +232,10 @@
                   "api-reference/models/password-reset-confirm-request",
                   "api-reference/models/password-reset-request",
                   "api-reference/models/password-update-request",
+                  "api-reference/models/phone-entity",
+                  "api-reference/models/profile-entity",
                   "api-reference/models/register-request",
+                  "api-reference/models/session-user-entity",
                   "api-reference/models/user-entity",
                   "api-reference/models/wallet-link-request",
                   "api-reference/models/wallet-linked-entity"
