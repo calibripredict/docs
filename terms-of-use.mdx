@@ -127,9 +127,10 @@ conducted with them.
 
 ## 4. Trading
 
-- Orders are matched by price and time. A match creates a **contract** jointly held by a YES holder and a NO holder.
-- You may cancel the unmatched remainder of a resting order at any time. Matched positions have already become contracts and are held to resolution.
-- Placing an order locks its collateral **and** a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees).
+- Orders are matched by price and time. Depending on the two orders, a match creates a new YES/NO **contract** pair (a YES buyer with a NO buyer), transfers existing contracts from a seller to a buyer, or closes out a YES/NO pair (a YES seller with a NO seller).
+- You may cancel the unmatched remainder of a resting order at any time. A matched trade cannot be cancelled or reversed.
+- You may sell contracts you hold before the market closes by placing a sell order. A sell fills only if another trader takes your price; Calibri does not guarantee a buyer or any exit price. Contracts you have not sold are held to resolution.
+- Placing a buy order locks its collateral **and** a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees). Placing a sell order locks the contracts it offers until it fills or you cancel it; no fee is reserved, and when a sell takes liquidity its taker fee is deducted from the sale proceeds.
 - Markets stop accepting orders at their stated close time.
 - **Market prices are not advice.** A price is what other people are willing to pay. It is not a forecast Calibri endorses, and nothing on the platform is financial advice.
 

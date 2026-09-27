@@ -41,27 +41,31 @@ view to YES at `0.65` — the two prices are two readings of one question.
 ## The combined order book
 
 Calibri does **not** keep a separate book for NO. There is **one combined order
-book** per market, and the YES+NO=1.00 identity is enforced by construction: a
-trade happens when a YES buyer and a NO buyer are matched, and their prices add
-up to 1.00. This keeps liquidity in one place instead of splitting it across two
-half-empty books.
+book** per market, priced in YES terms, and the YES+NO=1.00 identity is enforced
+by construction. This keeps liquidity in one place instead of splitting it across
+two half-empty books.
 
-<Note>
-  A practical consequence: a resting YES bid at `0.60` is simultaneously offering the NO side at `0.40`. You never have to hunt for "the other side" — it's the same book.
-</Note>
+Because a YES and a NO contract together always pay 1.00, **buying YES at `0.60`
+is the same trade as selling NO at `0.40`**. So a resting YES bid at `0.60` is
+also NO on offer at `0.40`. A YES buyer can be filled by someone selling YES **or**
+by someone buying NO; in the second case a new YES/NO pair is created for the
+two of them. See [The combined order book](/trading-placing-orders#the-combined-order-book)
+for all four order kinds and what each match does.
 
 ## What a contract is
 
 A **contract** is created the moment the engine matches a YES buyer with a NO
-buyer. Each contract is **jointly owned by both legs**: one member holds the YES
-side, the other holds the NO side, and together their stakes fund the full
-1.00 USDC that the winner will eventually collect.
+buyer. Their two payments, which add up to 1.00 USDC, go into the market's
+escrow: one member holds the YES side, the other holds the NO side, and together
+their stakes fund the full 1.00 USDC that the winner will eventually collect.
+Once created, a contract can change hands — a holder can sell it to another
+buyer — and settlement pays whoever holds the winning side.
 
 - Your **position** in a market is the set of contract legs you hold (net YES,
   net NO, or flat).
-- Positions are **held to resolution**. Buying the opposite side does not net
-  against the first — each leg is collateralised independently, so it locks
-  additional capital instead of returning any.
+- You can hold a position to resolution or **sell** it before then. Buying the
+  opposite side does not net against the first — each leg is collateralised
+  independently, so it locks additional capital instead of returning any.
 
 ## Settlement — winner takes 1.00, loser takes 0
 
@@ -118,7 +122,7 @@ From a trader's point of view, a market moves through these stages:
 |---|---|
 | **Binary market** | One question, two outcomes: YES / NO |
 | **Price** | Reads as probability; YES + NO = 1.00 |
-| **Order book** | One combined book; a match is a YES buyer + a NO buyer |
+| **Order book** | One combined book; buying YES at `p` = selling NO at `1.00 − p` |
 | **Contract** | Jointly owned YES/NO pair funding a 1.00 payout |
 | **Settlement** | Winner 1.00/share, loser 0, no settlement fee |
 | **Lifecycle** | Open → Closed → Resolved (or Voided) |

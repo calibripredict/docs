@@ -1,11 +1,12 @@
 ---
 title: "Placing Orders"
-description: "Placing a signed limit order, choosing YES or NO, and how a fill becomes a position."
+description: "Placing a signed limit order, choosing YES or NO, buying or selling, and how a fill becomes a position."
 ---
 
-An order is your instruction to trade a market. On Calibri you **buy the outcome
-you believe in** — there is no separate "buy" and "sell": you pick **YES** or
-**NO**, a price, and a size. This page covers how orders work in practice. For the
+An order is your instruction to trade a market. You pick an outcome (**YES** or
+**NO**), whether you are **buying** or **selling** it, a price, and a size. Most
+orders are buys: you **buy the outcome you believe in**. You sell only contracts
+you already hold. This page covers how orders work in practice. For the
 underlying model see [Core Concepts](/concepts/core-concepts).
 
 ## What you specify
@@ -15,13 +16,14 @@ Every order has:
 | Field | Meaning |
 |---|---|
 | **Market** | The market (event) you are trading. |
-| **Side** | **`yes`** or **`no`** — the outcome you are buying. Not "buy/sell". |
+| **Side** | **`yes`** or **`no`** — which outcome the order is for. Not "buy/sell". |
+| **Direction** | **`buy`** (acquire the outcome) or **`sell`** (offer contracts of it you already hold). Defaults to `buy`. |
 | **Order type** | **Limit**. Every order carries your signature, which commits to a price. |
 | **Volume** | Number of contracts. Must match the market's size precision. |
 | **Price** | Price per contract, `0.01`–`0.99`, in **whole cents** — e.g. `0.27`, not `0.275`. |
 
 <Note>
-  On the API these map to the order fields `market`, `side` (`"yes"`/`"no"`), `ord_type` (`"limit"`), `volume`, and `price`. See the [API Overview](/api-reference/introduction) for the exact request shape.
+  On the API these map to the order fields `market`, `side` (`"yes"`/`"no"`), `direction` (`"buy"`/`"sell"`), `ord_type` (`"limit"`), `volume`, and `price`. See the [API Overview](/api-reference/introduction) for the exact request shape.
 </Note>
 
 <Warning>
@@ -39,7 +41,8 @@ book until someone trades against it (or you cancel it).
 
 ```
 You place: BUY 100 YES, limit, price 0.60
-→ If there's a matching NO order at 0.40, you fill immediately.
+→ If someone is selling YES at 0.60 or less, or buying NO at 0.40 or more,
+  you fill immediately.
 → Otherwise your order rests in the book at 0.60 until it's matched or cancelled.
 ```
 
@@ -75,10 +78,59 @@ at `0.60`, not `0.62`.
 
 ## The combined order book
 
-Calibri runs **one combined book** per market — there is no separate NO book. A
-trade happens when a YES buyer and a NO buyer are matched and their prices sum to
-`1.00`. So a resting YES bid at `0.60` is simultaneously offering the NO side at
-`0.40`; you never have to hunt for "the other side."
+Calibri runs **one combined book** per market, priced in YES terms. There is no
+separate NO book: a NO order at price `p` sits in the book at `1.00 − p`.
+
+Every order is one of four kinds, and each kind sits on one side of the book:
+
+| Bid side (wants YES) | Ask side (offers YES) |
+|---|---|
+| **Buy YES** at `p` | **Sell YES** at `p` |
+| **Sell NO** at `1.00 − p` | **Buy NO** at `1.00 − p` |
+
+### Buying YES is selling NO
+
+The two orders in each column are the same trade. A YES and a NO contract
+together always pay out exactly `1.00`, so holding YES is the same position as
+being short NO:
+
+```
+Buy YES at 0.60   →  +0.40 if YES, −0.60 if NO
+Sell NO at 0.40   →  +0.40 if YES, −0.60 if NO
+```
+
+That is why a resting **Buy YES at `0.60`** shows up for someone buying NO as
+**NO on offer at `0.40`**. They can take it even though you hold no NO to hand
+over — see how a fill works below.
+
+### Who can fill your order
+
+Your order fills against anything resting on the **other** side of the book at
+your price or better:
+
+| You place | Filled by |
+|---|---|
+| Buy YES | someone selling YES, or someone buying NO |
+| Buy NO | someone selling NO, or someone buying YES |
+| Sell YES | someone buying YES, or someone selling NO |
+| Sell NO | someone buying NO, or someone selling YES |
+
+Orders on the **same** side compete with yours instead. A resting Sell NO at
+`0.40` is a second bid for YES at `0.60`; it cannot fill a Buy YES.
+
+What a fill does depends on the two orders' directions:
+
+| Orders matched | What happens |
+|---|---|
+| **Buy × buy** (Buy YES + Buy NO) | A new YES/NO pair is created. Each buyer gets their side, and both payments go into the market's escrow. |
+| **Buy × sell** (same outcome) | Existing contracts move from the seller to the buyer for cash. |
+| **Sell × sell** (Sell YES + Sell NO) | A YES/NO pair is destroyed, and the escrow pays both sellers. |
+
+On a new market nobody holds contracts yet, so the only way to fill a buy is a
+buy of the other outcome. When the app says **"No YES sellers or NO buyers
+yet"**, the ask side is empty: nobody is selling YES and nobody is buying NO. A
+limit order is how you go first — it rests on the board until one of them
+arrives.
 
 ## Fees
 
@@ -107,10 +159,15 @@ Once an order fills:
 
 - A **contract** is created between your side and the matched counterparty. Your
   **position** is the set of contract legs you hold (net YES, net NO, or flat).
-- Positions are **held to resolution**. Calibri does not currently support
-  selling a position back, and buying the opposite side does not close the first
-  one — it opens a second, separately collateralised position, locking more
-  money rather than releasing any.
+- To close a position before resolution, **sell** it: a Sell order offers
+  contracts you hold. It locks those contracts, not cash — a sell that takes
+  liquidity pays its taker fee out of the sale proceeds — and only the
+  quantity not already offered on another resting sell can be sold
+  (`sellable_qty` on `/account/positions`). In the app, use **Sell** on the
+  holding.
+- Buying the opposite side does not close the first position — it opens a
+  second, separately collateralised one, locking more money rather than
+  releasing any. Sell the contracts you hold instead.
 - Open (unfilled) limit orders can be **cancelled** while the market is open; the
   collateral they locked is released back to you.
 
