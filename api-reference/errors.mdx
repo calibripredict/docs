@@ -46,6 +46,8 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.missing_price` / `missing_volume` / `missing_market` | 400 | Required field absent |
 | `market.order.insufficient_balance` | 422 | Not enough collateral — remember an order locks stake **plus** the taker-fee reserve |
 | `market.order.post_only_would_match` | 422 | A `post_only` order would have taken liquidity |
+| `market.order.ioc_requires_limit` | 400 | `ioc` is only for a limit order, and not together with `post_only` |
+| `market.order.expired` | 400 | The order's signature expires in under 30 seconds (or already has), so a fill could not settle in time |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
 | `market.order.kyc_required` | 403 | KYC level below the market's minimum |
 | `market.order.cannot_cancel` | 422 | Order is already terminal or fully matched |

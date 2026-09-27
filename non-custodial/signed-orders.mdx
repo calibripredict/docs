@@ -194,9 +194,16 @@ Request body:
   "price": "0.60",
   "volume": "100",
   "post_only": false,
+  "ioc": false,
   "signed_order": { "…the object from step 5…": "" }
 }
 ```
+
+`ioc` (immediate-or-cancel) is for a **market-style** order: a limit at a price
+ceiling, signed with a short `expiration`. With `ioc: true`, whatever the book
+can't fill when the order arrives is refunded instead of resting at the ceiling.
+It is recorded on the order, so a wallet's market orders can be told apart from its
+limit orders (both are `ord_type: "limit"`). Ignored if `post_only` is set.
 
 If attaching the signature fails, the order is cancelled so no unsignable orphan
 is left behind.
@@ -217,6 +224,20 @@ Calibri fully validates the signed order before anything is placed, rejecting wi
 - for type `3`, `signer == maker` and the **Safe itself verifies the signature**
   (EIP-1271) — plus, for a session-key envelope, the grant is still within its
   expiry.
+
+### Expiry is enforced
+
+The engine keeps each order's `expiration` and never lets a signature lapse
+between a match and its on-chain settlement:
+
+- an order is never matched within **30 seconds** of its `expiration`;
+- a resting order reaching that point is **cancelled and refunded** (its order
+  update arrives as `cancel`);
+- an order that arrives with less than 30 seconds left is rejected with
+  `market.order.expired`.
+
+Sign resting limit orders with a long `expiration` (up to 365 days) and market-style
+orders with a short one — the app uses 120 seconds.
 
 A check that cannot be completed — blockchain service unreachable, Safe
 readiness unknown — **fails closed**: the order is rejected rather than placed

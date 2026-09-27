@@ -65,8 +65,13 @@ sign, so a **Market** order in the app is a *marketable limit*:
 2. It signs a limit at the **worst price the sweep reaches, plus a small slippage
    bound**. That price is a ceiling, never a target: the exchange fills you at the
    book price or better, and anything left of your max spend is not taken.
-3. The signature **expires after 60 seconds**. If the book moves past your ceiling
-   before it fills, the order lapses rather than filling at a price you never saw.
+3. It is sent **immediate-or-cancel**: whatever the book can't fill the moment
+   your order arrives is refunded straight away, never left resting at the
+   ceiling. A market order either fills now (all or part) or gives your money back.
+4. The signature **expires after 120 seconds**, long enough to approve it with
+   your passkey. An order is never matched within 30 seconds of its signature
+   expiring — the trade has to settle on-chain first — so one that arrives later
+   than that is refused rather than filled.
 
 The confirm screen states the exact ceiling and quantity before you sign. A
 market **sell** is the mirror image: it signs a floor, and fills at the book
