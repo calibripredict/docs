@@ -1437,7 +1437,13 @@ paths:
         becomes a standard Safe owner signature over the EIP-712
         `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`,
         in a domain of (chainId, the Safe). Signing the order hash directly
-        always fails.
+        always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit
+        at a price ceiling; send `ioc: true` and the unfilled remainder is
+        refunded rather than rested. The signature's `expiration` is enforced by
+        the engine — it never matches an order within 30 seconds of its expiry
+        (a fill must settle on-chain before the signature lapses), cancels and
+        refunds a resting order at that point, and rejects an order that arrives
+        inside that window (`market.order.expired`).
       parameters: []
       requestBody:
         content:
@@ -5518,6 +5524,15 @@ components:
             - sell
           example: buy
           type: string
+        ioc:
+          description: >-
+            Immediate-or-cancel. Set it on a marketable order — the "market"
+            order a signed wallet has to send as a limit at a price ceiling:
+            whatever the book cannot fill on arrival is refunded instead of
+            resting at that ceiling. Ignored together with `post_only`. Recorded
+            on the order as `ioc`.
+          example: false
+          type: boolean
         market:
           description: Market id.
           example: '12'
