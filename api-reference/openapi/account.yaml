@@ -751,6 +751,10 @@ components:
             - 'sell'
           example: 'buy'
           type: 'string'
+        ioc:
+          description: 'Immediate-or-cancel. Set it on a marketable order — the "market" order a signed wallet has to send as a limit at a price ceiling: whatever the book cannot fill on arrival is refunded instead of resting at that ceiling. Ignored together with `post_only`. Recorded on the order as `ioc`.'
+          example: false
+          type: 'boolean'
         market:
           description: 'Market id.'
           example: '12'
@@ -2961,7 +2965,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/orders:
     post:
-      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails.'
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
       parameters: []
       requestBody:
         content:
