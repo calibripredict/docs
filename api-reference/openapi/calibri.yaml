@@ -5891,6 +5891,13 @@ components:
       type: object
     CtfRedeemableMarketEntity:
       properties:
+        auto_redeem_failed:
+          description: >-
+            An auto-redeem attempt skipped this claim (for example, the approval
+            is missing), so redeem it yourself. Auto-redeem keeps retrying every
+            5 minutes.
+          example: false
+          type: boolean
         condition_id:
           description: The condition to pass to `redeemPositions`.
           example: 0x8f3a…
@@ -5930,6 +5937,7 @@ components:
         - condition_id
         - redeemable
         - settled_at
+        - auto_redeem_failed
       type: object
     CtfWalletBundleEntity:
       properties:
