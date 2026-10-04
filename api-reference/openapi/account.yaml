@@ -1118,6 +1118,9 @@ components:
           description: 'This deployment''s CTF Exchange.'
           example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
           type: 'string'
+        onramp_customer:
+          description: 'Whether the member is a customer at the fiat on-ramp provider already (their first checkout launched). The deposit sheet starts a cash checkout on opening only then.'
+          type: 'boolean'
         owner_address:
           description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
           example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
@@ -1178,6 +1181,7 @@ components:
         - 'signature_type'
         - 'session_keys_enabled'
         - 'safe_status'
+        - 'onramp_customer'
       type: 'object'
     CtfWalletEntity:
       properties:
