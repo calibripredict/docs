@@ -5010,8 +5010,7 @@ components:
           description: >-
             Stable id of this bridge:
             `cctp-bridge:{chain_key}:{address}:{run_id}`.
-          example: >-
-            cctp-bridge:ethereum:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed:0192f3a1-7c1e-7d2a-9b4e-5f6a7b8c9d0e
+          example: cctp-bridge:ethereum:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed:0192f3a1-7c1e-7d2a-9b4e-5f6a7b8c9d0e
           type: string
         burn_tx_hash:
           description: Source-chain burn transaction.
