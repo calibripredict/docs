@@ -814,7 +814,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -826,7 +826,7 @@ components:
           type: 'boolean'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         owner_address:
           description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
@@ -897,7 +897,7 @@ components:
           type: 'string'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -905,7 +905,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         no_token_id:
           description: 'The same for the NO leg.'
@@ -980,7 +980,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -988,7 +988,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         markets:
           description: 'Settled markets whose payout you have not yet redeemed, newest first. Only positive amounts: losing tokens alone are worth nothing.'
@@ -1108,7 +1108,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -1116,7 +1116,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         onramp_customer:
           description: 'Whether the member is a customer at the fiat on-ramp provider already (their first checkout launched). The deposit sheet starts a cash checkout on opening only then.'
@@ -1193,7 +1193,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -1201,7 +1201,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         owner_address:
           description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'

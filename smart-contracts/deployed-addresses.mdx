@@ -21,21 +21,26 @@ USDC**.
 
 | Contract | Address | Verify |
 |---|---|---|
-| **CTF Exchange** (Calibri) | `0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83` | [View on Polygonscan](https://polygonscan.com/address/0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83) |
+| **CTF Exchange** (Calibri) | `0xA06be29A9077DA70c70601156aac9F2cE0E3b595` | [View on Polygonscan](https://polygonscan.com/address/0xA06be29A9077DA70c70601156aac9F2cE0E3b595) |
 | **USDC** (collateral) | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | [View on Polygonscan](https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359) |
-| **ConditionalTokens** (Gnosis CTF) | read from `GET /account/wallet` → `conditional_tokens_address` | `https://polygonscan.com/address/{address}` |
-| **CalibriResolver** (oracle) | _to be published_ — ask support | `https://polygonscan.com/address/{address}` |
-| **AutoRedeemer** | read from `GET /account/wallet/auto-redeem` → `auto_redeemer_address` | `https://polygonscan.com/address/{address}` |
+| **ConditionalTokens** (Gnosis CTF) | `0x53aB2e11ea7a7e90a11F002FAa859124729611F4` | [View on Polygonscan](https://polygonscan.com/address/0x53aB2e11ea7a7e90a11F002FAa859124729611F4) |
+| **CalibriResolver** (oracle) | `0xCe6c7e8E72CaF5A315ec645ae753d084b1DdF7d8` | [View on Polygonscan](https://polygonscan.com/address/0xCe6c7e8E72CaF5A315ec645ae753d084b1DdF7d8) |
+| **AutoRedeemer** | `0x12ceDE20B645c82489882b0D3702cb171aE413c7` | [View on Polygonscan](https://polygonscan.com/address/0x12ceDE20B645c82489882b0D3702cb171aE413c7) |
+| **SessionKeyRegistry** (quick trading) | `0x6B22D8D814E08A29eAa8bA4750526a05f3B49416` | [View on Polygonscan](https://polygonscan.com/address/0x6B22D8D814E08A29eAa8bA4750526a05f3B49416) |
 | **Your Safe** | read from `GET /account/wallet` → `proxy_address` | `https://polygonscan.com/address/{address}` |
 
-The CTF Exchange was deployed on **2 August 2026** and carries Calibri's own
-EIP-712 domain name — it is not a shared or third-party exchange. That domain
-name is hashed into every order signature, which is why the app serves it rather
-than hard-coding it, and why signatures made against a different exchange cannot
-be replayed here.
+The CTF Exchange was deployed on **7 October 2026** and carries Calibri's own
+EIP-712 domain name, **Calibri CTF Prediction Markets** — it is not a shared or
+third-party exchange. That domain name is hashed into every order signature, which is
+why the app serves it rather than hard-coding it, and why signatures made against a
+different exchange cannot be replayed here.
 
 <Note>
-  **ConditionalTokens is not ours.** It is Gnosis' audited Conditional Token Framework, already deployed on Polygon and used by other prediction markets. Calibri deploys against the canonical instance rather than a fork — your collateral sits in a contract that predates us and is not under our control.
+  **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified — its bytecode is identical to that build, which you can compare on Polygonscan. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.
+</Note>
+
+<Note>
+  Calibri's earlier exchange, `0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83`, is retired: paused, with no admin or operator left. Nothing trades or settles against it.
 </Note>
 
 ## Wallet infrastructure
@@ -50,35 +55,34 @@ wallet we never got around to creating.
 
 | Contract | Address | What it does |
 |---|---|---|
-| **Safe factory** | _to be published_ | Deploys your Safe at its derived address |
-| **Safe singleton** | _to be published_ | The implementation every Safe proxy delegatecalls |
-| **Safe fallback handler** | _to be published_ | Handles signature checks and other non-core calls |
-| **WebAuthn signer factory** | _to be published_ | Deploys the secp256r1 signer contract a passkey owns |
+| **Safe factory** (CalibriSafeFactoryV2) | `0x5f26b4D72A858b9F1441d0241adF01D6A23f1894` | Deploys your Safe at its derived address |
+| **Safe singleton** (Safe 1.3.0) | `0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552` | The implementation every Safe proxy delegatecalls |
+| **Safe fallback handler** (Safe 1.3.0) | `0xf48f2B2d2a534e402487b3ee7C18c33Aec0Fe5e4` | Handles signature checks and other non-core calls |
+| **WebAuthn signer factory** | `0x2508Ef28544e00392a544A062ab3D2334F0C0d5a` | Deploys the secp256r1 signer contract a passkey owns |
 
 <Note>
-  The mainnet values are published here once the production contracts are deployed. Until then, ask support — they are fixed per network, identical for every member, and not secret: the Safe factory is readable from the exchange's own `safeFactory` view, and the singleton and handler from any deployed Safe's storage.
+  The singleton and the fallback handler are Safe's own canonical 1.3.0 deployments, used by Safes across every network. All four are fixed per network, identical for every member and not secret: the factory is also readable from the exchange's own `safeFactory` view, and the singleton and handler from any deployed Safe's storage.
 </Note>
 
 ## Cross-network deposits
 
 These contracts let USDC sent to your Safe address on another network reach your Safe on
 Polygon — see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
-Each is deployed at **the same address on Polygon, Ethereum, Base, Arbitrum and
-Optimism**, which is what makes your Safe's address the same on all of them. When they are
-live, **CalibriSafeFactoryV2** is the Safe factory listed above.
+Each is deployed at **the same address on Polygon and Ethereum**, which is what makes your
+Safe's address the same on both. **CalibriSafeFactoryV2** is the Safe factory listed above.
 
 | Contract | Address | What it does |
 |---|---|---|
-| **CalibriSafeFactoryV2** | _Not yet deployed_ | Creates member Safes with the bridge module enabled; permissionless |
-| **SafeModuleSetup** | _Not yet deployed_ | Switches the module on during a Safe's setup |
-| **CctpBridgeModule** | _Not yet deployed_ | Moves a Safe's USDC through Circle's CCTP to the same Safe on Polygon |
-| **BridgeFeeConfig** | _Not yet deployed_ | Holds the relayer allowed to charge the bridge fee, the treasury it is paid to, and the consent signer that countersigns an accepted fee above the cap |
+| **CalibriSafeFactoryV2** | `0x5f26b4D72A858b9F1441d0241adF01D6A23f1894` | Creates member Safes with the bridge module enabled; permissionless — [Polygonscan](https://polygonscan.com/address/0x5f26b4D72A858b9F1441d0241adF01D6A23f1894) · [Etherscan](https://etherscan.io/address/0x5f26b4D72A858b9F1441d0241adF01D6A23f1894) |
+| **SafeModuleSetup** | `0x389CB393c51373244fC67A1a08f9f9aB0b5323BB` | Switches the module on during a Safe's setup — [Polygonscan](https://polygonscan.com/address/0x389CB393c51373244fC67A1a08f9f9aB0b5323BB) · [Etherscan](https://etherscan.io/address/0x389CB393c51373244fC67A1a08f9f9aB0b5323BB) |
+| **CctpBridgeModule** | `0x1441E0De9aCDBf3bb0D527f598219BF0403eF3A2` | Moves a Safe's USDC through Circle's CCTP to the same Safe on Polygon — [Polygonscan](https://polygonscan.com/address/0x1441E0De9aCDBf3bb0D527f598219BF0403eF3A2) · [Etherscan](https://etherscan.io/address/0x1441E0De9aCDBf3bb0D527f598219BF0403eF3A2) |
+| **BridgeFeeConfig** | `0x7093AF674b82b9f8cFFd4f9bC74ac7b0DaB4a773` | Holds the relayer allowed to charge the bridge fee, the treasury it is paid to, and the consent signer that countersigns an accepted fee above the cap — [Polygonscan](https://polygonscan.com/address/0x7093AF674b82b9f8cFFd4f9bC74ac7b0DaB4a773) · [Etherscan](https://etherscan.io/address/0x7093AF674b82b9f8cFFd4f9bC74ac7b0DaB4a773) |
 
 <Note>
-  **These contracts are not deployed to mainnet yet.** Addresses are published here once they are. Until then, deposits from other networks are not available — send USDC on Polygon only.
+  **Ethereum is the only other network live today.** USDC sent to your Safe address on any other network is not bridged — send USDC on Polygon or Ethereum only.
 </Note>
 
-When they are live, you can check a module against its limits yourself. `CctpBridgeModule`
+You can check a module against its limits yourself. `CctpBridgeModule`
 exposes `MAX_FEE_ABS`, `MAX_FEE_BPS`, `MIN_AMOUNT`, `DEST_DOMAIN` (`7`, Polygon) and
 `TOKEN_MESSENGER` (Circle's TokenMessengerV2) as public views, and `localUsdc()` returns the
 USDC it moves on that network. `CalibriSafeFactoryV2.module()` names the module every Safe
