@@ -1,35 +1,91 @@
 components:
   schemas:
+    KLineRow:
+      description: |-
+        One candle: [timestamp, open, high, low, close, volume] — the bucket start
+        in Unix seconds, the YES-space open / high / low / close prices, and the
+        contracts traded in the bucket. Numbers, not strings: chart series are the
+        one place decimals are numbers.
+      example:
+      - 1787083200
+      - 0.6
+      - 0.7
+      - 0.58
+      - 0.65
+      - 240
+      maxItems: 6
+      minItems: 6
+      prefixItems:
+      - description: Bucket start, Unix seconds
+        type: integer
+      - description: Open, YES-space price
+        type: number
+      - description: High, YES-space price
+        type: number
+      - description: Low, YES-space price
+        type: number
+      - description: Close, YES-space price
+        type: number
+      - description: Contracts traded
+        type: number
+      type: array
     ActivityItem:
       properties:
         amount:
-          example: 250.5
-          type: number
+          description: The contract's notional (price × volume) in `currency`; null
+            on new_market.
+          example: "250.5"
+          type:
+          - string
+          - "null"
         created_at:
           example: "2026-08-07T10:05:30Z"
           type: string
         currency:
           example: usdc
-          type: string
+          type:
+          - string
+          - "null"
         description:
-          example: Bought 250 YES at 0.62
-          type: string
+          example: YES @ 62%
+          type:
+          - string
+          - "null"
         event_slug:
+          description: Null when the market has no event.
           example: will-btc-reach-70k
-          type: string
+          type:
+          - string
+          - "null"
         id:
-          example: trade-1420
-          type: string
+          description: |-
+            The id of the row the item is about: a contract for trade and
+            settlement, an event for new_market. A contract that traded and then
+            settled appears twice with the same id, once per type.
+          example: 1420
+          type: integer
         market_id:
-          example: "12"
-          type: string
+          example: 12
+          type:
+          - integer
+          - "null"
         side:
+          enum:
+          - "yes"
+          - "no"
+          - null
           example: "yes"
-          type: string
+          type:
+          - string
+          - "null"
         title:
           example: BTC crosses $65,000
           type: string
         type:
+          enum:
+          - trade
+          - settlement
+          - new_market
           example: trade
           type: string
       type: object
@@ -190,6 +246,38 @@ components:
           type: array
           uniqueItems: false
       type: object
+    CancelAllRequest:
+      properties:
+        market_id:
+          description: Only orders in this market. A JSON number or a numeric string.
+          example: 12
+          type: integer
+        side:
+          description: Only orders on this outcome.
+          enum:
+          - "yes"
+          - "no"
+          example: "yes"
+          type: string
+      type: object
+    CancelAllResult:
+      properties:
+        cancelled:
+          example: 3
+          type: integer
+        failed:
+          example: 0
+          type: integer
+        orders:
+          description: Orders are the orders this call cancelled, in state `cancel`.
+          items:
+            $ref: '#/components/schemas/MemberOrder'
+          type: array
+          uniqueItems: false
+        total:
+          example: 3
+          type: integer
+      type: object
     CandlePoint:
       properties:
         c:
@@ -232,6 +320,440 @@ components:
           example: 1723033200
           type: integer
       type: object
+    EnrichedEvent:
+      properties:
+        category:
+          example: crypto
+          type: string
+        created_at:
+          description: |-
+            CreatedAt (RFC3339, from events.created_at) backs the "newest" list sort.
+            Before it was surfaced, "newest" fell back to id DESC.
+          example: "2026-08-07T10:00:00Z"
+          type:
+          - string
+          - "null"
+        description:
+          example: Resolves from the final Coinbase BTC-USD trade price before the
+            close date.
+          type:
+          - string
+          - "null"
+        display_type:
+          description: |-
+            DisplayType (events.display_type) picks the chart SOURCE, not the market
+            shape: "probability" (default) plots the markets' own YES probability,
+            "price_feed" plots an underlying feed with a reference line.
+          example: probability
+          type: string
+        effective_taker_fee_rate_bps:
+          description: |-
+            EffectiveTakerFeeRateBps is the resolved fee rate the matching engine
+            will charge for trades in any of this event's markets. Computed at
+            load time as: COALESCE(override, category default). NULL/nil means
+            UNRESOLVED — no override and no fee_categories row for the category —
+            which order placement rejects (distinct from a resolved 0 = free).
+            Read-only — not persisted as its own column.
+          example: 200
+          type:
+          - integer
+          - "null"
+        end_at:
+          description: The earliest close_at across the event's markets. Null when
+            none has one.
+          example: "2026-12-31T00:00:00Z"
+          type:
+          - string
+          - "null"
+        featured:
+          example: false
+          type: boolean
+        id:
+          example: 12345
+          type: integer
+        image_url:
+          example: https://cdn.calibri.io/events/btc-70k.png
+          type:
+          - string
+          - "null"
+        market_count:
+          example: 2
+          type: integer
+        markets:
+          items:
+            $ref: '#/components/schemas/EnrichedMarket'
+          type: array
+          uniqueItems: false
+        outcome_structure:
+          description: |-
+            OutcomeStructure (events.outcome_structure) says how this event's markets
+            relate to one another. It selects the frontend layout and is deliberately
+            NOT derivable from len(Markets) — a contender race, a strike ladder and a
+            fixture's derivative bundle can all carry a dozen markets and none of them
+            renders like the others.
+
+              independent — one question, or several unrelated ones (the default)
+              one_winner  — at most one market resolves YES; ranked, sums to ~100%
+              ladder      — nested thresholds over one variable ("above $100k",
+                            "above $110k"). Several legs resolve YES together so it is
+                            not one_winner, but the legs are nested so it is not
+                            independent either: prices fall monotonically down the
+                            ladder, ordered by markets.event_rank.
+
+            Kalshi carries the same three as MECNET / DIRECNET / none.
+
+            Display + validation only. Neither Kalshi's collateral netting nor
+            Polymarket's NegRiskAdapter is implemented on our side.
+          example: independent
+          type: string
+        price_feed:
+          anyOf:
+          - $ref: '#/components/schemas/PriceFeed'
+          - type: "null"
+        series:
+          anyOf:
+          - $ref: '#/components/schemas/SeriesRef'
+          - type: "null"
+        series_window_count:
+          description: |-
+            How many windows of this rolling series are listed, this one included.
+            Null for everything else.
+          example: 12
+          type:
+          - integer
+          - "null"
+        slug:
+          example: btc-above-70k-december-2026
+          type: string
+        status:
+          description: The event's own lifecycle state (events.aasm_state).
+          enum:
+          - submitted
+          - initialized
+          - active
+          - closed
+          - resolving
+          - settling
+          - settled
+          - canceled
+          example: active
+          type: string
+        subcategory:
+          anyOf:
+          - $ref: '#/components/schemas/CategoryRef'
+          - type: "null"
+        tags:
+          description: |-
+            Tags are the editorial SHELVES this event sits on — what puts it on a hub
+            page. Many-to-many and deliberately not taxonomic: "Wimbledon" collects the
+            men's winner race, the women's winner race and every match, which share no
+            series and no outcome structure. Always present (possibly empty) so the
+            frontend need not nil-check.
+          items:
+            $ref: '#/components/schemas/TagRef'
+          type: array
+          uniqueItems: false
+        taker_fee_rate_bps_override:
+          description: |-
+            TakerFeeRateBpsOverride mirrors events.taker_fee_rate_bps_override
+            (NULL = inherit from category default, or global default if no category row).
+            Persisted to the DB; included in JSON for admin consumers.
+          example: 200
+          type:
+          - integer
+          - "null"
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        total_volume:
+          description: |-
+            Every contract the event's markets have ever traded. Null when nothing
+            has, so a consumer can tell "never traded" from "quiet today" — which
+            total_volume_24h alone cannot say.
+          example: "15000.25"
+          type:
+          - string
+          - "null"
+        total_volume_24h:
+          description: Contracts traded across the event's markets in the last 24h.
+          example: "1500.25"
+          type: string
+      type: object
+    EnrichedMarket:
+      properties:
+        amount_precision:
+          example: 2
+          type:
+          - integer
+          - "null"
+        category:
+          example: crypto
+          type: string
+        change_24h:
+          description: |-
+            24h change of the last price as a signed fraction ("0.0833" is +8.33%).
+            Null when there is no opening price to measure from.
+          example: "0.0833"
+          type:
+          - string
+          - "null"
+        close_at:
+          example: "2026-07-22T18:00:00Z"
+          type:
+          - string
+          - "null"
+        description:
+          example: Resolves YES if the Coinbase BTC-USD close on 31 Dec 2026 is above
+            $70,000.
+          type:
+          - string
+          - "null"
+        determination_at:
+          description: |-
+            DeterminationAt is when the outcome is EXPECTED to become knowable —
+            distinct from close, which is only when trading stops.
+
+            Published so a member is told the gap in advance. Kalshi's daily-high
+            temperature markets settle 6–7 hours after close because the authoritative
+            report lands hours after the weather; without this field that reads as a
+            stuck market rather than a documented wait.
+
+            Null when the outcome is expected at close.
+          example: "2026-07-23T10:00:00Z"
+          type:
+          - string
+          - "null"
+        event_id:
+          example: 12345
+          type:
+          - integer
+          - "null"
+        event_rank:
+          description: |-
+            EventRank is the operator's manual ordering of this market WITHIN its
+            event (`markets.event_rank`), ascending. nil = unranked. It exists because
+            the natural order of a ladder is not derivable from price: a date ladder
+            reads chronologically, a strike ladder by strike, and neither matches
+            probability order. When no market in an event carries a rank, the default
+            sort falls back to probability descending — the right answer for
+            candidate-style events.
+          example: 1
+          type:
+          - integer
+          - "null"
+        event_slug:
+          description: |-
+            EventSlug / EventTitle are the market's event context, denormalised onto the
+            market itself.
+
+            A market is not addressable on its own — there is no markets.slug column, and the
+            app routes /event/{slug}?market={id} — so without these a client holding a market
+            from the flat /markets list cannot build a link or name what it belongs to, and
+            has to go back for the event.
+
+            Carried even when the market is already nested inside its event (where it is
+            strictly redundant) so a market object means the same thing wherever it is found.
+            A caller that pulls one out of an event payload and passes it on must not end up
+            with something that has quietly lost its context.
+
+            EventID is the durable key; the slug is editable and is for display and routing.
+          example: btc-above-70k-december-2026
+          type:
+          - string
+          - "null"
+        event_title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type:
+          - string
+          - "null"
+        group_item_title:
+          description: |-
+            GroupItemTitle (markets.group_item_title) is this market's short label
+            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the frontend
+            derives one from the title, which is why an unlabelled contender list
+            currently reads "Will Abiy Ahmed be the next Prime Min…".
+          example: Above $70,000
+          type:
+          - string
+          - "null"
+        id:
+          example: 54321
+          type: integer
+        image_url:
+          example: https://cdn.calibri.io/markets/btc-70k.png
+          type:
+          - string
+          - "null"
+        last_price:
+          description: From the 24h ticker; null when the market has no ticker.
+          example: "0.61"
+          type:
+          - string
+          - "null"
+        liquidity_reward:
+          anyOf:
+          - $ref: '#/components/schemas/LiquidityReward'
+          - type: "null"
+        max_price:
+          example: "0.99"
+          type:
+          - string
+          - "null"
+        min_amount:
+          example: "1"
+          type:
+          - string
+          - "null"
+        min_price:
+          example: "0.01"
+          type:
+          - string
+          - "null"
+        no_price:
+          example: "0.38"
+          type:
+          - string
+          - "null"
+        no_token_id:
+          example: "9876543210987654321098765432109876543210"
+          type:
+          - string
+          - "null"
+        open_at:
+          example: "2026-07-21T10:00:00Z"
+          type:
+          - string
+          - "null"
+        open_interest:
+          description: |-
+            Outstanding complete YES/NO sets — see readOpenInterest. Attached after
+            paging, so only the markets a response actually carries are read. Null
+            when it cannot be read.
+          example: "1250"
+          type:
+          - string
+          - "null"
+        outcome_labels:
+          description: |-
+            OutcomeLabels are the display names of this market's two legs, index 0 the
+            YES leg and index 1 the NO leg, with the ["Yes","No"] default already
+            applied — consumers never have to handle NULL. Naming them turns a
+            proposition into a head-to-head, so the chart draws two labelled lines
+            instead of one and the buy buttons carry the contestant's name.
+
+            DISPLAY ONLY. The canonical resolution leg is still YES/NO: settlement,
+            the CTF condition and every ledger row are untouched by a relabel.
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price_precision:
+          description: |-
+            The engine's trading config for the market, as /public/markets/{id}
+            carries it, so an order can be built off the event payload. Null for a
+            market the engine does not hold (settled, not yet open).
+          example: 4
+          type:
+          - integer
+          - "null"
+        price_settlement:
+          anyOf:
+          - $ref: '#/components/schemas/PriceSettlement'
+          - type: "null"
+        price_target:
+          anyOf:
+          - $ref: '#/components/schemas/PriceTarget'
+          - type: "null"
+        quote_currency:
+          example: usdc
+          type: string
+        resolution_source:
+          example: Coinbase BTC-USD
+          type:
+          - string
+          - "null"
+        result:
+          enum:
+          - "yes"
+          - "no"
+          - void
+          - null
+          example: "yes"
+          type:
+          - string
+          - "null"
+        rules:
+          example: Settles on the final Coinbase BTC-USD trade price before 23:59:59
+            UTC.
+          type:
+          - string
+          - "null"
+        settlement_panel:
+          anyOf:
+          - $ref: '#/components/schemas/SettlementPanel'
+          - type: "null"
+        status:
+          description: |-
+            Status SHADOWS MarketMeta.Status (shallower field wins), so a nested
+            market speaks the same public vocabulary as /public/markets: the raw
+            aasm_state carries internal states publicMarketStatus exists to withhold.
+          enum:
+          - active
+          - closed
+          - determined
+          - settled
+          - cancelled
+          - voided
+          example: active
+          type: string
+        terms:
+          anyOf:
+          - $ref: '#/components/schemas/MarketTerms'
+          - type: "null"
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        volume:
+          description: |-
+            Lifetime contract volume for this market. Same unit as volume_24h —
+            contracts. Null when the market has never traded.
+          example: "15000.25"
+          type:
+          - string
+          - "null"
+        volume_24h:
+          example: "1500.25"
+          type:
+          - string
+          - "null"
+        yes_price:
+          description: |-
+            YES / NO probability from the live book mid, else the last trade. Null
+            when the market has neither.
+          example: "0.62"
+          type:
+          - string
+          - "null"
+        yes_token_id:
+          description: |-
+            YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
+            market's two legs, once atlas has registered the condition. nil (null)
+            until then, because a market that is not CTF-registered has no tokens — emitting
+            "" would read as "registered with an empty id".
+
+            Published because a token id IS the market-and-outcome identifier: it is derived
+            from (resolver, questionId, collateral), so it names exactly one outcome of one
+            market and never changes. A signed exchange order carries the token id and NO
+            market field — the token id has already answered "which market, which outcome".
+
+            Serving them here is what lets an API client build an order from the market it
+            already fetched, rather than making a second authed per-market call for data that
+            is public, immutable and identical for every member.
+          example: "1234567890123456789012345678901234567890"
+          type:
+          - string
+          - "null"
+      type: object
     ErrorResponse:
       properties:
         errors:
@@ -253,11 +775,15 @@ components:
             CreatedAt (RFC3339, from events.created_at) backs the "newest" list sort.
             Before it was surfaced, "newest" fell back to id DESC.
           example: "2026-08-07T10:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
         description:
           example: Resolves from the final Coinbase BTC-USD trade price before the
             close date.
-          type: string
+          type:
+          - string
+          - "null"
         display_type:
           description: |-
             DisplayType (events.display_type) picks the chart SOURCE, not the market
@@ -274,7 +800,16 @@ components:
             which order placement rejects (distinct from a resolved 0 = free).
             Read-only — not persisted as its own column.
           example: 200
-          type: integer
+          type:
+          - integer
+          - "null"
+        end_at:
+          description: The earliest close_at across the event's markets. Null when
+            none has one.
+          example: "2026-12-31T00:00:00Z"
+          type:
+          - string
+          - "null"
         featured:
           example: false
           type: boolean
@@ -283,7 +818,12 @@ components:
           type: integer
         image_url:
           example: https://cdn.calibri.io/events/btc-70k.png
-          type: string
+          type:
+          - string
+          - "null"
+        market_count:
+          example: 2
+          type: integer
         markets:
           items:
             $ref: '#/components/schemas/EventBundleMarket'
@@ -312,24 +852,41 @@ components:
           example: independent
           type: string
         price_feed:
-          description: |-
-            PriceFeed (events.price_feed) carries {source, symbol, reference_price}
-            for the price_feed layout. Passed through opaquely — pythia never
-            interprets it. nil when unset.
-          items:
-            type: integer
-          type: array
-          uniqueItems: false
+          anyOf:
+          - $ref: '#/components/schemas/PriceFeed'
+          - type: "null"
         series:
-          $ref: '#/components/schemas/SeriesRef'
+          anyOf:
+          - $ref: '#/components/schemas/SeriesRef'
+          - type: "null"
+        series_window_count:
+          description: |-
+            How many windows of this rolling series are listed, this one included.
+            Null for everything else.
+          example: 12
+          type:
+          - integer
+          - "null"
         slug:
           example: btc-above-70k-december-2026
           type: string
         status:
+          description: The event's own lifecycle state (events.aasm_state).
+          enum:
+          - submitted
+          - initialized
+          - active
+          - closed
+          - resolving
+          - settling
+          - settled
+          - canceled
           example: active
           type: string
         subcategory:
-          $ref: '#/components/schemas/CategoryRef'
+          anyOf:
+          - $ref: '#/components/schemas/CategoryRef'
+          - type: "null"
         tags:
           description: |-
             Tags are the editorial SHELVES this event sits on — what puts it on a hub
@@ -347,43 +904,55 @@ components:
             (NULL = inherit from category default, or global default if no category row).
             Persisted to the DB; included in JSON for admin consumers.
           example: 200
-          type: integer
+          type:
+          - integer
+          - "null"
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        total_volume:
+          description: |-
+            Every contract the event's markets have ever traded. Null when nothing
+            has, so a consumer can tell "never traded" from "quiet today" — which
+            total_volume_24h alone cannot say.
+          example: "15000.25"
+          type:
+          - string
+          - "null"
+        total_volume_24h:
+          description: Contracts traded across the event's markets in the last 24h.
+          example: "1500.25"
           type: string
       type: object
     EventBundleMarket:
       properties:
+        amount_precision:
+          example: 2
+          type:
+          - integer
+          - "null"
         category:
           example: crypto
           type: string
+        change_24h:
+          description: |-
+            24h change of the last price as a signed fraction ("0.0833" is +8.33%).
+            Null when there is no opening price to measure from.
+          example: "0.0833"
+          type:
+          - string
+          - "null"
         close_at:
           example: "2026-07-22T18:00:00Z"
-          type: string
-        ctf_no_token_id:
-          example: "9876543210987654321098765432109876543210"
-          type: string
-        ctf_yes_token_id:
-          description: |-
-            CTFYesTokenID / CTFNoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (and omitted)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
-
-            Published because a token id IS the market-and-outcome identifier: it is derived
-            from (resolver, questionId, collateral), so it names exactly one outcome of one
-            market and never changes. A signed exchange order carries the token id and NO
-            market field — the token id has already answered "which market, which outcome".
-
-            Serving them here is what lets an API client build an order from the market it
-            already fetched, rather than making a second authed per-market call for data that
-            is public, immutable and identical for every member.
-          example: "1234567890123456789012345678901234567890"
-          type: string
+          type:
+          - string
+          - "null"
         description:
           example: Resolves YES if the Coinbase BTC-USD close on 31 Dec 2026 is above
             $70,000.
-          type: string
+          type:
+          - string
+          - "null"
         determination_at:
           description: |-
             DeterminationAt is when the outcome is EXPECTED to become knowable —
@@ -394,12 +963,16 @@ components:
             report lands hours after the weather; without this field that reads as a
             stuck market rather than a documented wait.
 
-            Omitted when the outcome is expected at close.
+            Null when the outcome is expected at close.
           example: "2026-07-23T10:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
         event_id:
           example: 12345
-          type: integer
+          type:
+          - integer
+          - "null"
         event_rank:
           description: |-
             EventRank is the operator's manual ordering of this market WITHIN its
@@ -410,7 +983,9 @@ components:
             sort falls back to probability descending — the right answer for
             candidate-style events.
           example: 1
-          type: integer
+          type:
+          - integer
+          - "null"
         event_slug:
           description: |-
             EventSlug / EventTitle are the market's event context, denormalised onto the
@@ -428,10 +1003,14 @@ components:
 
             EventID is the durable key; the slug is editable and is for display and routing.
           example: btc-above-70k-december-2026
-          type: string
+          type:
+          - string
+          - "null"
         event_title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
-          type: string
+          type:
+          - string
+          - "null"
         group_item_title:
           description: |-
             GroupItemTitle (markets.group_item_title) is this market's short label
@@ -439,36 +1018,72 @@ components:
             derives one from the title, which is why an unlabelled contender list
             currently reads "Will Abiy Ahmed be the next Prime Min…".
           example: Above $70,000
-          type: string
+          type:
+          - string
+          - "null"
         id:
           example: 54321
           type: integer
         image_url:
           example: https://cdn.calibri.io/markets/btc-70k.png
-          type: string
+          type:
+          - string
+          - "null"
         kline:
-          description: |-
-            Exactly `GET /public/markets/{id}/k-line?period=&limit=`: rows of
-            [timestamp, open, high, low, close, volume].
+          description: Exactly `GET /public/markets/{id}/k-line?period=&limit=`.
           items:
-            items:
-              type: number
-            type: array
+            $ref: '#/components/schemas/KLineRow'
           type: array
           uniqueItems: false
         last_price:
+          description: From the 24h ticker; null when the market has no ticker.
           example: "0.61"
-          type: string
-        market_id:
-          description: the ID used in the markets/order book
-          example: "54321"
-          type: string
+          type:
+          - string
+          - "null"
+        liquidity_reward:
+          anyOf:
+          - $ref: '#/components/schemas/LiquidityReward'
+          - type: "null"
+        max_price:
+          example: "0.99"
+          type:
+          - string
+          - "null"
+        min_amount:
+          example: "1"
+          type:
+          - string
+          - "null"
+        min_price:
+          example: "0.01"
+          type:
+          - string
+          - "null"
         no_price:
           example: "0.38"
-          type: string
+          type:
+          - string
+          - "null"
+        no_token_id:
+          example: "9876543210987654321098765432109876543210"
+          type:
+          - string
+          - "null"
         open_at:
           example: "2026-07-21T10:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
+        open_interest:
+          description: |-
+            Outstanding complete YES/NO sets — see readOpenInterest. Attached after
+            paging, so only the markets a response actually carries are read. Null
+            when it cannot be read.
+          example: "1250"
+          type:
+          - string
+          - "null"
         order_book:
           $ref: '#/components/schemas/BundledOrderBook'
         outcome_labels:
@@ -485,10 +1100,23 @@ components:
             type: string
           type: array
           uniqueItems: false
+        price_precision:
+          description: |-
+            The engine's trading config for the market, as /public/markets/{id}
+            carries it, so an order can be built off the event payload. Null for a
+            market the engine does not hold (settled, not yet open).
+          example: 4
+          type:
+          - integer
+          - "null"
         price_settlement:
-          $ref: '#/components/schemas/PriceSettlement'
+          anyOf:
+          - $ref: '#/components/schemas/PriceSettlement'
+          - type: "null"
         price_target:
-          $ref: '#/components/schemas/PriceTarget'
+          anyOf:
+          - $ref: '#/components/schemas/PriceTarget'
+          - type: "null"
         quote_currency:
           example: usdc
           type: string
@@ -500,51 +1128,119 @@ components:
           uniqueItems: false
         resolution_source:
           example: Coinbase BTC-USD
-          type: string
+          type:
+          - string
+          - "null"
         result:
+          enum:
+          - "yes"
+          - "no"
+          - void
+          - null
           example: "yes"
-          type: string
+          type:
+          - string
+          - "null"
         rules:
           example: Settles on the final Coinbase BTC-USD trade price before 23:59:59
             UTC.
-          type: string
+          type:
+          - string
+          - "null"
         settlement_panel:
-          $ref: '#/components/schemas/SettlementPanel'
+          anyOf:
+          - $ref: '#/components/schemas/SettlementPanel'
+          - type: "null"
         status:
+          description: |-
+            Status SHADOWS MarketMeta.Status (shallower field wins), so a nested
+            market speaks the same public vocabulary as /public/markets: the raw
+            aasm_state carries internal states publicMarketStatus exists to withhold.
+          enum:
+          - active
+          - closed
+          - determined
+          - settled
+          - cancelled
+          - voided
           example: active
           type: string
         terms:
-          $ref: '#/components/schemas/MarketTerms'
+          anyOf:
+          - $ref: '#/components/schemas/MarketTerms'
+          - type: "null"
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+        volume:
+          description: |-
+            Lifetime contract volume for this market. Same unit as volume_24h —
+            contracts. Null when the market has never traded.
+          example: "15000.25"
+          type:
+          - string
+          - "null"
         volume_24h:
           example: "1500.25"
-          type: string
+          type:
+          - string
+          - "null"
         yes_price:
+          description: |-
+            YES / NO probability from the live book mid, else the last trade. Null
+            when the market has neither.
           example: "0.62"
-          type: string
+          type:
+          - string
+          - "null"
+        yes_token_id:
+          description: |-
+            YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
+            market's two legs, once atlas has registered the condition. nil (null)
+            until then, because a market that is not CTF-registered has no tokens — emitting
+            "" would read as "registered with an empty id".
+
+            Published because a token id IS the market-and-outcome identifier: it is derived
+            from (resolver, questionId, collateral), so it names exactly one outcome of one
+            market and never changes. A signed exchange order carries the token id and NO
+            market field — the token id has already answered "which market, which outcome".
+
+            Serving them here is what lets an API client build an order from the market it
+            already fetched, rather than making a second authed per-market call for data that
+            is public, immutable and identical for every member.
+          example: "1234567890123456789012345678901234567890"
+          type:
+          - string
+          - "null"
       type: object
     HomeRails:
       properties:
         ending_soon:
           items:
-            $ref: '#/components/schemas/Event'
+            anyOf:
+            - $ref: '#/components/schemas/EnrichedEvent'
+            - $ref: '#/components/schemas/SlimEvent'
           type: array
           uniqueItems: false
         featured:
           items:
-            $ref: '#/components/schemas/Event'
+            anyOf:
+            - $ref: '#/components/schemas/EnrichedEvent'
+            - $ref: '#/components/schemas/SlimEvent'
           type: array
           uniqueItems: false
         trending:
           items:
-            $ref: '#/components/schemas/Event'
+            anyOf:
+            - $ref: '#/components/schemas/EnrichedEvent'
+            - $ref: '#/components/schemas/SlimEvent'
           type: array
           uniqueItems: false
         volume:
           items:
-            $ref: '#/components/schemas/Event'
+            anyOf:
+            - $ref: '#/components/schemas/EnrichedEvent'
+            - $ref: '#/components/schemas/SlimEvent'
           type: array
           uniqueItems: false
       type: object
@@ -559,7 +1255,9 @@ components:
         events:
           description: Exactly what `/public/events` returns for the same query.
           items:
-            $ref: '#/components/schemas/Event'
+            anyOf:
+            - $ref: '#/components/schemas/EnrichedEvent'
+            - $ref: '#/components/schemas/SlimEvent'
           type: array
           uniqueItems: false
         rails:
@@ -577,12 +1275,12 @@ components:
           example: 1
           type: integer
         total_pnl:
-          example: 4500.75
-          type: number
+          example: "4500.75"
+          type: string
         total_volume:
           description: Stake the member put on the settled contracts behind total_pnl.
-          example: 12800.5
-          type: number
+          example: "12800.5"
+          type: string
         trades:
           example: 45
           type: integer
@@ -593,8 +1291,9 @@ components:
           example: alice***
           type: string
         win_rate:
-          example: 0.7333
-          type: number
+          description: Wins over contracts, a fraction to four places.
+          example: "0.7333"
+          type: string
         wins:
           example: 22
           type: integer
@@ -603,40 +1302,23 @@ components:
       properties:
         amount_precision:
           example: 2
-          type: integer
-        base_unit:
-          example: BTCUSD
-          type: string
+          type:
+          - integer
+          - "null"
         category:
           example: crypto
           type: string
         close_at:
           example: "2026-07-22T18:00:00Z"
-          type: string
-        ctf_no_token_id:
-          example: "9876543210987654321098765432109876543210"
-          type: string
-        ctf_yes_token_id:
-          description: |-
-            CTFYesTokenID / CTFNoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (and omitted)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
-
-            Published because a token id IS the market-and-outcome identifier: it is derived
-            from (resolver, questionId, collateral), so it names exactly one outcome of one
-            market and never changes. A signed exchange order carries the token id and NO
-            market field — the token id has already answered "which market, which outcome".
-
-            Serving them here is what lets an API client build an order from the market it
-            already fetched, rather than making a second authed per-market call for data that
-            is public, immutable and identical for every member.
-          example: "1234567890123456789012345678901234567890"
-          type: string
+          type:
+          - string
+          - "null"
         description:
           example: Resolves YES if the Coinbase BTC-USD close on 31 Dec 2026 is above
             $70,000.
-          type: string
+          type:
+          - string
+          - "null"
         determination_at:
           description: |-
             DeterminationAt is when the outcome is EXPECTED to become knowable —
@@ -647,12 +1329,16 @@ components:
             report lands hours after the weather; without this field that reads as a
             stuck market rather than a documented wait.
 
-            Omitted when the outcome is expected at close.
+            Null when the outcome is expected at close.
           example: "2026-07-23T10:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
         event_id:
           example: 12345
-          type: integer
+          type:
+          - integer
+          - "null"
         event_rank:
           description: |-
             EventRank is the operator's manual ordering of this market WITHIN its
@@ -663,7 +1349,9 @@ components:
             sort falls back to probability descending — the right answer for
             candidate-style events.
           example: 1
-          type: integer
+          type:
+          - integer
+          - "null"
         event_slug:
           description: |-
             EventSlug / EventTitle are the market's event context, denormalised onto the
@@ -681,10 +1369,14 @@ components:
 
             EventID is the durable key; the slug is editable and is for display and routing.
           example: btc-above-70k-december-2026
-          type: string
+          type:
+          - string
+          - "null"
         event_title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
-          type: string
+          type:
+          - string
+          - "null"
         group_item_title:
           description: |-
             GroupItemTitle (markets.group_item_title) is this market's short label
@@ -692,45 +1384,60 @@ components:
             derives one from the title, which is why an unlabelled contender list
             currently reads "Will Abiy Ahmed be the next Prime Min…".
           example: Above $70,000
-          type: string
+          type:
+          - string
+          - "null"
         id:
-          description: |-
-            ID and Status SHADOW the embedded fields of the same json name. The
-            encoder resolves a tag conflict by depth — shallower wins — so these
-            depth-0 fields are what get emitted.
-
-            ID because MarketMeta.ID is an int64 while the engine keys on the string
-            form, and clients key on the string.
-          example: "12"
-          type: string
+          example: 54321
+          type: integer
         image_url:
           example: https://cdn.calibri.io/markets/btc-70k.png
-          type: string
+          type:
+          - string
+          - "null"
         liquidity_reward:
-          $ref: '#/components/schemas/LiquidityReward'
-        market_id:
-          description: the ID used in the markets/order book
-          example: "54321"
-          type: string
+          anyOf:
+          - $ref: '#/components/schemas/LiquidityReward'
+          - type: "null"
         max_price:
           example: "0.99"
-          type: string
+          type:
+          - string
+          - "null"
         min_amount:
-          example: "1.00"
-          type: string
+          example: "1"
+          type:
+          - string
+          - "null"
         min_price:
-          example: "0.01"
-          type: string
-        name:
           description: |-
             Trading parameters. Only the engine knows these, and only for markets it
-            is currently trading — pointers so a settled market omits them rather
-            than publishing zero values that read as real limits.
-          example: Will BTC close above $70k on 2026-12-31?
-          type: string
+            is currently trading — null for a settled market rather than zero values
+            that read as real limits.
+          example: "0.01"
+          type:
+          - string
+          - "null"
+        no_token_id:
+          example: "9876543210987654321098765432109876543210"
+          type:
+          - string
+          - "null"
         open_at:
           example: "2026-07-21T10:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
+        open_interest:
+          description: |-
+            OpenInterest is the number of complete YES/NO sets outstanding — the
+            shares outstanding on each outcome — from the market's escrow in Redis
+            (see open_interest.go). "0" for a market that has never minted; null
+            only when it cannot be read.
+          example: "1250"
+          type:
+          - string
+          - "null"
         outcome_labels:
           description: |-
             OutcomeLabels are the display names of this market's two legs, index 0 the
@@ -747,37 +1454,57 @@ components:
           uniqueItems: false
         price_precision:
           example: 4
-          type: integer
+          type:
+          - integer
+          - "null"
         price_settlement:
-          $ref: '#/components/schemas/PriceSettlement'
+          anyOf:
+          - $ref: '#/components/schemas/PriceSettlement'
+          - type: "null"
         price_target:
-          $ref: '#/components/schemas/PriceTarget'
+          anyOf:
+          - $ref: '#/components/schemas/PriceTarget'
+          - type: "null"
         quote_currency:
-          example: usdc
-          type: string
-        quote_unit:
           example: usdc
           type: string
         resolution_source:
           example: Coinbase BTC-USD
-          type: string
+          type:
+          - string
+          - "null"
         result:
+          enum:
+          - "yes"
+          - "no"
+          - void
+          - null
           example: "yes"
-          type: string
+          type:
+          - string
+          - "null"
         rules:
           example: Settles on the final Coinbase BTC-USD trade price before 23:59:59
             UTC.
-          type: string
+          type:
+          - string
+          - "null"
         settlement_panel:
-          $ref: '#/components/schemas/SettlementPanel'
+          anyOf:
+          - $ref: '#/components/schemas/SettlementPanel'
+          - type: "null"
         status:
-          description: "Status because the published vocabulary is narrower than the
-            column.\n\t\t\t\tMarketMeta.Status is scanned straight from markets.aasm_state,
-            which\ncarries internal states — `escalated` in particular announces to
-            everyone\nholding a position that two reviewers disagreed. Emitting the
-            embedded\nfield raw is precisely the leak publicMarketStatus exists to
-            prevent, and\nshadowing is what makes that unmissable rather than a step
-            someone can\nforget."
+          description: |-
+            Status SHADOWS the embedded field of the same json name. The encoder
+            resolves a tag conflict by depth — shallower wins — so this depth-0 field
+            is what gets emitted.
+
+            The published vocabulary is narrower than the column. MarketMeta.Status is
+            scanned straight from markets.aasm_state, which carries internal states —
+            `escalated` in particular announces to everyone holding a position that two
+            reviewers disagreed. Emitting the embedded field raw is precisely the leak
+            publicMarketStatus exists to prevent, and shadowing is what makes that
+            unmissable rather than a step someone can forget.
           enum:
           - active
           - closed
@@ -788,50 +1515,132 @@ components:
           example: active
           type: string
         terms:
-          $ref: '#/components/schemas/MarketTerms'
+          anyOf:
+          - $ref: '#/components/schemas/MarketTerms'
+          - type: "null"
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+        yes_token_id:
+          description: |-
+            YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
+            market's two legs, once atlas has registered the condition. nil (null)
+            until then, because a market that is not CTF-registered has no tokens — emitting
+            "" would read as "registered with an empty id".
+
+            Published because a token id IS the market-and-outcome identifier: it is derived
+            from (resolver, questionId, collateral), so it names exactly one outcome of one
+            market and never changes. A signed exchange order carries the token id and NO
+            market field — the token id has already answered "which market, which outcome".
+
+            Serving them here is what lets an API client build an order from the market it
+            already fetched, rather than making a second authed per-market call for data that
+            is public, immutable and identical for every member.
+          example: "1234567890123456789012345678901234567890"
+          type:
+          - string
+          - "null"
       type: object
     MemberOrder:
       properties:
+        avg_price:
+          description: |-
+            AvgPrice is the average price of the filled part, in the ORDER'S OWN
+            outcome price space (a NO order's fills read as NO prices, not the YES book
+            price). Null while nothing has filled.
+          example: "0.61"
+          type:
+          - string
+          - "null"
+        client_order_id:
+          description: ClientOrderID is the id the caller chose at placement; null
+            when none was.
+          example: bot-7f3a-0001
+          type:
+          - string
+          - "null"
         contracts_count:
           example: 0
           type: integer
         created_at:
+          description: Timestamps are RFC3339 in UTC (`Z`), from either source.
           example: "2026-08-07T10:00:00Z"
+          type: string
+        direction:
+          description: |-
+            Direction is whether the order acquires the outcome named by `side` (buy)
+            or disposes of held outcome tokens (sell, a position exit). `side` alone
+            cannot tell a `sell yes` from a `buy yes`.
+          enum:
+          - buy
+          - sell
+          example: buy
           type: string
         event_slug:
           example: btc-above-70k-december-2026
+          type:
+          - string
+          - "null"
+        expires_at:
+          description: |-
+            ExpiresAt is when the order's authorisation lapses (a signed order's
+            EIP-712 expiration), RFC3339 UTC; null when it has none. The engine never
+            matches an order inside 30 seconds of it and cancels a resting one then.
+          example: "2026-08-07T11:00:00Z"
+          type:
+          - string
+          - "null"
+        fee:
+          description: |-
+            Fee is the taker fee charged to this order so far ("0" when none — a maker
+            is never charged). In quote_currency.
+          example: "0.04"
           type: string
+        filled_cost:
+          description: |-
+            FilledCost is the cash for the filled part at the fill prices: paid, on a
+            buy; received before fees, on a sell. Excludes the taker fee, which is
+            `fee`. "0" while nothing has filled; null only if it cannot be determined.
+          example: "3.05"
+          type:
+          - string
+          - "null"
         filled_volume:
           example: "0"
           type: string
         id:
           example: 1420
           type: integer
+        ioc:
+          description: |-
+            IOC: immediate-or-cancel — the unfilled remainder after the order's one
+            pass as a taker is refunded, never rested.
+          example: false
+          type: boolean
         locked:
           example: "6.20"
           type: string
-        market:
-          example: "12"
-          type: string
+        market_id:
+          example: 12
+          type: integer
         market_title:
           description: |-
             MarketTitle / EventSlug are the order's market context, denormalised onto
             the order the same way EventSlug/EventTitle are denormalised onto a market.
 
-            Without them `market` is a bare id and nothing else: a client listing a
+            Without them `market_id` is a bare id and nothing else: a client listing a
             member's orders can only print "3573", and has no slug to link with (a
             market is not addressable on its own — the app routes
             /event/{slug}?market={id}). The only alternative is a market read per row,
             which is a fan-out over a paginated list for data this handler already
             holds in memory.
 
-            Omitted when the market's metadata is unknown here (an id that is in
-            neither the cache nor storage); the row still carries `market`.
+            Null when the market's metadata is unknown here (an id that is in
+            neither the cache nor storage); the row still carries `market_id`.
           example: Will BTC close above $70,000 on 31 Dec 2026?
-          type: string
+          type:
+          - string
+          - "null"
         ord_type:
           enum:
           - limit
@@ -844,6 +1653,12 @@ components:
         origin_volume:
           example: "10"
           type: string
+        post_only:
+          description: |-
+            PostOnly: the order could only rest as a maker; it was rejected rather
+            than allowed to cross.
+          example: false
+          type: boolean
         price:
           example: "0.62"
           type: string
@@ -867,6 +1682,16 @@ components:
           - reject
           example: wait
           type: string
+        token_id:
+          description: |-
+            TokenID is the on-chain ERC-1155 id of the outcome `side` names (the
+            market's yes_token_id or no_token_id), so a client can match the
+            order to the token it holds without a market read. Null when the market
+            has no on-chain token, or its metadata is unknown here.
+          example: "1234567890123456789012345678901234567890"
+          type:
+          - string
+          - "null"
         updated_at:
           example: "2026-08-07T10:05:00Z"
           type: string
@@ -927,36 +1752,54 @@ components:
           example: 1420
           type: integer
         market_id:
-          example: "12"
-          type: string
+          example: 12
+          type: integer
         price:
           example: "0.62"
           type: string
+        side:
+          description: |-
+            Side is the outcome token that changed hands on a transfer (a buyer
+            meeting a holder who sells). Null on a mint or a merge, which move no
+            single outcome, and on a transfer whose source did not record it.
+          enum:
+          - "yes"
+          - "no"
+          - null
+          example: "yes"
+          type:
+          - string
+          - "null"
         state:
+          description: |-
+            State is the fill's standing: active (market unresolved), settled_yes /
+            settled_no, or voided — reversed off-chain after its on-chain settlement
+            failed for good. Voided fills stay on the tape; filter on this field.
           enum:
           - active
           - settled_yes
           - settled_no
+          - voided
           example: active
           type: string
         taker_side:
           description: |-
             TakerSide names the outcome the AGGRESSOR bought — the side that crossed
-            the spread and paid the taker fee. It is what lets a tape be read as
-            pressure rather than as a list of prices: direction inferred from the
-            price moving says nothing on the many fills that print at the price
-            before them.
+            the spread and paid the taker fee; on a fill whose taker SOLD it is the
+            other outcome (selling YES is buying NO in price terms). It is what lets a
+            tape be read as pressure rather than as a list of prices.
 
-            Empty means UNKNOWN, not "neither". A contract matched before the engine
-            recorded a taker, and any row served from the QuestDB tape (whose
-            `contracts` table does not carry the taker), report "" — clients must
-            render those as unattributed rather than picking a side.
+            Null means UNKNOWN, not "neither": a contract matched before the engine
+            recorded a taker, or a row whose source does not carry it. Render those as
+            unattributed rather than picking a side.
           enum:
-          - ""
           - "yes"
           - "no"
+          - null
           example: "yes"
-          type: string
+          type:
+          - string
+          - "null"
         volume:
           example: "25.5"
           type: string
@@ -972,7 +1815,9 @@ components:
             to tell a rolling series from a one-off: a five-minute feed publishes 288
             events a day and must appear ONCE, not 288 times.
           example: daily
-          type: string
+          type:
+          - string
+          - "null"
         generated:
           description: |-
             Generated reports whether atlas's roller mints this series' events from a
@@ -997,6 +1842,189 @@ components:
           example: Daily BTC Close
           type: string
       type: object
+    SlimEvent:
+      properties:
+        category:
+          example: crypto
+          type: string
+        display_type:
+          example: probability
+          type: string
+        effective_taker_fee_rate_bps:
+          description: |-
+            The fee the ticket quotes. Without it a card opened from the home feed
+            (served slim) fell back to the default rate.
+          example: 200
+          type:
+          - integer
+          - "null"
+        end_at:
+          example: "2026-12-31T00:00:00Z"
+          type:
+          - string
+          - "null"
+        featured:
+          example: false
+          type: boolean
+        id:
+          example: 12345
+          type: integer
+        image_url:
+          example: https://cdn.calibri.io/events/btc-70k.png
+          type:
+          - string
+          - "null"
+        market_count:
+          example: 2
+          type: integer
+        markets:
+          items:
+            $ref: '#/components/schemas/SlimMarket'
+          type: array
+          uniqueItems: false
+        outcome_structure:
+          description: 'The card fields: what a grid or rail card prints beside the
+            title.'
+          example: independent
+          type: string
+        price_feed:
+          anyOf:
+          - $ref: '#/components/schemas/PriceFeed'
+          - type: "null"
+        series:
+          anyOf:
+          - $ref: '#/components/schemas/SeriesRef'
+          - type: "null"
+        slug:
+          example: btc-above-70k-december-2026
+          type: string
+        status:
+          enum:
+          - submitted
+          - initialized
+          - active
+          - closed
+          - resolving
+          - settling
+          - settled
+          - canceled
+          example: active
+          type: string
+        subcategory:
+          anyOf:
+          - $ref: '#/components/schemas/CategoryRef'
+          - type: "null"
+        tags:
+          items:
+            $ref: '#/components/schemas/TagRef'
+          type: array
+          uniqueItems: false
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        total_volume:
+          example: "15000.25"
+          type:
+          - string
+          - "null"
+        total_volume_24h:
+          example: "1500.25"
+          type: string
+      type: object
+    SlimMarket:
+      properties:
+        change_24h:
+          example: "0.0333"
+          type:
+          - string
+          - "null"
+        close_at:
+          example: "2026-07-22T18:00:00Z"
+          type:
+          - string
+          - "null"
+        group_item_title:
+          description: |-
+            The operator's short label for a market of a multi-outcome event, its
+            lifetime volume, and a threshold market's level — all read by the cards
+            and the ticket.
+          example: Above $70,000
+          type:
+          - string
+          - "null"
+        id:
+          example: 54321
+          type: integer
+        last_price:
+          example: "0.61"
+          type:
+          - string
+          - "null"
+        liquidity_reward:
+          anyOf:
+          - $ref: '#/components/schemas/LiquidityReward'
+          - type: "null"
+        open_at:
+          example: "2026-07-21T10:00:00Z"
+          type:
+          - string
+          - "null"
+        outcome_labels:
+          items:
+            type: string
+          type: array
+          uniqueItems: false
+        price_precision:
+          example: 4
+          type:
+          - integer
+          - "null"
+        price_target:
+          anyOf:
+          - $ref: '#/components/schemas/PriceTarget'
+          - type: "null"
+        quote_currency:
+          example: usdc
+          type: string
+        result:
+          enum:
+          - "yes"
+          - "no"
+          - void
+          - null
+          example: "yes"
+          type:
+          - string
+          - "null"
+        status:
+          enum:
+          - active
+          - closed
+          - determined
+          - settled
+          - cancelled
+          - voided
+          example: active
+          type: string
+        title:
+          example: Will BTC close above $70,000 on 31 Dec 2026?
+          type: string
+        volume:
+          example: "15000.25"
+          type:
+          - string
+          - "null"
+        volume_24h:
+          example: "1500.25"
+          type:
+          - string
+          - "null"
+        yes_price:
+          example: "0.62"
+          type:
+          - string
+          - "null"
+      type: object
     TagCount:
       properties:
         event_count:
@@ -1014,15 +2042,27 @@ components:
       type: object
     TickerEntry:
       properties:
-        amount:
-          example: "900.50"
-          type: string
         avg_price:
-          example: "0.60"
+          example: "0.6"
           type: string
         buy:
           example: "0.58"
-          type: string
+          type:
+          - string
+          - "null"
+        buy_volume:
+          example: "120"
+          type:
+          - string
+          - "null"
+        change_24h:
+          description: |-
+            The 24h move of `last` against `open` as a signed fraction: "0.0333" is
+            +3.33%. Null when there is no open price.
+          example: "0.0333"
+          type:
+          - string
+          - "null"
         high:
           example: "0.72"
           type: string
@@ -1033,26 +2073,35 @@ components:
           example: "0.55"
           type: string
         open:
-          example: "0.60"
+          example: "0.6"
           type: string
-        price_change_percent:
-          example: +3.33%
+        quote_volume:
+          description: Quote currency traded in the last 24h.
+          example: "900.5"
           type: string
         sell:
           example: "0.68"
-          type: string
-        vol:
+          type:
+          - string
+          - "null"
+        sell_volume:
+          example: "75.5"
+          type:
+          - string
+          - "null"
+        volume:
+          description: Contracts traded in the last 24h.
           example: "1500.25"
           type: string
       type: object
     TickerResponse:
       properties:
-        at:
+        ticker:
+          $ref: '#/components/schemas/TickerEntry'
+        timestamp:
           description: Unix seconds.
           example: 1723033200
           type: integer
-        ticker:
-          $ref: '#/components/schemas/TickerEntry'
       type: object
     CategoryNode:
       properties:
@@ -1100,12 +2149,13 @@ components:
           type: string
       type: object
     CategoryParentRef:
-      description: The top-level node this sits under. Absent on a top-level node
-        itself.
+      description: The top-level node this sits under. Null on a top-level node itself.
       properties:
         icon:
           example: SportsSoccer
-          type: string
+          type:
+          - string
+          - "null"
         id:
           example: 10
           type: integer
@@ -1131,7 +2181,9 @@ components:
             Icon KEY the frontends map, not an icon. Replaces their hardcoded maps,
             which could not be extended without a deploy.
           example: SportsSoccer
-          type: string
+          type:
+          - string
+          - "null"
         id:
           example: 15
           type: integer
@@ -1139,118 +2191,11 @@ components:
           example: Soccer
           type: string
         parent:
-          $ref: '#/components/schemas/CategoryParentRef'
+          anyOf:
+          - $ref: '#/components/schemas/CategoryParentRef'
+          - type: "null"
         slug:
           example: soccer
-          type: string
-      type: object
-    Event:
-      properties:
-        category:
-          example: crypto
-          type: string
-        created_at:
-          description: |-
-            CreatedAt (RFC3339, from events.created_at) backs the "newest" list sort.
-            Before it was surfaced, "newest" fell back to id DESC.
-          example: "2026-08-07T10:00:00Z"
-          type: string
-        description:
-          example: Resolves from the final Coinbase BTC-USD trade price before the
-            close date.
-          type: string
-        display_type:
-          description: |-
-            DisplayType (events.display_type) picks the chart SOURCE, not the market
-            shape: "probability" (default) plots the markets' own YES probability,
-            "price_feed" plots an underlying feed with a reference line.
-          example: probability
-          type: string
-        effective_taker_fee_rate_bps:
-          description: |-
-            EffectiveTakerFeeRateBps is the resolved fee rate the matching engine
-            will charge for trades in any of this event's markets. Computed at
-            load time as: COALESCE(override, category default). NULL/nil means
-            UNRESOLVED — no override and no fee_categories row for the category —
-            which order placement rejects (distinct from a resolved 0 = free).
-            Read-only — not persisted as its own column.
-          example: 200
-          type: integer
-        featured:
-          example: false
-          type: boolean
-        id:
-          example: 12345
-          type: integer
-        image_url:
-          example: https://cdn.calibri.io/events/btc-70k.png
-          type: string
-        markets:
-          items:
-            $ref: '#/components/schemas/MarketMeta'
-          type: array
-          uniqueItems: false
-        outcome_structure:
-          description: |-
-            OutcomeStructure (events.outcome_structure) says how this event's markets
-            relate to one another. It selects the frontend layout and is deliberately
-            NOT derivable from len(Markets) — a contender race, a strike ladder and a
-            fixture's derivative bundle can all carry a dozen markets and none of them
-            renders like the others.
-
-              independent — one question, or several unrelated ones (the default)
-              one_winner  — at most one market resolves YES; ranked, sums to ~100%
-              ladder      — nested thresholds over one variable ("above $100k",
-                            "above $110k"). Several legs resolve YES together so it is
-                            not one_winner, but the legs are nested so it is not
-                            independent either: prices fall monotonically down the
-                            ladder, ordered by markets.event_rank.
-
-            Kalshi carries the same three as MECNET / DIRECNET / none.
-
-            Display + validation only. Neither Kalshi's collateral netting nor
-            Polymarket's NegRiskAdapter is implemented on our side.
-          example: independent
-          type: string
-        price_feed:
-          description: |-
-            PriceFeed (events.price_feed) carries {source, symbol, reference_price}
-            for the price_feed layout. Passed through opaquely — pythia never
-            interprets it. nil when unset.
-          items:
-            type: integer
-          type: array
-          uniqueItems: false
-        series:
-          $ref: '#/components/schemas/SeriesRef'
-        slug:
-          example: btc-above-70k-december-2026
-          type: string
-        status:
-          example: active
-          type: string
-        subcategory:
-          $ref: '#/components/schemas/CategoryRef'
-        tags:
-          description: |-
-            Tags are the editorial SHELVES this event sits on — what puts it on a hub
-            page. Many-to-many and deliberately not taxonomic: "Wimbledon" collects the
-            men's winner race, the women's winner race and every match, which share no
-            series and no outcome structure. Always present (possibly empty) so the
-            frontend need not nil-check.
-          items:
-            $ref: '#/components/schemas/TagRef'
-          type: array
-          uniqueItems: false
-        taker_fee_rate_bps_override:
-          description: |-
-            TakerFeeRateBpsOverride mirrors events.taker_fee_rate_bps_override
-            (NULL = inherit from category default, or global default if no category row).
-            Persisted to the DB; included in JSON for admin consumers.
-          example: 200
-          type: integer
-        title:
-          example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
       type: object
     FacetCount:
@@ -1270,7 +2215,7 @@ components:
     LiquidityReward:
       description: |-
         LiquidityReward is what the market pays makers for resting orders today
-        (UTC). Omitted when no reward period covers today.
+        (UTC). Null when no reward period covers today.
       properties:
         currency:
           example: usdc
@@ -1290,149 +2235,6 @@ components:
           example: "20"
           type: string
       type: object
-    MarketMeta:
-      properties:
-        category:
-          example: crypto
-          type: string
-        close_at:
-          example: "2026-07-22T18:00:00Z"
-          type: string
-        ctf_no_token_id:
-          example: "9876543210987654321098765432109876543210"
-          type: string
-        ctf_yes_token_id:
-          description: |-
-            CTFYesTokenID / CTFNoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (and omitted)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
-
-            Published because a token id IS the market-and-outcome identifier: it is derived
-            from (resolver, questionId, collateral), so it names exactly one outcome of one
-            market and never changes. A signed exchange order carries the token id and NO
-            market field — the token id has already answered "which market, which outcome".
-
-            Serving them here is what lets an API client build an order from the market it
-            already fetched, rather than making a second authed per-market call for data that
-            is public, immutable and identical for every member.
-          example: "1234567890123456789012345678901234567890"
-          type: string
-        description:
-          example: Resolves YES if the Coinbase BTC-USD close on 31 Dec 2026 is above
-            $70,000.
-          type: string
-        determination_at:
-          description: |-
-            DeterminationAt is when the outcome is EXPECTED to become knowable —
-            distinct from close, which is only when trading stops.
-
-            Published so a member is told the gap in advance. Kalshi's daily-high
-            temperature markets settle 6–7 hours after close because the authoritative
-            report lands hours after the weather; without this field that reads as a
-            stuck market rather than a documented wait.
-
-            Omitted when the outcome is expected at close.
-          example: "2026-07-23T10:00:00Z"
-          type: string
-        event_id:
-          example: 12345
-          type: integer
-        event_rank:
-          description: |-
-            EventRank is the operator's manual ordering of this market WITHIN its
-            event (`markets.event_rank`), ascending. nil = unranked. It exists because
-            the natural order of a ladder is not derivable from price: a date ladder
-            reads chronologically, a strike ladder by strike, and neither matches
-            probability order. When no market in an event carries a rank, the default
-            sort falls back to probability descending — the right answer for
-            candidate-style events.
-          example: 1
-          type: integer
-        event_slug:
-          description: |-
-            EventSlug / EventTitle are the market's event context, denormalised onto the
-            market itself.
-
-            A market is not addressable on its own — there is no markets.slug column, and the
-            app routes /event/{slug}?market={id} — so without these a client holding a market
-            from the flat /markets list cannot build a link or name what it belongs to, and
-            has to go back for the event.
-
-            Carried even when the market is already nested inside its event (where it is
-            strictly redundant) so a market object means the same thing wherever it is found.
-            A caller that pulls one out of an event payload and passes it on must not end up
-            with something that has quietly lost its context.
-
-            EventID is the durable key; the slug is editable and is for display and routing.
-          example: btc-above-70k-december-2026
-          type: string
-        event_title:
-          example: Will BTC close above $70,000 on 31 Dec 2026?
-          type: string
-        group_item_title:
-          description: |-
-            GroupItemTitle (markets.group_item_title) is this market's short label
-            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the frontend
-            derives one from the title, which is why an unlabelled contender list
-            currently reads "Will Abiy Ahmed be the next Prime Min…".
-          example: Above $70,000
-          type: string
-        id:
-          example: 54321
-          type: integer
-        image_url:
-          example: https://cdn.calibri.io/markets/btc-70k.png
-          type: string
-        market_id:
-          description: the ID used in the markets/order book
-          example: "54321"
-          type: string
-        open_at:
-          example: "2026-07-21T10:00:00Z"
-          type: string
-        outcome_labels:
-          description: |-
-            OutcomeLabels are the display names of this market's two legs, index 0 the
-            YES leg and index 1 the NO leg, with the ["Yes","No"] default already
-            applied — consumers never have to handle NULL. Naming them turns a
-            proposition into a head-to-head, so the chart draws two labelled lines
-            instead of one and the buy buttons carry the contestant's name.
-
-            DISPLAY ONLY. The canonical resolution leg is still YES/NO: settlement,
-            the CTF condition and every ledger row are untouched by a relabel.
-          items:
-            type: string
-          type: array
-          uniqueItems: false
-        price_settlement:
-          $ref: '#/components/schemas/PriceSettlement'
-        price_target:
-          $ref: '#/components/schemas/PriceTarget'
-        quote_currency:
-          example: usdc
-          type: string
-        resolution_source:
-          example: Coinbase BTC-USD
-          type: string
-        result:
-          example: "yes"
-          type: string
-        rules:
-          example: Settles on the final Coinbase BTC-USD trade price before 23:59:59
-            UTC.
-          type: string
-        settlement_panel:
-          $ref: '#/components/schemas/SettlementPanel'
-        status:
-          example: active
-          type: string
-        terms:
-          $ref: '#/components/schemas/MarketTerms'
-        title:
-          example: Will BTC close above $70,000 on 31 Dec 2026?
-          type: string
-      type: object
     MarketTerms:
       description: |-
         Terms is what this market resolves against, as structured fields — the
@@ -1445,22 +2247,29 @@ components:
 
         Stored by atlas (`markets.terms`, derived from the resolution source and its
         params — atlas owns that derivation) and decoded here only so the published
-        schema names every field. Omitted for a market with no automated source.
+        schema names every field. Null for a market with no automated source.
       properties:
         cap_strike:
-          example: 77500
-          type: number
+          example: "77500"
+          type:
+          - string
+          - "null"
         floor_strike:
-          description: 'Null when not applicable. A band is half-open: inclusive floor,
-            exclusive cap.'
-          example: 70000
-          type: number
+          description: |-
+            Decimal strings; null when not applicable. A band is half-open: inclusive
+            floor, exclusive cap.
+          example: "70000"
+          type:
+          - string
+          - "null"
         kind:
           description: threshold | range | direction | categorical
           example: threshold
           type: string
         measure:
-          $ref: '#/components/schemas/TermsMeasure'
+          anyOf:
+          - $ref: '#/components/schemas/TermsMeasure'
+          - type: "null"
         settles_on:
           description: The resolution provider that settles the market, e.g. coinbase_spot.
           example: coinbase_spot
@@ -1471,7 +2280,27 @@ components:
           example: greater_equal
           type: string
         underlying:
-          $ref: '#/components/schemas/TermsUnderlying'
+          anyOf:
+          - $ref: '#/components/schemas/TermsUnderlying'
+          - type: "null"
+      type: object
+    PriceFeed:
+      description: |-
+        PriceFeed (events.price_feed) is the underlying feed a price_feed event
+        charts: {symbol, window_start, granularity_seconds}. Null when unset.
+      properties:
+        granularity_seconds:
+          description: Candle granularity the chart and the reference line use.
+          example: 300
+          type: integer
+        symbol:
+          description: Exchange product id, e.g. "BTC-USD".
+          example: BTC-USD
+          type: string
+        window_start:
+          description: When the event's window opens. RFC 3339 UTC, whole seconds.
+          example: "2026-10-19T06:35:00Z"
+          type: string
       type: object
     PriceSettlement:
       description: |-
@@ -1494,14 +2323,15 @@ components:
           example: "2026-07-22T18:00:00Z"
           type: string
         close:
-          example: 69200.5
-          type: number
+          example: "69200.5"
+          type: string
         granularity_seconds:
           example: 300
           type: integer
         open:
-          example: 68500.75
-          type: number
+          description: The price to beat and the deciding close, as decimal strings.
+          example: "68500.75"
+          type: string
         symbol:
           description: Coinbase product id, e.g. "BTC-USD".
           example: BTC-USD
@@ -1531,15 +2361,25 @@ components:
         reference is its own opening price, which is PriceSettlement's business.
       properties:
         cap_strike:
-          example: 77500
-          type: number
+          example: "77500"
+          type:
+          - string
+          - "null"
         comparator:
           description: |-
             How the close is compared to it: gte, gt, lte or lt. Published because
             "above $77,000" and "at or above $77,000" are different markets on a tie,
             and the chart's own label should not have to guess which one this is.
+          enum:
+          - gte
+          - gt
+          - lte
+          - lt
+          - null
           example: gte
-          type: string
+          type:
+          - string
+          - "null"
         floor_strike:
           description: |-
             Band form, half-open [floor, cap): inclusive floor, exclusive cap. That
@@ -1548,25 +2388,27 @@ components:
             overlap where two legs both pay.
 
             Either bound is absent on a wing: a bottom band has only a cap, a top
-            band only a floor. Pointers rather than plain floats so "no floor" and "a
+            band only a floor. Decimal strings, null when absent, so "no floor" and "a
             floor of zero" stay distinguishable on the wire.
-          example: 75000
-          type: number
+          example: "75000"
+          type:
+          - string
+          - "null"
         threshold:
           description: |-
             Threshold form. The level the close is compared against, in the market's
-            quote currency. Zero and absent are indistinguishable in Go, so a chart
-            must branch on Comparator being set rather than on Threshold being
-            non-zero — a strike genuinely at 0 is nonsense, but a FLOOR at 0 is not.
-          example: 77000
-          type: number
+            quote currency, as a decimal string. Null on a band.
+          example: "77000"
+          type:
+          - string
+          - "null"
       type: object
     SeriesRef:
       description: |-
         Series is the FEED this event came from — Polymarket's `atp` / `mls-2025`,
         Kalshi's `series_ticker`. Usually absent: a one-off competition has no feed
         behind it, and Polymarket returns `series: []` on every Wimbledon event
-        including the matches. Omitted from JSON when unset.
+        including the matches. Null when unset.
       properties:
         frequency:
           description: |-
@@ -1574,7 +2416,9 @@ components:
             to tell a rolling series from a one-off: a five-minute feed publishes 288
             events a day and must appear ONCE, not 288 times.
           example: daily
-          type: string
+          type:
+          - string
+          - "null"
         generated:
           description: |-
             Generated reports whether atlas's roller mints this series' events from a
@@ -1619,7 +2463,9 @@ components:
             How the panel is applied beyond the ordering — what happens when two
             sources disagree, and what happens when none has published.
           example: First consult these sources
-          type: string
+          type:
+          - string
+          - "null"
         entries:
           description: |-
             Already ordered: primaries first, then fallbacks, each by rank. The order
@@ -1642,7 +2488,9 @@ components:
         terms_url:
           description: The rules page it is published on.
           example: https://calibri.io/hub/terms-of-use
-          type: string
+          type:
+          - string
+          - "null"
       type: object
     SettlementSource:
       properties:
@@ -1657,7 +2505,9 @@ components:
           type: string
         url:
           example: https://www.coinbase.com/price/bitcoin
-          type: string
+          type:
+          - string
+          - "null"
       type: object
     TagRef:
       properties:
@@ -1688,9 +2538,13 @@ components:
           example: 60
           type: integer
         window_start:
-          description: A direction market's window opens here; `at` is when it closes.
+          description: |-
+            A direction market's window opens here; `at` is when it closes. Null
+            for any other kind.
           example: "2026-09-16T16:00:00Z"
-          type: string
+          type:
+          - string
+          - "null"
       type: object
     TermsUnderlying:
       properties:
@@ -1707,9 +2561,6 @@ components:
       in: header
       name: X-Auth-Apikey
       description: HMAC-signed API key. Send X-Auth-Apikey, X-Auth-Nonce and X-Auth-Signature.
-externalDocs:
-  description: ""
-  url: ""
 info:
   description: |-
     Market data and authenticated order management for Calibri prediction
@@ -1746,17 +2597,23 @@ paths:
           type: string
       - description: Market id
         in: query
-        name: market
+        name: market_id
         schema:
-          type: string
+          type: integer
       - description: limit or market
         in: query
         name: ord_type
         schema:
           type: string
-      - description: 'Side filter: yes or no'
+      - description: 'Outcome filter: yes or no'
         in: query
-        name: type
+        name: side
+        schema:
+          type: string
+      - description: Your client_order_id. Without `state`, looks in open orders,
+          then history
+        in: query
+        name: client_order_id
         schema:
           type: string
       - description: Lower bound, Unix SECONDS (not milliseconds)
@@ -1895,11 +2752,72 @@ paths:
       summary: Cancel an order
       tags:
       - Trade
+  /api/v2/pythia/orders/cancel:
+    post:
+      description: |-
+        Cancels every open order you hold, optionally narrowed by market
+        and outcome — on the query string, or as a JSON body
+        `{"market_id": 12, "side": "yes"}` (a body field wins over the same
+        query parameter). `orders` lists the orders cancelled, as `GET /orders`
+        rows (state `cancel`); `failed` counts orders that could not be.
+        Shares a per-member budget with order placement and single cancels
+        (429 `market.order.rate_limited` over it).
+      parameters:
+      - description: Only orders in this market
+        in: query
+        name: market_id
+        schema:
+          type: integer
+      - description: Only orders on this outcome (yes|no)
+        in: query
+        name: side
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/CancelAllRequest'
+                description: The same filters as a JSON body
+                summary: body
+        description: The same filters as a JSON body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelAllResult'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Too Many Requests
+      security:
+      - apiKey: []
+      summary: Cancel all own orders
+      tags:
+      - Trade
   /api/v2/pythia/public/activity:
     get:
       description: |-
-        Recent platform activity across ordinary trades, large trades,
-        settlements and newly activated markets, newest first. Filter with
+        Recent platform activity across trades, settlements and newly
+        activated markets, newest first. Filter with
         `type` (`trades`, `settlements`, `new_markets`); omit it for the
         combined feed.
       parameters:
@@ -2115,9 +3033,24 @@ paths:
 
         A generated or sub-daily series is COLLAPSED to a single entry — a
         five-minute feed publishes 288 events a day and must not fill the feed.
-        Pass `series` to drill into one and get its individual windows; that is
-        the only way to see them.
+        Pass `series` to drill into one and get its individual windows, or
+        `expand_series=true` to list every window of every series uncollapsed.
+
+        `q` searches title, description, category, sub-category, tags and market
+        titles (case-insensitive substring, 2+ characters). Collapsing still
+        applies, but AFTER the search: a series is represented by its best
+        MATCHING window, so a search naming one window returns that window.
+
+        Pagination: `page` / `limit` in, `Page` / `Per-Page` / `Total` response
+        headers out — the same headers as `/orders`. `Total` counts every
+        matching event after collapsing; a page past the end is `[]`.
       parameters:
+      - description: Search text, case-insensitive substring; under 2 characters is
+          ignored
+        in: query
+        name: q
+        schema:
+          type: string
       - description: Filter by category
         in: query
         name: category
@@ -2163,9 +3096,19 @@ paths:
         name: market_sort
         schema:
           type: string
-      - description: Page size, applied after collapsing
+      - description: List each window of a collapsed series as its own event
+        in: query
+        name: expand_series
+        schema:
+          type: boolean
+      - description: Page size, 1-100 (default 100), applied after collapsing
         in: query
         name: limit
+        schema:
+          type: integer
+      - description: Page, 1-based (default 1)
+        in: query
+        name: page
         schema:
           type: integer
       - description: '`slim` reduces each event and market to the card fields (see
@@ -2180,9 +3123,24 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/Event'
+                  anyOf:
+                  - $ref: '#/components/schemas/EnrichedEvent'
+                  - $ref: '#/components/schemas/SlimEvent'
                 type: array
           description: OK
+          headers:
+            Page:
+              description: Page served
+              schema:
+                type: integer
+            Per-Page:
+              description: Page size
+              schema:
+                type: integer
+            Total:
+              description: Matching events across all pages, after collapsing
+              schema:
+                type: integer
       summary: List events
       tags:
       - Events
@@ -2190,6 +3148,7 @@ paths:
     get:
       description: |-
         One event with its markets — the same object as a list element.
+        The path takes the event's slug or its numeric id; an all-digit value is an id.
         Falls back to MySQL for older windows that have left the live
         cache, so bookmarked and historical links keep resolving.
 
@@ -2202,7 +3161,7 @@ paths:
         the limit carry none of them. Without `include` the response is the
         plain event.
       parameters:
-      - description: Event slug
+      - description: Event slug, or its numeric id
         in: path
         name: slug
         required: true
@@ -2254,7 +3213,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: Not Found
-      summary: Event by slug
+      summary: Event by slug or id
       tags:
       - Events
   /api/v2/pythia/public/home:
@@ -2265,7 +3224,8 @@ paths:
         `/public/events?sort=<rail>&limit=5&status=active`) and the
         category tree, in one response. Each part is exactly what its
         standalone route returns. Takes the same query parameters as
-        `/public/events` for the main list.
+        `/public/events` for the main list, except `q` and `page`, which
+        are ignored: the main list is always the first page, unsearched.
       parameters:
       - description: Filter by category
         in: query
@@ -2394,19 +3354,15 @@ paths:
         name: status
         schema:
           type: string
-      - description: Filter by base unit
-        in: query
-        name: base_unit
-        schema:
-          type: string
-      - description: Filter by quote unit
-        in: query
-        name: quote_unit
-        schema:
-          type: string
       - description: asc (default) or desc
         in: query
         name: ordering
+        schema:
+          type: string
+      - description: 'Only the live market whose yes_token_id or no_token_id this
+          is: the decimal string, exactly as published'
+        in: query
+        name: token_id
         schema:
           type: string
       responses:
@@ -2456,6 +3412,13 @@ paths:
         The public trade tape — recently matched YES/NO contracts at a
         price and volume, newest first. Served for settled markets too
         (historical tape from storage), not only live engine markets.
+
+        `from_id` and `time_from` switch to OLDEST first, for paging forward;
+        `from_id` wins when both are given. Prices are in YES space.
+
+        Voided trades appear with `state: "voided"`: a match whose on-chain
+        settlement failed for good and was reversed off-chain. Every row has
+        `state`; drop voided rows if you want only trades that stood.
       parameters:
       - description: Market id
         in: path
@@ -2468,6 +3431,18 @@ paths:
         name: limit
         schema:
           type: integer
+      - description: 'Cursor: only contracts with id greater than this, OLDEST first.
+          Pass the last id you received to page forward without gaps'
+        in: query
+        name: from_id
+        schema:
+          type: integer
+      - description: Only contracts matched at or after this time, Unix SECONDS (inclusive),
+          OLDEST first. Continue with from_id
+        in: query
+        name: time_from
+        schema:
+          type: integer
       responses:
         "200":
           content:
@@ -2477,6 +3452,12 @@ paths:
                   $ref: '#/components/schemas/PublicContract'
                 type: array
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bad Request
       summary: Recent contracts
       tags:
       - Market Data
@@ -2555,9 +3536,7 @@ paths:
             application/json:
               schema:
                 items:
-                  items:
-                    type: object
-                  type: array
+                  $ref: '#/components/schemas/KLineRow'
                 type: array
           description: OK
         "400":
@@ -2613,7 +3592,10 @@ paths:
     get:
       description: |-
         Rolling 24h ticker for one market — last, open, high, low, volume
-        and change. For a live multi-market dashboard prefer `GET /public/tickers`.
+        and change — plus the top of the book: `buy` / `sell` (best bid / ask,
+        YES-price space) and `buy_volume` / `sell_volume` (size at each), all
+        null when that side of the book is empty. For a live multi-market
+        dashboard prefer `GET /public/tickers`.
       parameters:
       - description: Market id
         in: path
@@ -2690,31 +3672,35 @@ paths:
                 type: object
               example:
                 "12":
-                  at: 1723033200
+                  timestamp: 1723033200
                   ticker:
                     buy: '0.62'
                     sell: '0.64'
+                    buy_volume: '120'
+                    sell_volume: '75.5'
                     low: '0.58'
                     high: '0.67'
-                    open: '0.60'
+                    open: '0.6'
                     last: '0.62'
                     avg_price: '0.61'
-                    vol: '1500.25'
-                    amount: '900.50'
-                    price_change_percent: '+3.33%'
+                    volume: '1500.25'
+                    quote_volume: '900.5'
+                    change_24h: '0.0333'
                 "13":
-                  at: 1723033200
+                  timestamp: 1723033200
                   ticker:
-                    buy: '0.41'
+                    buy: null
                     sell: '0.43'
+                    buy_volume: null
+                    sell_volume: '40'
                     low: '0.39'
                     high: '0.47'
                     open: '0.45'
                     last: '0.42'
                     avg_price: '0.43'
-                    vol: '820.00'
-                    amount: '352.60'
-                    price_change_percent: '-6.67%'
+                    volume: '820'
+                    quote_volume: '352.6'
+                    change_24h: '-0.0667'
           description: OK
       summary: All tickers
       tags:
