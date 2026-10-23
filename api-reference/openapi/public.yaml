@@ -1266,6 +1266,7 @@ components:
     LeaderboardEntry:
       properties:
         contracts:
+          description: Holdings paid out at settlement plus sales before resolution.
           example: 30
           type: integer
         currency:
@@ -1278,10 +1279,13 @@ components:
           example: "4500.75"
           type: string
         total_volume:
-          description: Stake the member put on the settled contracts behind total_pnl.
+          description: What the holdings and sold contracts behind total_pnl cost.
           example: "12800.5"
           type: string
         trades:
+          description: |-
+            Holdings paid out at settlement plus sales before resolution — the same count
+            as contracts.
           example: 45
           type: integer
         uid:
@@ -1295,6 +1299,7 @@ components:
           example: "0.7333"
           type: string
         wins:
+          description: Of those, the ones that made money.
           example: 22
           type: integer
       type: object
@@ -3295,10 +3300,13 @@ paths:
   /api/v2/pythia/public/leaderboard:
     get:
       description: |-
-        Top members by realised PnL on settled contracts. `username` is a
+        Top members by realised PnL: holdings paid out at settlement (payout
+        − what they cost), sales before resolution (proceeds − the cost basis
+        sold − the sale fee), and the fees paid on buys. `username` is a
         privacy-masked display name (or an explicit display name when set).
-        A member with settled contracts in more than one currency appears
-        once per currency. Filter with `period` (`all`, `24h`, `7d`, `30d`).
+        A member with realised PnL in more than one currency appears once per
+        currency. Filter with `period` (`all`, `24h`, `7d`, `30d`), which
+        windows on the day each fact was realised.
       parameters:
       - description: all (default), 24h, 7d or 30d
         in: query
