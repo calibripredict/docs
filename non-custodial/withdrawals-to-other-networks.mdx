@@ -111,10 +111,8 @@ The fee is fixed when you sign. If gas on the destination network rises so far a
 that delivering now would cost more than your fee covers, we hold the delivery instead of
 charging you again:
 
-- The withdrawal shows as waiting, with the time by which it will be completed.
-- We deliver as soon as the cost is covered again.
-- **At the latest six hours after it starts waiting**, we deliver it **at our own cost**,
-  whatever gas is doing then.
+- The withdrawal shows as waiting.
+- We deliver as soon as the cost is covered again, or **at our own cost** if it is not.
 - **You are never charged more** than the fee you signed for.
 
 Your USDC is not at risk while it waits: the burn has already named your address as the
