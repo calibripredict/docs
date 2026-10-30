@@ -47,10 +47,6 @@ components:
         id:
           example: 4821
           type: 'number'
-        is_withdrawal_hold_exempt:
-          description: 'Whether withdrawals skip the new-account hold. Always a boolean.'
-          example: false
-          type: 'boolean'
         kyc:
           $ref: '#/components/schemas/KycStatusEntity'
           description: 'The verification checklist, computed from labels and level. Level 3 and above reads as verified unless a step is explicitly marked required.'
@@ -111,7 +107,6 @@ components:
         - 'otp'
         - 'state'
         - 'entity_type'
-        - 'is_withdrawal_hold_exempt'
         - 'referral_code'
         - 'wallet_address'
         - 'source_of_funds'
@@ -477,9 +472,6 @@ components:
         id:
           example: 4821
           type: 'number'
-        is_withdrawal_hold_exempt:
-          example: false
-          type: 'boolean'
         labels:
           items:
             $ref: '#/components/schemas/LabelEntity'
@@ -564,7 +556,6 @@ components:
         - 'level'
         - 'otp'
         - 'state'
-        - 'is_withdrawal_hold_exempt'
         - 'created_at'
         - 'updated_at'
         - 'labels'
