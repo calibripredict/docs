@@ -24,7 +24,7 @@ request to a company.
 |---|---|
 | **Funds** | USDC lives in your own Gnosis Safe on-chain — 1-of-1, or 1-of-2 if you add a [signing key](/non-custodial/signing-keys) |
 | **Balances** | `balance_safe` / `locked_safe` mirror your Safe — see [Balances](/non-custodial/balances) |
-| **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; atlas validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
+| **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; Calibri validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
 | **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
 | **Contracts** | A YES buyer matched with a NO buyer; the leg carries a `settlement_status` badge tracking the on-chain mint |
 | **Settlement** | On-chain: a complete set of outcome tokens is minted from Safe collateral |
