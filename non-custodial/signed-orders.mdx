@@ -386,8 +386,7 @@ and the match is then **voided** off-chain — rolled back as if it never happen
 
 Both members receive a `contract` frame with `state: "voided"` and a balance
 update on the private WebSocket, and the affected orders show `cancel` or are
-restored as above. A match that gets no on-chain answer at all within two hours is
-not voided automatically; the operator resolves it by hand.
+restored as above.
 
 ## Related
 
