@@ -81,7 +81,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `This account already has a self-custody wallet…` | 422 | Passkey enrolment on an account that already has a wallet-derived Safe. One self-custody wallet per account |
 
 <Note>
-  There are no deposit or withdrawal error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits). The exception is an account with a custodial balance withdrawing through a `withdraw`-scoped API key, which can get `422` `account.withdraw.api_requires_saved_beneficiary` — see [Authentication](/api-reference/authentication#withdrawals-with-an-api-key).
+  There are no deposit or withdrawal error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits).
 </Note>
 
 ## Identity and sessions
