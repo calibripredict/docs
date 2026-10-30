@@ -18,11 +18,11 @@ components:
             - 'string'
             - 'null'
         balance:
-          description: 'Operator-held pool. Calibri does not operate one, so this is always `"0"`; retained for schema stability. There is no `total` field — earlier docs claimed one, and the serializer has never emitted it.'
+          description: 'Operator-held pool. Calibri does not operate one, so this is always `"0"`; retained for schema stability. There is no `total` field.'
           example: '0'
           type: 'string'
         balance_eoa:
-          description: 'Raw on-chain balance of the linked wallet, when the scanner has seen it. `null` rather than zeroed when unknown — "no reading yet" is not the same as an empty wallet.'
+          description: 'Raw on-chain balance of the linked wallet, once it has been read. `null` rather than zeroed when unknown — "no reading yet" is not the same as an empty wallet.'
           example: '42.1'
           type:
             - 'string'
@@ -753,7 +753,7 @@ components:
             - 'string'
             - 'null'
         settlement_status_raw:
-          description: 'The internal state-machine value behind the badge.'
+          description: 'The detailed settlement state behind the badge.'
           example: 'matched'
           type: 'string'
         side:
@@ -1966,7 +1966,7 @@ components:
           example: '65.5'
           type: 'string'
         settled_legs:
-          description: 'Holdings paid out at settlement plus sales counted into the curve so far. The name predates sales being counted.'
+          description: 'Holdings paid out at settlement plus sales counted into the curve so far.'
           example: 12
           type: 'number'
       required:
@@ -3594,7 +3594,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/orders:
     post:
-      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Atlas validates it — a signature it cannot verify is rejected rather than placed — then relays to the engine and attaches the signature. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
       parameters: []
       requestBody:
         content:
@@ -4271,7 +4271,7 @@ paths:
         - 'Currencies'
   /api/v2/atlas/public/health/alive:
     get:
-      description: 'Liveness probe for the Atlas process. Returns plain-text `200` when the process is up — not a dependency check, and not a trading-engine readiness signal.'
+      description: 'Liveness probe for the account API. Returns plain-text `200` when the process is up — not a dependency check, and not a trading-engine readiness signal.'
       parameters: []
       responses:
         "200":
