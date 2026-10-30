@@ -337,7 +337,7 @@ components:
           - "null"
         display_type:
           description: |-
-            DisplayType (events.display_type) picks the chart SOURCE, not the market
+            DisplayType picks the chart SOURCE, not the market
             shape: "probability" (default) plots the markets' own YES probability,
             "price_feed" plots an underlying feed with a reference line.
           example: probability
@@ -380,9 +380,9 @@ components:
           uniqueItems: false
         outcome_structure:
           description: |-
-            OutcomeStructure (events.outcome_structure) says how this event's markets
-            relate to one another. It selects the frontend layout and is deliberately
-            NOT derivable from len(Markets) — a contender race, a strike ladder and a
+            OutcomeStructure says how this event's markets relate to one another, and
+            so how the event is laid out. It is deliberately NOT derivable from the
+            number of markets — a contender race, a strike ladder and a
             fixture's derivative bundle can all carry a dozen markets and none of them
             renders like the others.
 
@@ -418,16 +418,17 @@ components:
           example: btc-above-70k-december-2026
           type: string
         status:
-          description: The event's own lifecycle state.
+          description: |-
+            The event's lifecycle state. `active` while its markets are open for
+            trading; `closed` once trading has stopped and the outcome is not yet
+            known; `determined` once the outcome is known and payout may still be in
+            progress; `settled` once paid out; `cancelled` if the event was cancelled.
           enum:
-          - submitted
-          - initialized
           - active
           - closed
-          - resolving
-          - settling
+          - determined
           - settled
-          - canceled
+          - cancelled
           example: active
           type: string
         subcategory:
@@ -439,8 +440,8 @@ components:
             Tags are the editorial SHELVES this event sits on — what puts it on a hub
             page. Many-to-many and deliberately not taxonomic: "Wimbledon" collects the
             men's winner race, the women's winner race and every match, which share no
-            series and no outcome structure. Always present (possibly empty) so the
-            frontend need not nil-check.
+            series and no outcome structure. Always present (possibly empty), never
+            null.
           items:
             $ref: '#/components/schemas/TagRef'
           type: array
@@ -534,11 +535,11 @@ components:
           - "null"
         event_slug:
           description: |-
-            EventSlug / EventTitle are the market's event context, denormalised onto the
+            EventSlug / EventTitle are the market's event context, copied onto the
             market itself.
 
-            A market is not addressable on its own — there is no markets.slug column, and the
-            app routes /event/{slug}?market={id} — so without these a client holding a market
+            A market is not addressable on its own — markets have no slug of their own, and
+            the web app links a market as /event/{slug}?market={id} — so without these a client holding a market
             from the flat /markets list cannot build a link or name what it belongs to, and
             has to go back for the event.
 
@@ -723,9 +724,9 @@ components:
         yes_token_id:
           description: |-
             YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (null)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
+            market's two legs, once the market's condition is registered on-chain. Null
+            until then, because a market whose condition is not yet registered has no
+            tokens — an empty string would read as "registered with an empty id".
 
             Published because a token id IS the market-and-outcome identifier: it is derived
             from (resolver, questionId, collateral), so it names exactly one outcome of one
@@ -770,7 +771,7 @@ components:
           - "null"
         display_type:
           description: |-
-            DisplayType (events.display_type) picks the chart SOURCE, not the market
+            DisplayType picks the chart SOURCE, not the market
             shape: "probability" (default) plots the markets' own YES probability,
             "price_feed" plots an underlying feed with a reference line.
           example: probability
@@ -813,9 +814,9 @@ components:
           uniqueItems: false
         outcome_structure:
           description: |-
-            OutcomeStructure (events.outcome_structure) says how this event's markets
-            relate to one another. It selects the frontend layout and is deliberately
-            NOT derivable from len(Markets) — a contender race, a strike ladder and a
+            OutcomeStructure says how this event's markets relate to one another, and
+            so how the event is laid out. It is deliberately NOT derivable from the
+            number of markets — a contender race, a strike ladder and a
             fixture's derivative bundle can all carry a dozen markets and none of them
             renders like the others.
 
@@ -851,16 +852,17 @@ components:
           example: btc-above-70k-december-2026
           type: string
         status:
-          description: The event's own lifecycle state.
+          description: |-
+            The event's lifecycle state. `active` while its markets are open for
+            trading; `closed` once trading has stopped and the outcome is not yet
+            known; `determined` once the outcome is known and payout may still be in
+            progress; `settled` once paid out; `cancelled` if the event was cancelled.
           enum:
-          - submitted
-          - initialized
           - active
           - closed
-          - resolving
-          - settling
+          - determined
           - settled
-          - canceled
+          - cancelled
           example: active
           type: string
         subcategory:
@@ -872,8 +874,8 @@ components:
             Tags are the editorial SHELVES this event sits on — what puts it on a hub
             page. Many-to-many and deliberately not taxonomic: "Wimbledon" collects the
             men's winner race, the women's winner race and every match, which share no
-            series and no outcome structure. Always present (possibly empty) so the
-            frontend need not nil-check.
+            series and no outcome structure. Always present (possibly empty), never
+            null.
           items:
             $ref: '#/components/schemas/TagRef'
           type: array
@@ -967,11 +969,11 @@ components:
           - "null"
         event_slug:
           description: |-
-            EventSlug / EventTitle are the market's event context, denormalised onto the
+            EventSlug / EventTitle are the market's event context, copied onto the
             market itself.
 
-            A market is not addressable on its own — there is no markets.slug column, and the
-            app routes /event/{slug}?market={id} — so without these a client holding a market
+            A market is not addressable on its own — markets have no slug of their own, and
+            the web app links a market as /event/{slug}?market={id} — so without these a client holding a market
             from the flat /markets list cannot build a link or name what it belongs to, and
             has to go back for the event.
 
@@ -1170,9 +1172,9 @@ components:
         yes_token_id:
           description: |-
             YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (null)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
+            market's two legs, once the market's condition is registered on-chain. Null
+            until then, because a market whose condition is not yet registered has no
+            tokens — an empty string would read as "registered with an empty id".
 
             Published because a token id IS the market-and-outcome identifier: it is derived
             from (resolver, questionId, collateral), so it names exactly one outcome of one
@@ -1333,11 +1335,11 @@ components:
           - "null"
         event_slug:
           description: |-
-            EventSlug / EventTitle are the market's event context, denormalised onto the
+            EventSlug / EventTitle are the market's event context, copied onto the
             market itself.
 
-            A market is not addressable on its own — there is no markets.slug column, and the
-            app routes /event/{slug}?market={id} — so without these a client holding a market
+            A market is not addressable on its own — markets have no slug of their own, and
+            the web app links a market as /event/{slug}?market={id} — so without these a client holding a market
             from the flat /markets list cannot build a link or name what it belongs to, and
             has to go back for the event.
 
@@ -1496,9 +1498,9 @@ components:
         yes_token_id:
           description: |-
             YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
-            market's two legs, once atlas has registered the condition. nil (null)
-            until then, because a market that is not CTF-registered has no tokens — emitting
-            "" would read as "registered with an empty id".
+            market's two legs, once the market's condition is registered on-chain. Null
+            until then, because a market whose condition is not yet registered has no
+            tokens — an empty string would read as "registered with an empty id".
 
             Published because a token id IS the market-and-outcome identifier: it is derived
             from (resolver, questionId, collateral), so it names exactly one outcome of one
@@ -1864,14 +1866,11 @@ components:
           type: string
         status:
           enum:
-          - submitted
-          - initialized
           - active
           - closed
-          - resolving
-          - settling
+          - determined
           - settled
-          - canceled
+          - cancelled
           example: active
           type: string
         subcategory:
@@ -2070,9 +2069,8 @@ components:
     CategoryNode:
       properties:
         children:
-          description: |-
-            Present on top-level nodes; always non-nil so a client can range without
-            a nil check.
+          description: The node's sub-categories. Present on top-level nodes that
+            have any.
           items:
             $ref: '#/components/schemas/CategoryNode'
           type: array
@@ -2239,7 +2237,7 @@ components:
       type: object
     PriceFeed:
       description: |-
-        PriceFeed (events.price_feed) is the underlying feed a price_feed event
+        PriceFeed is the underlying feed a price_feed event
         charts: {symbol, window_start, granularity_seconds}. Null when unset.
       properties:
         granularity_seconds:
@@ -2306,10 +2304,10 @@ components:
         PriceSettlement is what happened and exists only once a market is decided;
         this is the question, and it is known the moment the market is listed. A
         strike ladder needs it: every rung shares one underlying price chart and
-        differs only in where its line sits, so without this the front end has a
+        differs only in where its line sits, so without this a client has a
         chart and no idea what to draw on it.
 
-        nil for anything not judged against a fixed level — an up/down window's
+        Null for anything not judged against a fixed level — an up/down window's
         reference is its own opening price, which is PriceSettlement's business.
       properties:
         cap_strike:
@@ -2512,10 +2510,11 @@ info:
 
     Public routes need no authentication and send Cache-Control (15s on
     browse, 5s on live data, `immutable` on a closed asset range).
-    Authenticated order routes use the same HMAC API key as Atlas.
+    Authenticated order routes use the same HMAC API key as the account
+    API under `/api/v2/atlas`.
 
     Open orders and cancel live here for both custodial and non-custodial
-    members. Non-custodial *placement* is Atlas `POST /account/orders`
+    members. Non-custodial *placement* is `POST /api/v2/atlas/account/orders`
     (signed EIP-712); once resting, list and cancel are these endpoints.
   title: Calibri Markets & Orders
   version: 1.0.0
@@ -2524,11 +2523,9 @@ paths:
   /api/v2/pythia/orders:
     get:
       description: |-
-        Your prediction orders. Open (`wait`) rows come from the live
-        engine index; terminal history (`done`, `cancel`, `reject`) from
-        storage. Pass `state=wait` for the open-orders tab — that is what
-        the product calls for resting orders, custodial and non-custodial
-        alike. Placement differs (signed orders via
+        Your prediction orders: open (`wait`) orders and terminal history
+        (`done`, `cancel`, `reject`). Pass `state=wait` for resting orders,
+        custodial and non-custodial alike. Placement differs (signed orders via
         `POST /api/v2/atlas/account/orders` vs direct `POST`); list and
         cancel do not.
 
@@ -2658,8 +2655,9 @@ paths:
       description: |-
         Cancels one of your open (`wait`) orders and refunds unmatched
         collateral. Same route for custodial and non-custodial resting
-        orders — non-custodial placement is via Atlas; once resting, cancel
-        is here. Terminal orders return 422.
+        orders — non-custodial placement is via
+        `POST /api/v2/atlas/account/orders`; once resting, cancel is here.
+        Terminal orders return 422.
       parameters:
       - description: Order id
         in: path
@@ -3329,8 +3327,8 @@ paths:
     get:
       description: |-
         One market with pricing fields and CTF ids needed to build an order.
-        Falls back to stored data for settled and voided markets, so historical
-        markets and bookmarked links keep resolving after the engine has dropped them.
+        Settled and voided markets are still served, so historical markets and
+        bookmarked links keep resolving after trading has ended.
       parameters:
       - description: Market id
         in: path
@@ -3358,8 +3356,8 @@ paths:
     get:
       description: |-
         The public trade tape — recently matched YES/NO contracts at a
-        price and volume, newest first. Served for settled markets too
-        (historical tape from storage), not only live engine markets.
+        price and volume, newest first. Served for settled markets too,
+        not only markets that are open for trading.
 
         `from_id` and `time_from` switch to OLDEST first, for paging forward;
         `from_id` wins when both are given. Prices are in YES space.
@@ -3449,8 +3447,8 @@ paths:
       description: |-
         OHLC history for the market's own probability (not the underlying
         asset). Each row is [timestamp, open, high, low, close, volume],
-        timestamp in Unix seconds. Settled markets are still served from
-        storage so historical charts keep loading.
+        timestamp in Unix seconds. Settled markets are still served, so
+        historical charts keep loading.
       parameters:
       - description: Market id
         in: path
@@ -3571,7 +3569,7 @@ paths:
     get:
       description: |-
         Every series backing at least one active event, busiest first.
-        Derived from the live event cache — empty shelves never appear.
+        A series with no active event never appears.
         Use a series slug with `GET /public/events?series=` to expand
         collapsed windows.
       responses:
@@ -3590,8 +3588,8 @@ paths:
     get:
       description: |-
         Every tag with at least one ACTIVE event on it, busiest first, with
-        an event count. Derived from the live event cache, so an empty shelf
-        never appears — use for category navigation, not a static taxonomy.
+        an event count. A tag with no active event never appears — use for
+        category navigation, not a static taxonomy.
       responses:
         "200":
           content:
