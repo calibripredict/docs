@@ -34,10 +34,9 @@ values and how to verify them.
 
 ## Cross-network deposits
 
-Four contracts let USDC sent to your Safe address on **Ethereum, Base, Arbitrum or
-Optimism** reach the same Safe on Polygon without you signing anything. Each is deployed at
-**the same address on every supported network**, which is what gives your Safe the same
-address everywhere. See [Deposits from other networks](/non-custodial/deposits-from-other-networks)
+Four contracts let USDC sent to your Safe address on **Ethereum** reach the same Safe on
+Polygon without you signing anything. Each is deployed at **the same address on Polygon and
+Ethereum**, which is what gives your Safe the same address on both. See [Deposits from other networks](/non-custodial/deposits-from-other-networks)
 for the member-facing flow.
 
 | Contract | Plain-English role |
@@ -89,7 +88,7 @@ factory and different Safe addresses.
 ### Withdrawals to other networks
 
 The outbound direction uses **none of the contracts above**. A withdrawal from your Safe on
-Polygon to Ethereum, Base, Arbitrum or Optimism is a Safe transaction you sign, which calls
+Polygon to Ethereum is a Safe transaction you sign, which calls
 **Circle's messenger directly from the Safe** — no module. It is batched through Safe's own
 **MultiSendCallOnly** contract, which can make only plain calls, and the batch is exactly
 three of them: USDC to Calibri's treasury for the fee, a USDC approval to Circle's

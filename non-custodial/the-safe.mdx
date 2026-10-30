@@ -39,8 +39,8 @@ Safe ever exists without it and nobody can set one up differently first.
 A Safe module is a contract the Safe lets act **without owner signatures** — so what
 matters is what the module's own, immutable code allows. This one allows exactly one
 thing: moving that network's **USDC**, through Circle's CCTP, to **the same Safe address
-on Polygon**. That is what lets USDC sent to your address on Ethereum, Base, Arbitrum or
-Optimism reach your Safe on Polygon without you signing anything — see
+on Polygon**. That is what lets USDC sent to your address on Ethereum reach your
+Safe on Polygon without you signing anything — see
 [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 | The module can | The module cannot |
@@ -58,8 +58,8 @@ Safe** — no module and no Calibri contract is involved, and the destination ad
 part of what you sign. See
 [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
-Your Safe has **the same address on every supported network**, because the factory and
-the Safe implementation sit at the same address on each. On a network other than Polygon
+Your Safe has **the same address on Polygon and Ethereum**, because the factory and
+the Safe implementation sit at the same address on both. On a network other than Polygon
 the Safe is created only when it is first needed, by the same permissionless factory, with
 **the same owner** your Polygon Safe was created with. Calibri is never an owner there
 either.
@@ -125,7 +125,7 @@ Send USDC to your Safe address (`proxy_address`) on-chain — from any wallet or
 exchange. Your off-chain [`balance_safe`](/non-custodial/balances) mirror is
 credited once the transfer confirms.
 
-USDC sent to the same address on Ethereum, Base, Arbitrum or Optimism is bridged to
+USDC sent to the same address on Ethereum is bridged to
 this Safe on Polygon by the module above and credited the same way, less the bridge fee —
 see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
@@ -220,5 +220,5 @@ matches that quote byte for byte, once. See
 
 - [Signed orders](/non-custodial/signed-orders) — build and sign an EIP-712 order once the Safe is ready
 - [Redeeming winnings](/non-custodial/redeeming-winnings) — the same relay path is used to claim payouts
-- [Deposits from other networks](/non-custodial/deposits-from-other-networks) — USDC on Ethereum, Base, Arbitrum or Optimism, bridged here
-- [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks) — USDC from this Safe to an address on Ethereum, Base, Arbitrum or Optimism
+- [Deposits from other networks](/non-custodial/deposits-from-other-networks) — USDC on Ethereum, bridged here
+- [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks) — USDC from this Safe to an address on Ethereum

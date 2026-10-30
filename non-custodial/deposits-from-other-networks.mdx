@@ -1,11 +1,11 @@
 ---
 title: "Deposits from other networks"
-description: "Send USDC to your Safe address on Ethereum, Base, Arbitrum or Optimism and it arrives in the same Safe on Polygon — how it works, what it costs, what not to send, and why it stays non-custodial."
+description: "Send USDC to your Safe address on Ethereum and it arrives in the same Safe on Polygon — how it works, what it costs, what not to send, and why it stays non-custodial."
 ---
 
 Calibri trades on **Polygon**, but you do not have to fund your account from Polygon.
-Your Safe has **the same address on every supported network**. Send USDC to that address
-on **Ethereum, Base, Arbitrum or Optimism** and it is moved to **the same Safe on
+Your Safe has **the same address on Polygon and Ethereum**. Send USDC to that address
+on **Ethereum** and it is moved to **the same Safe on
 Polygon** automatically, through Circle's own bridge. You sign nothing.
 
 It arrives as an ordinary deposit, exactly as if you had sent it on Polygon.
@@ -23,9 +23,6 @@ To send USDC the other way — from your Safe to an address on another network �
 |---|---|---|---|
 | **Polygon** | None | None | About a minute |
 | **Ethereum** | 20 USDC | Covers network gas — at most 10 USDC and at most 20% | About 15–20 minutes |
-| **Base** | 5 USDC | Same rule | About 15–20 minutes |
-| **Arbitrum** | 5 USDC | Same rule | About 15–20 minutes |
-| **Optimism** | 5 USDC | Same rule | About 15–20 minutes |
 
 The Wallet page shows the current minimum, fee estimate and arrival time for each network.
 If it and this page ever disagree, the Wallet page is right.
@@ -42,7 +39,7 @@ them without your say-so: the deposit waits and the Wallet page asks you. See
 
 <Steps>
   <Step title="You send USDC to your Safe address">
-    On Ethereum, Base, Arbitrum or Optimism — from an exchange or any wallet. It is the
+    On Ethereum — from an exchange or any wallet. It is the
     same address as on Polygon, and the same one the Wallet page shows.
   </Step>
   <Step title="We wait for the minimum">
@@ -119,31 +116,28 @@ changes, Circle's own fee would come out of the amount it mints.
 
 | You send | Fee can be at most | You receive at least |
 |---|---|---|
-| 5 USDC on an L2 | 1.00 USDC (20%) | 4.00 USDC |
 | 20 USDC on Ethereum | 4.00 USDC (20%) | 16.00 USDC |
-| 100 USDC on any network | 10.00 USDC (the absolute cap) | 90.00 USDC |
+| 100 USDC on Ethereum | 10.00 USDC (the absolute cap) | 90.00 USDC |
 
 Those are the standard fee's ceilings, not estimates, and they assume Circle still charges
 nothing. The fee charged is the gas cost at the time, and the Wallet page shows the current
 estimate before you send. A fee above them is charged only if you accept it for that
 deposit — see [When Ethereum gas is high](#when-ethereum-gas-is-high).
 
-**Minimums** are Calibri's, not the contract's: 20 USDC on Ethereum, where gas is
-expensive, and 5 USDC on the L2s. Below it nothing is lost — the USDC waits at your address
+**The minimum** is Calibri's, not the contract's: 20 USDC on Ethereum, where gas is
+expensive. Below it nothing is lost — the USDC waits at your address
 until more arrives. You can also move it yourself at any time for no fee (see
 [Moving it yourself](#moving-it-yourself)).
 
-**Timing.** About 15–20 minutes from any of the four networks. That time is **Circle's
-finality wait, not ours**: a Standard transfer is attested only once the burn is final on
-Ethereum — and Base, Arbitrum and Optimism settle to Ethereum, so they take about as long.
+**Timing.** About 15–20 minutes. That time is **Circle's finality wait, not ours**: a
+Standard transfer is attested only once the burn is final on Ethereum.
 Below the minimum, the clock starts when the total reaches it.
 
 ## When Ethereum gas is high
 
 Sometimes moving a deposit costs more than the standard fee is allowed to cover. This is
 mostly Ethereum: at ordinary Ethereum gas prices it applies to most deposits there,
-especially small ones and your first from Ethereum, which also creates your Safe there. On
-Base, Arbitrum and Optimism it is rare.
+especially small ones and your first from Ethereum, which also creates your Safe there.
 
 Calibri does not cover the difference, and does not charge above the cap without asking. The
 deposit waits at your address, and the Wallet page shows it with the **amount**, the
@@ -199,10 +193,10 @@ In practice:
 ## What not to send
 
 <Warning>
-  **Only native USDC, issued by Circle, on Ethereum, Base, Arbitrum or Optimism** is moved automatically. Anything else sent to your Safe address on those networks stays there:
+  **Only native USDC, issued by Circle, on Ethereum** is moved automatically. Anything else sent to your Safe address on those networks stays there:
 
   - **Other tokens** — ETH, USDT, or bridged USDC such as USDC.e.
-  - **USDC on any network not listed** — including **Solana**, which has a different address format altogether.
+  - **USDC on any network not listed** — including **Base, Arbitrum, Optimism** and **Solana**, which has a different address format altogether.
 
   None of it is recovered automatically. If you use a **passkey**, it cannot be moved at all today (see [The caveats](#the-caveats)). If you use **your own wallet**, you can move it yourself by signing a Safe transaction on that network.
 </Warning>
