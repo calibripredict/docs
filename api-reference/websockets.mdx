@@ -71,8 +71,8 @@ connection for market data next to a private one for its account.
 
 ## Channel reference
 
-`{market}` is a market id; `{period}` a k-line period; `{symbol}` a Coinbase
-product id.
+`{market}` is a market id; `{period}` a k-line period; `{symbol}` a product id
+such as `BTC-USD`.
 
 | Stream | Auth | Payload |
 |---|---|---|
@@ -98,9 +98,10 @@ happens. Levels are `[price, volume]` string tuples:
 { "12.ob-inc":  { "bids": [["0.60","0"]], "sequence": 9713, "timestamp": 1795000124 } }
 ```
 
-- **`bids` are YES bids.** **`asks` are NO bids, expressed at the
-  YES-equivalent price** — a NO bid at `0.37` appears as an ask at `0.63`. To
-  show it as a NO price, use `1 − price`.
+- **`bids` want YES:** buy-YES orders, and sell-NO orders at the
+  YES-equivalent price. **`asks` offer YES:** sell-YES orders, and buy-NO
+  orders at the YES-equivalent price — a NO bid at `0.37` appears as an ask at
+  `0.63`. To show a level as a NO price, use `1 − price`.
 - An increment carries the new **total** volume at one level, on whichever side
   changed. Volume `"0"` means the level is empty: remove it.
 - Each increment's `sequence` is one more than the previous one; a snapshot
@@ -205,13 +206,13 @@ cannot diverge.
 | `price` | Latest price |
 | `timestamp` | Unix **seconds** — the same unit the historical endpoint uses, so history and live ticks concatenate directly |
 | `bucket_start` | Opening instant of the candle currently forming |
-| `bucket_open` | That candle's open — the level a candle-direction window is judged against |
+| `bucket_open` | The first price of the forming candle. It is not the level a candle-direction window settles against — that is the previous window's close |
 | `bucket_seconds` | Width of the forming candle |
 
 Throttled to roughly one message per second, newest-wins.
 
 <Note>
-  `bucket_open` is for **drawing**. Settlement reads the authoritative closed candle — see [How markets are resolved](/concepts/resolution-sources).
+  `bucket_open` is for **drawing**. Settlement reads the market's settlement source — see [How markets are resolved](/concepts/resolution-sources).
 </Note>
 
 ## Private streams
@@ -339,7 +340,7 @@ on frames sent by a settlement, a void or a redemption, and `null`
 otherwise.
 
 <Warning>
-  **Settlement does not credit a winner automatically.** On-chain resolution only makes the winning outcome token redeemable; the balance moves when **you redeem**. Do not wait on a balance event at resolution time — see [Redeeming winnings](/non-custodial/redeeming-winnings).
+  **Settlement does not credit a winner automatically.** On-chain resolution only makes the winning outcome token redeemable; the balance moves when the position is **redeemed** — by you, or by auto-redeem if you turned it on. Do not wait on a balance event at resolution time — see [Redeeming winnings](/non-custodial/redeeming-winnings).
 </Warning>
 
 Balance updates are triggered by order creation (locking stake **plus** the

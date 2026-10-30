@@ -41,9 +41,9 @@ holds a key for your account.
     deterministically from that public key. Your deposit address exists the
     moment you enrol, before anything is on-chain.
   </Step>
-  <Step title="Nothing is deployed yet">
-    The contracts are only deployed when your **first deposit** arrives — and
-    the operator pays for that deployment, not you.
+  <Step title="The contracts are deployed for you">
+    Calibri deploys the signer contract and your Safe right after you enrol —
+    and the operator pays for that deployment, not you.
   </Step>
   <Step title="Trading">
     Each order is signed by the passkey and verified on-chain against the signer
@@ -99,9 +99,11 @@ when you need it.
     stands between you and your funds. Make sure it has recovery set up and 2FA
     you will not lose.
   </Step>
-  <Step title="Enrol on a second device if you can">
-    A second passkey on a second device is the cheapest insurance available, and
-    there is no other kind for a self-custody wallet.
+  <Step title="Keep a second way in">
+    A passkey that syncs to your other devices reaches the same wallet from each
+    of them. A separate passkey created on another device does not — the app
+    cannot add one to an existing wallet. For a backup that does not depend on
+    the passkey at all, add a [signing key](/non-custodial/signing-keys).
   </Step>
 </Steps>
 
@@ -167,9 +169,10 @@ it yourself.
 | **Passkey wallet** | `3` | Face ID, Touch ID, or your device PIN |
 | **Your own wallet** | `2` | Approve the request in MetaMask, Rainbow, or your WalletConnect wallet |
 
-Sign up with a passkey and you get a passkey wallet in the same step. Sign up
-with an email address and you have no wallet yet — you set one up afterwards in
-**Settings → Wallet**, and that is the moment your type is decided.
+Sign up with an email address or Google and you have no wallet yet — you create
+a passkey wallet or connect your own afterwards in **Settings → Wallet**, and that
+is the moment your type is decided. Sign in with Ethereum and your wallet is your
+own wallet from the start.
 
 Add a [second signing key](/non-custodial/signing-keys) to a passkey wallet and
 you stay on type `3`. The extra key lets your own code sign orders. Your wallet

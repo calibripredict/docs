@@ -17,8 +17,8 @@ either one alone can sign. Calibri is never an owner in any configuration.
 What differs between members is **what owns the Safe** — see
 [Your wallet options](/non-custodial/wallets):
 
-- **Owner** — either your **wallet address (EOA)** (linked/SIWE wallet, or an
-  email-derived address), or, for a passkey wallet, a **signer contract**
+- **Owner** — either your **wallet address (EOA)** (the wallet you linked or
+  signed in with via SIWE), or, for a passkey wallet, a **signer contract**
   derived from your WebAuthn credential. Either way, this is what **signs**.
 - **Safe (proxy)** — the Gnosis Safe owned by that owner. This is the
   **maker** of your orders and the **destination** for deposits.
@@ -70,16 +70,17 @@ either.
 
 ## 1. Deploy & register (operator-gasless)
 
-You do not deploy the Safe yourself. When you first read your CTF config, Calibri
-**ensures your Safe exists** — the operator deploys it gaslessly (idempotent) and
-returns the derived Safe address, then registers it so on-chain transfers to it
-are credited back to your account.
+You do not deploy the Safe yourself. Reading your wallet config returns the
+derived Safe address and registers it, so on-chain transfers to it are credited
+back to your account. The operator deploys the Safe gaslessly — for a passkey
+wallet right after you enrol, for your own wallet when you first sign a wallet
+transaction such as setup.
 
 Read your member-level wallet config:
 
-**`GET /api/v2/atlas/account/wallet`**
+**`GET /api/v2/atlas/account/wallet?setup=1`**
 
-Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
+Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
 
 ```json
 {
@@ -135,25 +136,25 @@ see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 ## 3. Make the Safe trade-ready
 
-Before its first trade, the Safe must grant three on-chain approvals:
+Before its first trade, the Safe must set four on-chain approvals:
 
 1. Approve **USDC → the exchange** — collateral for your fills
 2. `setApprovalForAll` on **ConditionalTokens → the exchange** — your outcome tokens
-3. Approve **USDC → the operator**, capped — the taker fee pulled at settlement
+3. Approve **USDC → the CalibriMatcher** — the contract that settles each match and
+   takes the taker fee in the same transaction
+4. Set the **operator's** USDC allowance to **zero**
 
-The third is deliberately **bounded**, not unlimited: it covers many trades and
-depletes as fees are collected. When it runs low the config asks you to sign
-once more to top it up, so setup can recur — it is not strictly one-time. A
-capped allowance means a compromised operator key could take at most that
-remaining amount, never your Safe balance.
+The operator holds no allowance on your Safe. The matcher can take a fee only as
+part of a match your signed order allows, at no more than the contract's maximum
+fee rate.
 
-These come back in the config as `safe_setup.calls` — a list of
+These come back in `GET /api/v2/atlas/account/wallet?setup=1` as `safe_setup.calls` — a list of
 `{ to, data, operation, nonce, hash }`. Sign each as a Safe `SafeTx` (EIP-712)
 with your Safe's owner and relay it (see below).
 
 Handle both shapes: the approvals may arrive batched through Safe's
 **MultiSend** as a **single** call with `operation: 1` (`DELEGATECALL`) — one
-signature instead of three — or as three separate calls at sequential Safe
+signature instead of four — or as separate calls at sequential Safe
 nonces, which must be relayed **in order**. Either way, when setup is complete
 the config reports:
 

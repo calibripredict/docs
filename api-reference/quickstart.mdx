@@ -23,7 +23,9 @@ with it (`X-Auth-Apikey`, `X-Auth-Nonce`, `X-Auth-Signature`). See
 
 ## 1. Read your wallet config
 
-**`GET /api/v2/atlas/account/wallet`**
+**`GET /api/v2/atlas/account/wallet?setup=1`**
+
+Without `?setup=1` the response is the same but `safe_setup` is `null`.
 
 This is the entry point to everything on-chain: it tells you which Safe is
 yours, what owns it, which contracts you are trading against, and whether you
@@ -144,7 +146,7 @@ Returns `201` with the order object. Up to 20 orders go in one request with
 `POST /api/v2/atlas/account/orders/batch`, and
 `POST /api/v2/atlas/account/orders/{id}/replace` swaps a resting order for a new
 one in one step. The struct, the unit rules, the signature types, batch and
-replace are in [Signed orders](/non-custodial/signed-orders) — three things catch
+replace are in [Signed orders](/non-custodial/signed-orders) — five things catch
 people out:
 
 - **`market_id` is the numeric market id** (`12`), not a slug — read it from

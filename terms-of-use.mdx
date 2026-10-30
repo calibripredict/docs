@@ -128,7 +128,7 @@ conducted with them.
 ## 4. Trading
 
 - Orders are matched by price and time. Depending on the two orders, a match creates a new YES/NO **contract** pair (a YES buyer with a NO buyer), transfers existing contracts from a seller to a buyer, or closes out a YES/NO pair (a YES seller with a NO seller).
-- You may cancel the unmatched remainder of a resting order at any time. A matched trade cannot be cancelled or reversed.
+- You may cancel the unmatched remainder of a resting order at any time. You cannot cancel a matched trade. A match that fails to settle on-chain is voided, and both sides are refunded.
 - You may sell contracts you hold before the market closes by placing a sell order. A sell fills only if another trader takes your price; Calibri does not guarantee a buyer or any exit price. Contracts you have not sold are held to resolution.
 - Placing a buy order locks its collateral **and** a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees). Placing a sell order locks the contracts it offers until it fills or you cancel it; no fee is reserved, and when a sell takes liquidity its taker fee is deducted from the sale proceeds.
 - Markets stop accepting orders at their stated close time.
@@ -153,13 +153,15 @@ The rules that matter most:
 Resolution is reported **on-chain**, and the escalation ladder that follows it is
 permissionless: if Calibri fails to report, anyone can escalate the question, and
 past a hard deadline anyone can force a 50/50 void so the 0.50 per share is
-redeemable directly from the contracts. See [Market resolution](/non-custodial/resolution).
+redeemable directly from the contracts — unless UMA has already answered, in which
+case anyone can settle the market on UMA's answer. See [Market resolution](/non-custodial/resolution).
 
 ## 6. Winnings must be claimed
 
 Resolution makes your winning shares **redeemable**. It does **not** pay you
 automatically. You claim them yourself — the claim is gasless, but it is yours to
-make. See [Redeeming winnings](/non-custodial/redeeming-winnings).
+make — unless you turn on auto-redeem, in which case Calibri redeems them into your
+own Safe after resolution. See [Redeeming winnings](/non-custodial/redeeming-winnings).
 
 ## 7. Fees
 
@@ -168,8 +170,8 @@ nothing. There is no settlement fee and no redemption fee — a winning share pa
 the full 1.00 USDC.
 
 The fee is `rate × volume × P × (1 − P)`, where the rate depends on the market's
-category. The applicable rate is shown before you confirm an order, and is bound
-into the order you sign, so you always sign for the fee you will pay. See
+category. The applicable rate is shown before you confirm an order, and the fee is
+capped on-chain by the settlement contract's maximum rate. See
 [Fees](/concepts/fees).
 
 Rates may change. Changes apply to future trades, never retroactively to trades

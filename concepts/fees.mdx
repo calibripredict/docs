@@ -13,8 +13,9 @@ nothing.
 ## How the taker fee is calculated
 
 The fee is **not** a flat percentage of what you spend. It scales with how
-uncertain the market is, peaking at price `0.50` and falling to zero at the
-extremes:
+uncertain the market is, peaking at price `0.50` and falling toward zero at the
+extremes — small at `0.01` or `0.99`, but never zero in a category with a non-zero
+rate:
 
 ```
 fee = rate × volume × P × (1 − P)
@@ -70,11 +71,12 @@ the moment you place, so a fee is never taken out of the stake backing a
 contract. Anything left over is released when the order fills, rests, or is
 cancelled.
 
-- A **limit** order reserves the fee at its own limit price.
+- A **limit** buy reserves the fee at its own limit price.
 - A **post-only** order reserves **nothing** — it can only ever be a maker, and makers pay no fee.
+- A **sell** reserves **nothing**. It locks the contracts it offers, and if it takes liquidity its fee is deducted from the sale proceeds.
 
 <Note>
-  Practically: an order needs `stake + maximum fee` available, not just the stake. On the example above that is `60.00 + 1.68 = 61.68 USDC`.
+  Practically: a buy needs `stake + maximum fee` available, not just the stake. On the example above that is `60.00 + 1.68 = 61.68 USDC`.
 </Note>
 
 ## Taker rates by category
@@ -140,9 +142,10 @@ and therefore no rewards.
 
 ## How the fee is collected
 
-The fee is **pulled on-chain from your Safe** to the operator at settlement.
-Your Safe pre-approved this during setup, so you only ever *sign* — the operator
-pays the gas.
+The fee is **pulled on-chain from your Safe** in the same transaction that
+settles your trade — not at market resolution. Your Safe pre-approved the
+settlement contract during setup, so you only ever *sign* — the operator pays
+the gas.
 
 See [Self-custody](/non-custodial/overview) for the full model.
 
@@ -165,7 +168,8 @@ referrers:
 - **It covers network gas** — the bridge transaction on the network you sent from, the
   delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
 - **At most 10 USDC, and at most 20% of the amount** bridged. Both caps are fixed in the
-  bridge contract; Calibri cannot raise them.
+  bridge contract. A higher fee goes through only for a deposit where you accepted it,
+  countersigned by Calibri's consent key.
 - **Above the cap only with your acceptance.** When gas — mostly on Ethereum — costs more
   than the caps allow, the deposit waits and the Wallet page shows the fee it would cost
   now. You can accept it and bridge now, or wait: we bridge automatically at the standard

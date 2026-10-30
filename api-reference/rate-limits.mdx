@@ -73,7 +73,7 @@ Keyed **per member**.
 | Endpoints | Allowance |
 |---|---|
 | `POST /atlas/account/orders` (signed orders)<br/>`POST /atlas/account/orders/batch`<br/>`POST /atlas/account/orders/{id}/replace` | 600 per minute, **shared**; a batch counts one per order in it |
-| `POST /pythia/orders`<br/>`POST /pythia/orders/{id}/cancel`<br/>`POST /pythia/orders/cancel` | 600 per minute, **shared** by all three |
+| `POST /pythia/orders/{id}/cancel`<br/>`POST /pythia/orders/cancel` | 600 per minute, **shared** by both |
 | `POST /atlas/account/wallet/relay` | 30 per 5 minutes |
 | `POST /atlas/account/wallet/passkey`<br/>`POST /atlas/account/wallet/owners`<br/>`POST /atlas/account/wallet/session-key`<br/>`DELETE /atlas/account/wallet/session-key`<br/>`POST /atlas/account/market_requests` | 5 per hour, per URL |
 | `POST /atlas/account/bridge/transfers/{id}/consent` | 10 per minute |
@@ -91,9 +91,8 @@ cancelling it counts against the `/pythia` one. A replace counts as one order
 on `/atlas` and nothing on `/pythia`, so re-quoting by replace costs half what
 cancel-then-place does. A batch of 20 orders counts 20; a batch over the
 remaining budget is refused whole, never partly placed, and leaves the rest
-of the budget untouched. The engine budget is shared by
-creates and cancels together, so a client that re-quotes by cancel-and-replace
-spends one engine request per cancel. A throttled engine request returns `429`
+of the budget untouched. A client that re-quotes by
+cancel-then-place spends one engine request per cancel. A throttled engine request returns `429`
 with `market.order.rate_limited`.
 
 The 5-per-hour class is counted **per URL**, not per method: `POST` and `DELETE`

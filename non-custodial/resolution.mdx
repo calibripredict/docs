@@ -62,7 +62,9 @@ placed.
     As a last resort, once `resolveBy + grace window + UMA extension` has elapsed
     (a strictly-later hard cap), anyone may call `forceVoid`. This resolves the
     market to an **equal `[1,1]` payout**: every YES and every NO share redeems
-    for 0.50 USDC directly from the on-chain contracts.
+    for 0.50 USDC directly from the on-chain contracts. If the question was
+    escalated and UMA has already answered, `forceVoid` is refused — anyone can
+    call `resolveFromUMA` to settle on UMA's answer instead.
   </Step>
 </Steps>
 
@@ -72,7 +74,7 @@ placed.
 | --- | --- | --- | --- |
 | Report | `resolveBy` | Calibri (operator) | Winners redeem 1.00/share |
 | UMA escalation | `resolveBy` + **~7 days** (grace window) | Anyone | UMA settles the true outcome |
-| Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, 0.50 per share redeemable |
+| Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, 0.50 per share redeemable — unless UMA has already answered |
 
 <Note>
   These windows (≈7-day grace, ≈30-day hard cap) are the resolver's configured defaults; the contract bounds the grace window to 1 hour–14 days.

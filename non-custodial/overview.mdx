@@ -28,7 +28,7 @@ request to a company.
 | **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
 | **Contracts** | A YES buyer matched with a NO buyer; the leg carries a `settlement_status` badge tracking the on-chain mint |
 | **Settlement** | On-chain: a complete set of outcome tokens is minted from Safe collateral |
-| **Winnings** | **Not** auto-paid — you call `redeemPositions` yourself (relayed, gasless), USDC lands in your Safe, then you withdraw. See [Redeeming winnings](/non-custodial/redeeming-winnings) |
+| **Winnings** | Not paid by default — you call `redeemPositions` yourself (relayed, gasless), or opt in to auto-redeem; either way the USDC lands in your Safe. See [Redeeming winnings](/non-custodial/redeeming-winnings) |
 | **Fees** | Taker fee charged **once at trade**, pulled on-chain from your Safe after the match |
 | **Gas** | None **for you** — the operator relays every Safe transaction (deploy, approvals, settlement, redeem) and pays the gas. You only ever sign |
 
@@ -37,7 +37,7 @@ request to a company.
 Signing is the whole of your involvement in the on-chain machinery. You never
 need to hold a gas token, approve a network fee, or send a transaction yourself:
 
-- **Deploying** your Safe and signer contracts — operator pays, on first deposit
+- **Deploying** your Safe and signer contracts — operator pays, when you set up a passkey wallet or first sign a wallet transaction
 - **Approvals** that let the exchange settle your trades — operator relays
 - **Settlement** of a matched order — operator relays
 - **Redeeming** a winning position — operator relays
@@ -63,8 +63,8 @@ Self-custody cuts both ways. Because only you can move your funds:
   [signing key](/non-custodial/signing-keys), a second key of your own that can
   still reach the funds if the first one is lost.
 - **Winnings are claimed, not delivered.** A resolved market makes your winning
-  token redeemable; it does not push funds to you. See
-  [Redeeming winnings](/non-custodial/redeeming-winnings).
+  token redeemable; it does not push funds to you unless you have turned on
+  auto-redeem. See [Redeeming winnings](/non-custodial/redeeming-winnings).
 
 ## Next steps
 

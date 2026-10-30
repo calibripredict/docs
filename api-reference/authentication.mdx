@@ -190,7 +190,7 @@ func sign(method, path, body string) map[string]string {
 ### The exact string signed, for a POST
 
 ```
-1700000000000abc123POST/api/v2/atlas/account/orders{"market":"1","side":"yes"}
+1700000000000abc123POST/api/v2/atlas/account/orders{"market_id":1,"side":"yes"}
 └─ nonce ────┘└ kid ┘└ M ┘└─ path (query included) ─────────────┘└─ raw body ───────────┘
 ```
 

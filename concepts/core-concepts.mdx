@@ -82,8 +82,9 @@ The winner collects the **full pot** — their own stake plus the loser's stake.
 There is **no fee at settlement or redemption**. Your only trading cost is the
 **taker fee at the time of the fill** (see [Fees](/concepts/fees)).
 
-Winners **redeem on-chain** themselves — resolution makes the winning outcome
-token redeemable for 1.00 USDC per share, and you claim it. See
+Winners **redeem on-chain** — resolution makes the winning outcome token
+redeemable for 1.00 USDC per share, and you claim it, or auto-redeem claims it
+into your Safe if you turned it on. See
 [Redeeming winnings](/non-custodial/redeeming-winnings).
 
 ## Market lifecycle
@@ -96,8 +97,8 @@ From a trader's point of view, a market moves through these stages:
     people trade.
   </Step>
   <Step title="Closed">
-    Trading stops at the market's close time. Open orders stop matching and your
-    positions are locked in, pending the outcome.
+    Trading stops at the market's close time. Open orders are cancelled and their
+    collateral released, and your positions are locked in, pending the outcome.
 
     Closing is not the same as answering. Where the outcome only becomes knowable
     some time after close, the market states an **answer deadline** up front — see

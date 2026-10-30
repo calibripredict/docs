@@ -73,9 +73,9 @@ published there once the production contracts are deployed.
 
 ## If your Safe was never deployed
 
-Your Safe address is derived the moment you enrol, but the contract itself is
-only deployed when you first deposit — we pay for that. If you never deposited,
-nothing exists at the address and there is nothing to rescue.
+Your Safe address is derived before the contract exists. We deploy it, and pay
+for it, right after you enrol a passkey. If that deployment never happened,
+nothing exists at the address yet.
 
 If funds were sent to an undeployed Safe address, it can still be created: both
 the passkey signer factory and the Safe factory are **permissionless**, so anyone
@@ -128,8 +128,8 @@ funds from your Safe on that network by signing a Safe transaction there, as on 
 
 ## What this does not cover
 
-- **Redeeming a winning position.** Settlement pays into your Safe, and redeeming is a
-  different call than a transfer. It is documented in
+- **Redeeming a winning position.** Settlement makes a winning position redeemable;
+  redeeming it moves the USDC into your Safe, and is a different call than a transfer. It is documented in
   [Redeeming winnings](/non-custodial/redeeming-winnings).
 - **Moving outcome tokens** rather than collateral. They are ERC-1155; the transfer call
   differs. The addresses and interfaces are public.

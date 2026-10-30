@@ -25,7 +25,9 @@ It is deliberately narrow:
 
 **The session key is not a Safe owner.** All it can do is make your Safe accept a
 Calibri order signature — and only when the exchange itself is the caller.
-Withdrawals and redemptions still require your passkey, always.
+Withdrawals and redemptions still need a signature from an owner of your Safe —
+your passkey, or a [signing key](/non-custodial/signing-keys) you added — never
+the session key.
 
 <Note>
   An unlocked session key is roughly equivalent to being logged in on any exchange: whoever holds the device can trade. The meaningful difference is that this one **provably cannot move your money out**, where a normal logged-in session usually can.
@@ -73,7 +75,8 @@ emergency path and works no matter how many keys exist.
 
 Revoke the session key. It takes effect on-chain the moment it lands, and your
 funds were never reachable by that key in the first place — a session key cannot
-withdraw. Your passkey remains the only thing that can move money.
+withdraw. Only an owner of your Safe — your passkey, or a signing key you added —
+can move money.
 
 ## How long a key lasts
 
@@ -135,7 +138,7 @@ no prompt at all.
     What the Safe is and what can act on it.
   </Card>
   <Card title="Redeeming winnings" href="/non-custodial/redeeming-winnings">
-    Still passkey-only.
+    Never by a session key.
   </Card>
   <Card title="Withdrawing without Calibri" href="/non-custodial/withdraw-without-calibri">
     The exit that does not need us.

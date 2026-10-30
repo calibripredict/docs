@@ -70,8 +70,9 @@ exactly the property this design exists to avoid.
 
 ### The chart and the settlement come from the same place
 
-The live price you watch on a market page is republished from **the same Coinbase
-feed the market settles against**. A chart fed from one venue and a settlement
+The live price you watch on a market page is republished from **the same feed the
+market settles against** — Coinbase, or Chainlink for BTC-USD markets that settle
+on it. A chart fed from one venue and a settlement
 taken from another disagree eventually, and every disagreement is somebody
 watching one number and being paid on another.
 
@@ -93,7 +94,7 @@ which applies — `underlying.source` is `chainlink` and `settles_on` is
 `chainlink_twap_direction` or `chainlink_twap_threshold`.
 
 <Note>
-  The live line is for **drawing**. Settlement always reads the authoritative closed candle. In the seconds between an interval ending and its final candle being confirmed, the app marks the figure as not-yet-final rather than showing a number that then moves.
+  The live line is for **drawing**. Settlement reads the TWAP at the stated second, not the live line.
 </Note>
 
 ### No retroactive corrections

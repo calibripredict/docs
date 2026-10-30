@@ -67,10 +67,10 @@ Chainlink BTC/USD 60-second TWAP, other assets from Coinbase candles — see
   There is a short gap between a window closing *by the clock* and the final candle being confirmed. During it the displayed close is still forming. The app distinguishes the two states so you are never shown a "final" price that then moves.
 </Note>
 
-Once settled, the window keeps the two numbers that decided it — the deciding
-candle's open and close — so you can always see what happened, even months
-later. They are reproducible: anyone can re-request that candle and get the same
-values.
+Once settled, the window keeps the two numbers that decided it — the previous
+window's close and its own close — so you can always see what happened, even
+months later. They are reproducible: anyone can re-read them from the market's
+source and get the same values.
 
 <Warning>
   Settlement is **final**. If the exchange later restates its data, or there was an outage or an unusual print during the window, the market stays settled on what was published at the time. See [How markets are resolved](/concepts/resolution-sources).

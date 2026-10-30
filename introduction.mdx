@@ -5,7 +5,7 @@ description: "Trade binary YES/NO prediction markets from a wallet only you cont
 
 Calibri is a **prediction-market exchange**. You trade on the outcome of real events — an election, a match, where Bitcoin closes — against other people, using real money, on a public order book.
 
-**Calibri is non custodial, we never holds your funds.** They stay in a wallet only you control, on-chain, the entire time.
+**Calibri is non-custodial: we never hold your funds.** Your USDC sits in a wallet only you control, on-chain. While you hold a position, the USDC behind it is locked in the ConditionalTokens contract, and only the holder of the outcome tokens — you — can redeem it.
 
 ## What a prediction market is
 
@@ -35,7 +35,7 @@ Prices move as opinion moves, so the odds you see change right up until the mark
 
 - **Settled in USDC** — a US-dollar stablecoin. Stakes, fees, winnings, rewards, all in USDC.
 - **One fee, once** — a taker fee when your order fills. Nothing at settlement, nothing at redemption. A winning share always pays the full 1.00. See [Fees](/concepts/fees).
-- **Resolution is published before you trade** — the exact source that decides each market is on the market page. Crypto markets read Coinbase's own data directly. See [How markets are resolved](/concepts/resolution-sources).
+- **Resolution is published before you trade** — the exact source that decides each market is on the market page. Crypto markets read Coinbase's own data directly, except BTC-USD markets that settle on the Chainlink BTC/USD feed. See [How markets are resolved](/concepts/resolution-sources).
 - **Settlement is on-chain** and enforced by public contracts, not by our word.
 
 ## Your money is yours
@@ -94,7 +94,7 @@ You never send a blockchain transaction and you never need gas. What you do is *
     When your order matches, the contracts pull the collateral from your Safe and mint the outcome tokens. Calibri submits the transaction and pays the gas — but it can only ever submit orders both sides have signed.
   </Step>
   <Step title="You claim your winnings">
-    Resolution makes your winning shares redeemable. You sign the claim; we relay it and pay the gas. Nothing is pushed to you automatically.
+    Resolution makes your winning shares redeemable. You sign the claim; we relay it and pay the gas. Nothing is pushed to you unless you turn on [auto-redeem](/non-custodial/redeeming-winnings#auto-redeem).
   </Step>
 </Steps>
 
