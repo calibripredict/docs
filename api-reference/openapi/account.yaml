@@ -197,12 +197,6 @@ components:
           items:
             $ref: '#/components/schemas/BridgeChainEntity'
           type: 'array'
-        custodial_address:
-          description: 'Not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
         polygon:
           $ref: '#/components/schemas/BridgePolygonEntity'
           description: 'Polygon, the chain your wallet is on: its chain id and explorer templates.'
@@ -215,7 +209,6 @@ components:
       required:
         - 'chains'
         - 'address'
-        - 'custodial_address'
         - 'reason'
         - 'polygon'
       type: 'object'
@@ -1355,14 +1348,6 @@ components:
           description: 'ISO-8601.'
           example: '2026-08-07T10:00:00Z'
           type: 'string'
-        deposit_enabled:
-          description: 'Not used on Calibri.'
-          example: false
-          type: 'boolean'
-        deposit_fee:
-          description: 'Not used on Calibri.'
-          example: '0'
-          type: 'string'
         description:
           example: 'US-dollar stablecoin.'
           type: 'string'
@@ -1375,22 +1360,10 @@ components:
         id:
           example: 'usdc'
           type: 'string'
-        min_collection_amount:
-          description: 'Not used on Calibri.'
-          example: '0'
-          type: 'string'
         min_confirmations:
           description: 'Confirmations before an on-chain credit is final.'
           example: 12
           type: 'number'
-        min_deposit_amount:
-          description: 'Not used on Calibri.'
-          example: '0'
-          type: 'string'
-        min_withdraw_amount:
-          description: 'Not used on Calibri.'
-          example: '0'
-          type: 'string'
         name:
           example: 'USD Coin'
           type: 'string'
@@ -1431,14 +1404,6 @@ components:
         visible:
           description: 'Whether the currency is shown at all.'
           example: true
-          type: 'boolean'
-        withdraw_fee:
-          description: 'Not used on Calibri.'
-          example: '0'
-          type: 'string'
-        withdrawal_enabled:
-          description: 'Not used on Calibri.'
-          example: false
           type: 'boolean'
       required:
         - 'id'
@@ -2981,12 +2946,6 @@ components:
           type:
             - 'string'
             - 'null'
-        beneficiary_id:
-          description: 'Not used on Calibri.'
-          example: null
-          type:
-            - 'number'
-            - 'null'
         blockchain_key:
           example: 'polygon-mainnet'
           type:
@@ -3000,24 +2959,6 @@ components:
         bridge:
           $ref: '#/components/schemas/TransactionBridgeEntity'
           description: 'Deposits and withdrawals that crossed chains: the other side of the bridge. `null` otherwise.'
-        change_voucher_amount:
-          description: 'Voucher flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
-        change_voucher_expiry:
-          description: 'Voucher flow — not used on Calibri. RFC 3339, UTC.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
-        change_voucher_pin:
-          description: 'Voucher flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
         created_at:
           description: 'RFC 3339, UTC.'
           example: '2026-08-07T10:00:00Z'
@@ -3151,30 +3092,6 @@ components:
           type:
             - 'string'
             - 'null'
-        payment_method_icon_url:
-          description: 'Payment-provider flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
-        payment_method_name:
-          description: 'Payment-provider flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
-        payment_method_precision:
-          description: 'Payment-provider flow — not used on Calibri.'
-          example: null
-          type:
-            - 'number'
-            - 'null'
-        payment_method_provider:
-          description: 'Payment-provider flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
         price:
           description: 'Fill price.'
           example: '0.6'
@@ -3248,12 +3165,6 @@ components:
           type:
             - 'string'
             - 'null'
-        voucher_pin:
-          description: 'Voucher flow — not used on Calibri.'
-          example: null
-          type:
-            - 'string'
-            - 'null'
       required:
         - 'id'
         - 'type'
@@ -3292,15 +3203,6 @@ components:
         - 'updated_at'
         - 'paid_at'
         - 'expires_at'
-        - 'beneficiary_id'
-        - 'payment_method_provider'
-        - 'payment_method_name'
-        - 'payment_method_precision'
-        - 'payment_method_icon_url'
-        - 'voucher_pin'
-        - 'change_voucher_pin'
-        - 'change_voucher_amount'
-        - 'change_voucher_expiry'
         - 'txid_explorer_url'
         - 'bridge'
         - 'from_address'
@@ -4233,7 +4135,7 @@ paths:
         - 'Wallet'
   /api/v2/atlas/public/currencies:
     get:
-      description: 'Visible currencies in the registry. Collateral is USDC (6-decimal) on the chain named by `blockchain_key`. Deposit and withdrawal fee, minimum and enabled fields are retained for schema stability and do not apply: funding happens on your own Safe.'
+      description: 'Visible currencies in the registry. Collateral is USDC (6-decimal) on the chain named by `blockchain_key`. Funding happens on your own Safe.'
       parameters: []
       responses:
         "200":
