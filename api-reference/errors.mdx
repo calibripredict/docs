@@ -37,35 +37,32 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 
 | Code | Status | Meaning |
 |---|---|---|
-| `market.order.invalid_side` | 422 | `side` must be `yes` or `no` |
+| `Invalid order side` / `Invalid order price` / `Invalid order volume` | 422 | `side` is not `yes` or `no`, or the price or volume is missing or malformed |
+| `market_id must be a market id (a number or a numeric string)` | 422 | `market_id` is missing or not a numeric id |
 | `market.order.invalid_price` | 422 | Price outside `0.01`–`0.99` |
-| `market.order.price_too_high` / `market.order.price_too_low` | 422 | Price beyond the market's allowed band |
-| `market.order.invalid_volume` | 422 | Volume missing or malformed |
-| `market.order.amount_too_small` / `market.order.amount_too_large` | 422 | Order size below or above market limits |
-| `market.order.missing_price` / `missing_volume` / `missing_market` | 400 | Required field absent |
-| `market.order.insufficient_balance` | 422 | Not enough collateral — remember an order locks stake **plus** the taker-fee reserve |
-| `market.order.post_only_would_match` | 422 | A `post_only` order would have taken liquidity |
+| `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral: an order locks stake **plus** the taker-fee reserve |
 | `market.order.expired` | 400 | The order's signature expires in under 30 seconds (or already has), so a fill could not settle in time |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
 | `market.order.kyc_required` | 403 | KYC level below the market's minimum |
-| `market.order.cannot_cancel` | 422 | Order is already terminal or fully matched |
+| `market.order.invalid_state` | 422 | Cancel refused: the order is already terminal or fully matched |
 | `market.order.not_found` | 404 | Order does not exist or is not yours |
-| `market.market.doesnt_exist` / `public.market.doesnt_exist` | 404 | Unknown market |
+| `public.market.doesnt_exist` | 404 | Unknown market |
 | `market.engine.not_found` | 404 | Market data is unavailable for this market |
-| `market.order.insufficient_market_liquidity` | 422 | Not enough resting liquidity to fill the order to the requested size |
-| `market.order.spend_amount_*` | 400 | Misuse of `spend_amount` / `max_spend` / `use_max_available`. `spend_amount_too_small` is the exception, at 422 |
 | `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
 | `prediction.event.not_found` | 404 | Unknown event slug or id |
-| `auth.required` | 401 | Authentication required |
+| `authz.invalid_signature` / `authz.nonce_expired` / `authz.nonce_reused` / `authz.unexistent_apikey` / `authz.apikey_not_active` / `authz.invalid_api_key_headers` / `authz.invalid_session` | 401 | Missing or invalid credentials — see [Authentication](/api-reference/authentication) |
+| `authz.invalid_permission_scope` | 403 | The API key's scope does not allow this request |
 | `server.error` | 500 | Unexpected server error |
 | `maintenance` | 503 | Scheduled maintenance; the body carries `eta` and `message` ([Status and Maintenance](/api-reference/status)) |
+
+A `post_only` order that would take liquidity is not refused with an error: it is accepted and then moves to state `reject`.
 
 ## Self-custody — Safe, relay, and session keys
 
 | Code | Status | Meaning |
 |---|---|---|
 | `Market is not CTF-registered` | 422 | No on-chain condition exists for this market yet (`404` on `GET /account/wallet/markets/{id}`) |
-| `signed_order with signature is required` | 400 | The order was posted without a `signed_order` |
+| `signed_order with signature is required for non-custodial orders` | 400 | The order was posted without a `signed_order`, or without its `signature` |
 | `Member safe is not settlement-ready` | 422 | Approvals outstanding — relay `safe_setup.calls` first |
 | `signed_order maker is not a Safe registered to this member` | 422 | The `maker` is not your Safe |
 | `signed_order signature does not match the signer` | 422 | The signature does not verify |
@@ -77,11 +74,11 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `Your passkey is no longer able to sign for this wallet…` | 422 | A signing key you added removed your passkey as an owner. Raised on the first order, withdrawal, or redemption the passkey is refused for — see [Signing keys](/non-custodial/signing-keys) |
 | `A two-factor code is required to add a signing key` | 422 | `POST /account/wallet/owners` without `otp`. Only adding needs it; removing does not |
 | `That two-factor code is not valid` | 422 | Wrong code, or 2FA is not enabled on the account |
-| `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 422 | Refused: the passkey cannot be removed through the API |
-| `This account already has a self-custody wallet…` | 422 | Passkey enrolment on an account that already has a wallet-derived Safe. One self-custody wallet per account |
+| `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 400 | Refused: the passkey cannot be removed through the API |
+| `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a wallet-derived Safe. One self-custody wallet per account |
 
 <Note>
-  There are no deposit or withdrawal error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits).
+  Funding and withdrawing on Polygon are on-chain actions on your own Safe, not API calls, so they have no error codes here. See [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.
 </Note>
 
 ## Identity and sessions
@@ -92,8 +89,8 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `identity.session.missing_otp` | 401 | 2FA code required |
 | `identity.session.invalid_otp` | 401 | 2FA code incorrect |
 | `identity.session.otp_rate_limited` | 429 | Too many 2FA attempts |
-| `identity.wallet.already_linked` | 409 | Wallet already linked to this account |
-| `identity.wallet.account_already_linked` | 409 | Wallet already linked to a different account |
+| `identity.wallet.already_linked` | 409 | That wallet is already linked to a different account |
+| `identity.wallet.account_already_linked` | 409 | This account already has a different wallet linked |
 
 ## Rate limits
 

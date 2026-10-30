@@ -27,7 +27,7 @@ Each key carries `read`, and optionally `trade`, chosen when you create it:
 
 | Scope | Allows |
 |---|---|
-| `read` | `GET` requests only, including deposit, withdrawal, transfer and ledger history. A key with `read` alone is read-only: it suits an accountant or a reporting tool |
+| `read` | `GET` requests only. A key with `read` alone is read-only: it suits an accountant or a reporting tool |
 | `trade` | Any request an API key may make (includes `read`) |
 
 Keys created before scopes existed act as both `read` and `trade`. A request outside the key's scope is refused with `403`
@@ -37,8 +37,7 @@ Keys created before scopes existed act as both `read` and `trade`. A request out
 
 Some actions change who controls the account or where its money can go. An API
 key cannot reach them — they return `403` and must be done in the browser,
-signed in. The exception: any key may **read** withdrawal and transfer history
-(`GET`):
+signed in:
 
 - API key management
 - Linking a wallet
@@ -176,7 +175,8 @@ func sign(method, path, body string) map[string]string {
 `X-Auth-Nonce` is checked against server time: it must be within **10 seconds**
 of it, in either direction, or the request is rejected with
 `authz.nonce_expired`. Read `GET /api/v2/atlas/public/timestamp` (Unix
-**milliseconds**) to measure your offset before signing.
+**seconds**) to measure your offset before signing; the nonce itself is in
+milliseconds.
 
 Each signature is **single-use**. Sending the same signed request twice — same
 nonce, method, path and body — is rejected the second time with
@@ -223,10 +223,10 @@ Open your type below.
     **Reads work as normal.** For writes it depends on whether you have added a
     second signing key.
 
-    A passkey signs only in the browser it was registered in, and session keys are
-    generated non-extractable, so neither can reach a server. Without a second key
-    your client can read balances, positions, orders, contracts and market data,
-    and nothing else.
+    A passkey signs only in a browser on a device that holds it, and session keys
+    are generated non-extractable, so neither can reach a server. Without a second
+    key your client can read balances, positions, orders, contracts and market
+    data, and cancel your orders; it cannot place orders, withdraw or redeem.
 
     **With** a second [signing key](/non-custodial/signing-keys) (Settings →
     Wallet → Signing keys — adding one requires two-factor authentication) your

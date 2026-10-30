@@ -11,8 +11,12 @@ Every limit below is enforced server-side and is not configurable per account.
 
 ## What you get back
 
-A throttled request returns **`429 Too Many Requests`**. Identity endpoints tag
-the body with the error code `identity.too_many_requests`.
+A throttled request returns **`429 Too Many Requests`**. Per-IP identity limits
+tag the body with `identity.too_many_requests`. Per-user identity limits return
+their own code: `identity.session.otp_rate_limited`,
+`identity.phones.send_code_rate_limited`, `identity.phones.verify_rate_limited`,
+`identity.email.send_rate_limited` or `identity.email.verify_rate_limited`, each
+with a `Retry-After` header.
 
 The `/atlas` limits below also send three headers on every counted request,
 throttled or not:

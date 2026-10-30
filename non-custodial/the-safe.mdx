@@ -117,7 +117,7 @@ Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_
 </Warning>
 
 <Note>
-  For a specific market, use `GET /api/v2/atlas/account/wallet/markets/:id` instead. It returns the same funding config **plus** the market's `condition_id`, `yes_token_id`, and `no_token_id`. It returns `404` for a custodial-only market. See [Signed orders](/non-custodial/signed-orders).
+  For a specific market, use `GET /api/v2/atlas/account/wallet/markets/:id` instead. It returns the same funding config **plus** the market's `condition_id`, `yes_token_id`, and `no_token_id`. It returns `404` if the market is not on-chain yet. See [Signed orders](/non-custodial/signed-orders).
 </Note>
 
 ## 2. Fund the Safe with USDC

@@ -22,7 +22,7 @@ To send USDC the other way — from your Safe to an address on another network �
 | Network | Minimum before we bridge | Fee | Typical time |
 |---|---|---|---|
 | **Polygon** | None | None | About a minute |
-| **Ethereum** | 20 USDC | Covers network gas — at most 10 USDC and at most 20% | About 15–20 minutes |
+| **Ethereum** | 20 USDC | Network gas plus a margin — at most 10 USDC and at most 20% | About 15–20 minutes |
 
 The Wallet page shows the current minimum, fee estimate and arrival time for each network.
 If it and this page ever disagree, the Wallet page is right.
@@ -100,9 +100,9 @@ If a transfer stops, it says so and gives you a reference. Contact support and q
 
 ## Fees, minimums and timing
 
-**The fee covers the network gas** of moving your USDC — the bridge transaction, the
-delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
-It is not a trading fee and it is not a percentage we set per deposit. The standard fee is
+**The fee is the network gas** of moving your USDC — the bridge transaction, the
+delivery on Polygon, and, on your first bridge from a network, creating your Safe there —
+**plus a margin**. It is not a trading fee. The standard fee is
 capped by the contract itself:
 
 - **At most 10 USDC**, and
@@ -120,8 +120,8 @@ changes, Circle's own fee would come out of the amount it mints.
 | 100 USDC on Ethereum | 10.00 USDC (the absolute cap) | 90.00 USDC |
 
 Those are the standard fee's ceilings, not estimates, and they assume Circle still charges
-nothing. The fee charged is the gas cost at the time, and the Wallet page shows the current
-estimate before you send. A fee above them is charged only if you accept it for that
+nothing. The fee charged is the gas cost at the time plus a margin, and the Wallet page shows the
+current estimate before you send. A fee above them is charged only if you accept it for that
 deposit — see [When Ethereum gas is high](#when-ethereum-gas-is-high).
 
 **The minimum** is Calibri's, not the contract's: 20 USDC on Ethereum, where gas is
@@ -158,8 +158,8 @@ would be the whole amount or more. It waits at your address. Send more USDC to t
 address — it is combined with what is there — or wait for gas to drop; either one brings it
 back to the choice above, or bridges it automatically at the standard fee.
 
-We email you and send a notification when a deposit first needs your decision, and remind
-you at most once a day while it waits. A changed fee on its own does not trigger another
+We send you a notification when a deposit first needs your decision, and remind you at
+most once a day while it waits. A changed fee on its own does not trigger another
 message.
 
 **Timing.** The 15–20 minutes start when the bridge is sent — when you accept, or when gas

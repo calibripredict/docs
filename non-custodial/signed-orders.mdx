@@ -311,7 +311,7 @@ filled stays on the old order.
 | `409` | `order.not_open` | The old order already filled or was cancelled; nothing was placed |
 | `422` | `order.replace_market_mismatch` | The new order is for a different market |
 | `422` | (validation message) | The new order failed validation; the old order is untouched |
-| `503` | `market.engine.busy` | The engine could not take the request; nothing changed — retry |
+| `502` | `market.engine.busy` | The engine could not take the request; nothing changed — retry |
 
 If the engine cancelled the old order but then refused the new one, the error
 body also carries `replaced_order_id`: the old order is gone and nothing
@@ -359,8 +359,8 @@ unverified.
 A request with no `signed_order`, or one without a `signature`, is rejected
 with `400 signed_order with signature is required for non-custodial orders`.
 
-Common `422` errors: `Market is not CTF-registered` (often a slug sent as
-`market`), `signed_order side must be SELL for a sell order`, `Member safe is not
+Common `422` errors: `market_id must be a market id (a number or a numeric string)`
+(often a slug sent as `market_id`), `Market is not CTF-registered`, `signed_order side must be SELL for a sell order`, `Member safe is not
 settlement-ready`, `signed_order signature does not match the signer`. Other
 errors include `409 order.duplicate_client_order_id`; a temporary failure returns
 `502`.

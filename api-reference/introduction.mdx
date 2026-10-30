@@ -116,14 +116,16 @@ https://calibri.io
 |---|---|
 | `/api/v2/pythia/*` | Market data — events, markets, books, tickers, open orders |
 | `/api/v2/atlas/*` | Trading and account — balances, signed-order placement, contracts, wallet |
-| `/api/v2/persona/*` | Identity — account reads and wallet link |
+| `/api/v2/persona/*` | Identity — account reads |
 
 ## Response format
 
 Responses are **plain JSON** — a resource object or an array of them. There is
 **no `{ success, data }` envelope**.
 
-Monetary and volume values are **strings** — parse them as decimals, not floats.
+Monetary and volume values are **strings** — parse them as decimals, not floats. The
+exception is chart and price-feed series — k-line rows, asset prices, candles and
+windows, and the `kline-*` and `crypto.*` WebSocket streams — which are numbers.
 Ids are **numbers**, except on-chain token ids, which are decimal strings. A field
 that can be empty is always present as `null`. Timestamps named `*_at` are RFC
 3339 in UTC to the second; `timestamp` fields are Unix seconds.

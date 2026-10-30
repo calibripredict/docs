@@ -58,8 +58,8 @@ Three separate things end a session, and they are not the same:
 
 | | What happens | What you do |
 |---|---|---|
-| **Idle lock** | After a period with no orders (**15 minutes** by default) the key drops out of memory | Unlock again — a single passkey prompt |
-| **Expiry** | Grants are issued for a fixed lifetime (**30 days** by default) | Authorise a new key |
+| **Idle lock** | After the period you chose with no orders, the key drops out of memory. By default there is none: the key stays unlocked until it expires | Unlock again — a single passkey prompt |
+| **Expiry** | Grants are issued for **30 days** | Authorise a new key |
 | **Revocation** | You revoke it deliberately | Authorise a new key |
 
 You can revoke **one** key or **all** of them at once. Revoke-all is the
@@ -78,15 +78,15 @@ funds were never reachable by that key in the first place — a session key cann
 withdraw. Only an owner of your Safe — your passkey, or a signing key you added —
 can move money.
 
-## How long a key lasts
+## How long a key stays unlocked
 
-You choose, in **Settings → Quick trading**: **1 day**, **7 days**, or **30 days**.
-The choice applies to the **next** key you authorise — it cannot shorten a grant
-that already exists on-chain, so to cut one short, revoke it and authorise a new
-one.
+A key is always issued for 30 days. In **Settings → Quick trading**, "Ask for my
+passkey again after" sets how long it stays unlocked on this device without an
+order: **15 minutes**, **1 hour**, **8 hours**, **1 day**, **7 days** or
+**30 days**. The default, 30 days, means it stays unlocked until it expires. To
+end a key early, revoke it.
 
-Whatever you pick, the key still locks after 15 minutes idle and still cannot
-withdraw.
+Whatever you pick, the key cannot withdraw.
 
 ## For API clients
 

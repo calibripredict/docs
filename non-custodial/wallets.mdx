@@ -49,7 +49,8 @@ holds a key for your account.
     Each order is signed by the passkey and verified on-chain against the signer
     contract. To avoid a prompt on every order, unlock a
     **[session key](/non-custodial/session-keys)** once and orders sign silently
-    after that — withdrawals and redemptions still require your passkey.
+    after that — withdrawals and redemptions still need your passkey or a
+    [signing key](/non-custodial/signing-keys) you added.
   </Step>
 </Steps>
 
@@ -191,13 +192,11 @@ is the same wallet.
 Most prediction markets that let you sign up with an email address do it the same
 way, and it is worth understanding because it is **not** what Calibri does.
 
-The usual pattern — Polymarket's, through Magic — is that signing up creates an
-ordinary wallet with an ordinary private key, generated and held by a third-party
-key service. It is genuinely your key: the exchange cannot sign with it. But the
-key **exists off your device**, and you can export it. Their own API clients
-depend on exactly that: an email user who wants to trade programmatically exports
-the private key from the key service and imports it into their bot, then signs
-with `signature_type=1`.
+The usual pattern is that signing up creates an ordinary wallet with an ordinary
+private key, generated and held by a third-party key service. It is genuinely
+your key: the exchange cannot sign with it. But the key **exists off your
+device**, and you can export it — which is how an email user there trades from a
+script.
 
 A passkey wallet has no such key to export. Your credential is sealed inside your
 authenticator, and the Safe is owned by an **on-chain signer contract derived

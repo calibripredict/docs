@@ -12,10 +12,6 @@ the taker fee itself follows the `P × (1 − P)` curve. So the rebate is larges
 where quoting is hardest — around `0.50`, where the outcome is genuinely
 uncertain — and smallest at lopsided prices where a quote carries little risk.
 
-<Note>
-  Calibri's rebate schedule mirrors Polymarket's — the same fee curve, the same per-category rebate rates. If you already run a maker strategy there, the economics carry across unchanged.
-</Note>
-
 ## What qualifies
 
 You earn a rebate when **your order was already resting on the book and someone
@@ -132,11 +128,11 @@ position.
     No money moves for it at that point — only the taker's fee moves.
   </Step>
   <Step title="Visible live">
-    Pending rebates are readable in near-real-time, separated from referral
-    earnings:
+    Pending rebates are readable in near-real-time, separated from referral and
+    liquidity rewards:
 
     ```json
-    { "currency": "usdc", "total": "12.35", "maker": "10.00", "referral": "2.35" }
+    { "currency": "usdc", "total": "13.10", "maker": "10.00", "referral": "2.35", "liquidity": "0.75" }
     ```
   </Step>
   <Step title="Paid daily, to your Safe">
@@ -146,9 +142,7 @@ position.
   </Step>
 </Steps>
 
-There is **no arbitrary payout threshold**. The only floor is economic: an
-amount below the network gas cost of sending it stays pending and rolls into the
-next sweep rather than being written off.
+There is **no payout threshold**.
 
 ## Voided markets
 

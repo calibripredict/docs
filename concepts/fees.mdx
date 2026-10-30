@@ -32,8 +32,6 @@ maximum of `0.25` at a coin flip, and is symmetric about `0.50` — so:
   near-certain outcome is cheap to trade.
 - The fee **scales with your fill size**.
 
-This is the same formula Polymarket publishes.
-
 ### Relative fee across prices
 
 Holding rate and size fixed, the fee at each price relative to its maximum (at
@@ -165,8 +163,9 @@ address on **Ethereum** is bridged to your Safe on Polygon, and
 that bridge carries one fee. It is not a trading fee and is not shared with makers or
 referrers:
 
-- **It covers network gas** — the bridge transaction on the network you sent from, the
-  delivery on Polygon, and, on your first bridge from a network, creating your Safe there.
+- **It is network gas plus a margin** — the bridge transaction on the network you sent
+  from, the delivery on Polygon, and, on your first bridge from a network, creating your
+  Safe there.
 - **At most 10 USDC, and at most 20% of the amount** bridged. Both caps are fixed in the
   bridge contract. A higher fee goes through only for a deposit where you accepted it,
   countersigned by Calibri's consent key.

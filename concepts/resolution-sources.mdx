@@ -201,9 +201,9 @@ change.
   "kind": "threshold",
   "underlying": { "source": "coinbase", "symbol": "BTC-USD" },
   "strike_type": "greater_equal",
-  "floor_strike": 70000,
+  "floor_strike": "70000",
   "cap_strike": null,
-  "measure": { "at": "2026-09-17T00:00:00Z", "granularity_seconds": 60, "basis": "close" },
+  "measure": { "at": "2026-09-17T00:00:00Z", "window_start": null, "granularity_seconds": 60, "basis": "close" },
   "settles_on": "coinbase_spot"
 }
 ```
@@ -212,14 +212,14 @@ change.
 |---|---|
 | `kind` | `threshold`, `range`, `direction` (up/down) or `categorical` (a named outcome — the leg's `group_item_title` labels it) |
 | `strike_type` | `greater`, `greater_equal`, `less`, `less_equal`, `between`, `direction` or `none` |
-| `floor_strike` / `cap_strike` | The level(s) compared against; `null` when not applicable. A `range` is half-open: inclusive floor, **exclusive** cap |
+| `floor_strike` / `cap_strike` | The level(s) compared against, as decimal strings; `null` when not applicable. A `range` is half-open: inclusive floor, **exclusive** cap |
 | `underlying` | The venue and instrument that decide a price market |
 | `measure.at` | The instant that decides it — the deciding candle's close |
 | `measure.window_start` | For `direction` markets, when the window opens |
 | `measure.basis` | `close`, or `close_vs_previous_close` for up/down markets |
 | `settles_on` | The resolution source that settles the market |
 
-`terms` is omitted for markets settled by hand, which are described by their
+`terms` is `null` for markets settled by hand, which are described by their
 `rules` alone.
 
 ## Related
