@@ -2513,9 +2513,8 @@ info:
     Authenticated order routes use the same HMAC API key as the account
     API under `/api/v2/atlas`.
 
-    Open orders and cancel live here for both custodial and non-custodial
-    members. Non-custodial *placement* is `POST /api/v2/atlas/account/orders`
-    (signed EIP-712); once resting, list and cancel are these endpoints.
+    Placement is `POST /api/v2/atlas/account/orders` (signed EIP-712); once
+    resting, list and cancel are these endpoints.
   title: Calibri Markets & Orders
   version: 1.0.0
 openapi: 3.1.0
@@ -2524,10 +2523,8 @@ paths:
     get:
       description: |-
         Your prediction orders: open (`wait`) orders and terminal history
-        (`done`, `cancel`, `reject`). Pass `state=wait` for resting orders,
-        custodial and non-custodial alike. Placement differs (signed orders via
-        `POST /api/v2/atlas/account/orders` vs direct `POST`); list and
-        cancel do not.
+        (`done`, `cancel`, `reject`). Pass `state=wait` for resting orders.
+        Orders are placed through `POST /api/v2/atlas/account/orders`.
 
         Pagination: `page` / `limit` in, totals in the `Page` / `Per-Page` /
         `Total` response headers.
@@ -2654,8 +2651,7 @@ paths:
     post:
       description: |-
         Cancels one of your open (`wait`) orders and refunds unmatched
-        collateral. Same route for custodial and non-custodial resting
-        orders — non-custodial placement is via
+        collateral. Orders are placed through
         `POST /api/v2/atlas/account/orders`; once resting, cancel is here.
         Terminal orders return 422.
       parameters:
