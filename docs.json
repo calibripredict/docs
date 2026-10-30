@@ -236,7 +236,12 @@
               {
                 "group": "Identity",
                 "pages": [
+                  "api-reference/models/business-profile-metadata-entity",
                   "api-reference/models/current-user-entity",
+                  "api-reference/models/current-user-label-entity",
+                  "api-reference/models/email-add-confirm-request",
+                  "api-reference/models/email-add-request",
+                  "api-reference/models/email-code-sent-entity",
                   "api-reference/models/email-confirm-request",
                   "api-reference/models/kyc-item-entity",
                   "api-reference/models/kyc-status-entity",
