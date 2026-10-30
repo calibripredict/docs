@@ -1,6 +1,6 @@
 ---
 title: "How markets are resolved"
-description: "The exact data each market settles against — Coinbase for crypto prices, official sports feeds for fixtures — how the deciding number is read, and why a settled market is never re-opened."
+description: "The exact data each market settles against — Coinbase or Chainlink for crypto prices, official sports feeds for fixtures — how the deciding number is read, and why a settled market is never re-opened."
 ---
 
 Every market names the source that decides it **before** you can trade it. This
@@ -13,7 +13,8 @@ the time, and we do not go back and change it later.**
 
 Crypto markets settle against **Coinbase Exchange**, read directly from
 Coinbase's public API. No aggregator, no index, no third-party price oracle sits
-in between.
+in between. The exception is **BTC-USD**, which settles against the Chainlink
+BTC/USD 60-second TWAP — see [BTC-USD: Chainlink](#btc-usd-chainlink).
 
 ### The deciding number is the interval's final trade price
 
@@ -73,6 +74,23 @@ The live price you watch on a market page is republished from **the same Coinbas
 feed the market settles against**. A chart fed from one venue and a settlement
 taken from another disagree eventually, and every disagreement is somebody
 watching one number and being paid on another.
+
+### BTC-USD: Chainlink
+
+BTC-USD markets settle against the **Chainlink BTC/USD 60-second TWAP**
+(time-weighted average price) instead of Coinbase candles, and their chart is drawn
+from the same Chainlink feed. Everything else on this page applies unchanged.
+
+- **Up/down:** YES if the TWAP at the window's **end** second is at or above the
+  TWAP at its **start** second. The start value is the previous window's close, so
+  this is the same close-against-previous-close rule. **A tie resolves up.**
+- **Price at a moment:** the TWAP at the stated second is compared with the
+  market's threshold.
+
+A market keeps the source it was listed with: a BTC-USD market listed while BTC-USD
+still settled on Coinbase settles on Coinbase. Read the market's `terms` to know
+which applies — `underlying.source` is `chainlink` and `settles_on` is
+`chainlink_twap_direction` or `chainlink_twap_threshold`.
 
 <Note>
   The live line is for **drawing**. Settlement always reads the authoritative closed candle. In the seconds between an interval ending and its final candle being confirmed, the app marks the figure as not-yet-final rather than showing a number that then moves.
@@ -165,8 +183,8 @@ Closing and answering are two different moments.
 - **The answer deadline** is when the outcome is expected to become knowable. Markets state it separately when the two differ — some sources publish hours after the event.
 
 Crypto markets settle **shortly after they close** — typically within seconds.
-Calibri waits a few seconds after an interval ends so Coinbase's candle is final,
-reads it, and commits the outcome; there is no further hold for a closed candle.
+Calibri waits a few seconds after an interval ends so Coinbase's candle is final
+(a Chainlink TWAP value needs no wait), reads it, and commits the outcome; there is no further hold for a closed candle.
 An operator can still freeze a suspect settlement. Sources that report
 judgement-based results (sports, events) keep a short review window before the
 outcome is committed. Once committed, resolution is reported on-chain and your

@@ -144,7 +144,7 @@ on the market before you can trade it. See
 
 The rules that matter most:
 
-- **The source named on the market decides it.** For crypto price markets that is Coinbase's own published data for the stated interval, read directly.
+- **The source named on the market decides it.** For crypto price markets that is the source named in the market's terms: Coinbase's own published data for the stated interval, or, for BTC-USD markets that name it, the Chainlink BTC/USD 60-second TWAP.
 - **Settlement is final.** A settled market is terminal. If the source later restates its data, or there was an outage, an unusual print, or any other issue at or around the deciding moment, **the settlement stands.** Calibri does not retroactively correct a settled market.
 - **Ties on up/down markets resolve up.** An interval closing exactly at the previous interval's close resolves YES.
 - **Manual settlements go through two-person review**, with escalation to a senior adjudicator where reviewers disagree.

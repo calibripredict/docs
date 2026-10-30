@@ -55,7 +55,9 @@ disagreement is somebody watching one number and being paid on another.
 ## What settles a window
 
 A candle-direction window resolves on one question: **did this window close at or
-above the previous window's close?**
+above the previous window's close?** BTC-USD windows take both prices from the
+Chainlink BTC/USD 60-second TWAP, other assets from Coinbase candles — see
+[BTC-USD: Chainlink](/concepts/resolution-sources#btc-usd-chainlink).
 
 - The **level to beat** is the previous window's close. It is fixed the moment the window starts, so arriving mid-window still shows you the real level to beat. The candle's own open is not used — see [Up/down markets](/concepts/resolution-sources#up%2Fdown-markets).
 - The **close** moves until the window ends, and it is the same number the resolution source compares against.
@@ -87,7 +89,7 @@ windows resolve.
     Binary markets, prices as probabilities, settlement.
   </Card>
   <Card title="How markets are resolved" href="/concepts/resolution-sources">
-    The exact Coinbase data a window settles on, and why it is never revised.
+    The exact price data a window settles on, and why it is never revised.
   </Card>
   <Card title="Market resolution" href="/non-custodial/resolution">
     The on-chain escalation ladder and the deadman switch.
