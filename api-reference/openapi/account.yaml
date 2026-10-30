@@ -17,10 +17,6 @@ components:
           type:
             - 'string'
             - 'null'
-        balance:
-          description: 'Operator-held pool. Calibri does not operate one, so this is always `"0"`; retained for schema stability. There is no `total` field.'
-          example: '0'
-          type: 'string'
         balance_eoa:
           description: 'Raw on-chain balance of the linked wallet, once it has been read. `null` rather than zeroed when unknown — "no reading yet" is not the same as an empty wallet.'
           example: '42.1'
@@ -34,10 +30,6 @@ components:
         currency:
           description: 'Currency code, e.g. `usdc`.'
           example: 'usdc'
-          type: 'string'
-        locked:
-          description: 'Operator-held pool. Always `"0"`.'
-          example: '0'
           type: 'string'
         locked_safe:
           description: 'Reserved by resting signed orders and their taker-fee reserve. Released when an order fills, rests, or is cancelled.'
@@ -57,8 +49,6 @@ components:
         - 'locked_safe'
         - 'redeemable_safe'
         - 'pending_safe'
-        - 'balance'
-        - 'locked'
         - 'balance_eoa'
         - 'address_eoa'
       type: 'object'
@@ -280,7 +270,7 @@ components:
           example: '6.1'
           type: 'string'
         expires_at:
-          description: 'Until when the offer is expected to hold. It is re-checked every 10 minutes.'
+          description: 'Until when the offer is expected to hold.'
           example: '2026-09-24T10:10:00Z'
           type: 'string'
         gas_price_wei:
@@ -837,7 +827,6 @@ components:
         ord_type:
           enum:
             - 'limit'
-            - 'market'
           example: 'limit'
           type: 'string'
         post_only:
@@ -1126,7 +1115,7 @@ components:
     CtfRedeemableMarketEntity:
       properties:
         auto_redeem_failed:
-          description: 'An auto-redeem attempt skipped this claim (for example, the approval is missing), so redeem it yourself. Auto-redeem keeps retrying every 5 minutes.'
+          description: 'An auto-redeem attempt skipped this claim (for example, the approval is missing), so redeem it yourself.'
           example: false
           type: 'boolean'
         condition_id:
@@ -1422,157 +1411,6 @@ components:
       required:
         - 'errors'
       type: 'object'
-    FundingMethodLimitEntity:
-      properties:
-        blockchain_key:
-          description: 'The chain this limit applies to, where it is chain-specific.'
-          example: 'polygon-mainnet'
-          type: 'string'
-        created_at:
-          description: 'ISO-8601.'
-          example: '2026-08-07T10:00:00Z'
-          type: 'string'
-        currency:
-          example: 'usdc'
-          type: 'string'
-        day:
-          description: 'Rolling 24-hour ceiling.'
-          example: '25000'
-          type: 'string'
-        month:
-          description: 'Rolling 30-day ceiling.'
-          example: '250000'
-          type: 'string'
-        reference_id:
-          example: 90231
-          type: 'number'
-        reference_type:
-          description: 'What the limit is attached to.'
-          example: 'Order'
-          type: 'string'
-        remaining:
-          additionalProperties:
-            type: 'string'
-          description: 'How much of each window is left. Present only when `with_remaining` is requested — absent is not zero.'
-          example:
-            day: '18500'
-            month: '240000'
-            week: '92000'
-          type: 'object'
-        transaction_max:
-          description: 'Ceiling for a single transaction.'
-          example: '10000'
-          type: 'string'
-        updated_at:
-          description: 'ISO-8601.'
-          example: '2026-08-07T10:05:00Z'
-          type: 'string'
-        verification_available:
-          description: 'Whether a higher tier is reachable by verifying further.'
-          example: false
-          type: 'boolean'
-        verified:
-          description: 'Whether this limit tier applies at your current verification level.'
-          example: true
-          type: 'boolean'
-        week:
-          description: 'Rolling 7-day ceiling.'
-          example: '100000'
-          type: 'string'
-        year_to_date:
-          description: 'Ceiling for the calendar year to date.'
-          example: '1000000'
-          type: 'string'
-      required:
-        - 'currency'
-        - 'transaction_max'
-        - 'day'
-        - 'week'
-        - 'month'
-        - 'year_to_date'
-        - 'verified'
-        - 'verification_available'
-        - 'created_at'
-        - 'updated_at'
-      type: 'object'
-    GlobalLimitEntity:
-      properties:
-        created_at:
-          description: 'ISO-8601.'
-          example: '2026-08-07T10:00:00Z'
-          type: 'string'
-        currency:
-          example: 'usdc'
-          type: 'string'
-        day:
-          description: 'Rolling 24-hour ceiling.'
-          example: '25000'
-          type: 'string'
-        month:
-          description: 'Rolling 30-day ceiling.'
-          example: '250000'
-          type: 'string'
-        reference_type:
-          description: 'What the limit is attached to.'
-          example: 'Order'
-          type: 'string'
-        remaining:
-          additionalProperties:
-            type: 'string'
-          description: 'How much of each window is left. Present only when `with_remaining` is requested.'
-          example:
-            day: '18500'
-            month: '240000'
-            week: '92000'
-          type: 'object'
-        updated_at:
-          description: 'ISO-8601.'
-          example: '2026-08-07T10:05:00Z'
-          type: 'string'
-        verification_available:
-          description: 'Whether a higher tier is reachable by verifying further.'
-          example: false
-          type: 'boolean'
-        verified:
-          description: 'Whether this tier applies at your current verification level.'
-          example: true
-          type: 'boolean'
-        week:
-          description: 'Rolling 7-day ceiling.'
-          example: '100000'
-          type: 'string'
-        year_to_date:
-          description: 'Ceiling for the calendar year to date.'
-          example: '1000000'
-          type: 'string'
-      required:
-        - 'currency'
-        - 'reference_type'
-        - 'day'
-        - 'week'
-        - 'month'
-        - 'year_to_date'
-        - 'verified'
-        - 'verification_available'
-        - 'created_at'
-        - 'updated_at'
-      type: 'object'
-    LimitsEntity:
-      properties:
-        funding_method_limits:
-          description: 'Limits that apply per funding method, one entry per currency and method.'
-          items:
-            $ref: '#/components/schemas/FundingMethodLimitEntity'
-          type: 'array'
-        global_limits:
-          description: 'Account-wide limits, independent of funding method.'
-          items:
-            $ref: '#/components/schemas/GlobalLimitEntity'
-          type: 'array'
-      required:
-        - 'funding_method_limits'
-        - 'global_limits'
-      type: 'object'
     LiquidityRewardEntity:
       properties:
         amount:
@@ -1694,7 +1532,6 @@ components:
         ord_type:
           enum:
             - 'limit'
-            - 'market'
           example: 'limit'
           type: 'string'
         origin_locked:
@@ -1921,7 +1758,7 @@ components:
           example: '2026-08-01T00:00:00Z'
           type: 'string'
         net_deposits:
-          description: 'Cumulative deposits minus withdrawals as at this point. Subtract it from portfolio value to isolate trading performance from money paid in. Excludes adjustments and internal transfers, so it is not a full balance reconciliation.'
+          description: 'Cumulative deposits minus withdrawals as at this point. Subtract it from portfolio value to isolate trading performance from money paid in. Excludes adjustments, so it is not a full balance reconciliation.'
           example: '1000'
           type:
             - 'string'
@@ -2382,7 +2219,6 @@ components:
         ord_type:
           enum:
             - 'limit'
-            - 'market'
           example: 'limit'
           type: 'string'
         origin_locked:
@@ -2801,7 +2637,7 @@ components:
           example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
           type: 'string'
         maker_amount:
-          description: 'USDC in, 6-decimal base units. `round(price × volume × 1e6)`.'
+          description: 'What you give, 6-decimal base units: on a buy, USDC `round(price × volume × 1e6)`; on a sell, outcome tokens `round(volume × 1e6)`.'
           example: '60000000'
           type: 'string'
         nonce:
@@ -2813,9 +2649,10 @@ components:
           example: '5821094412'
           type: 'string'
         side:
-          description: 'Always `0` (BUY). Both YES and NO legs are buys that mint — the side you are taking is carried by `token_id` alone.'
+          description: '`0` (BUY) for a `direction: "buy"` order, `1` (SELL) for a `direction: "sell"` order; a mismatch is rejected. YES or NO is carried by `token_id` alone.'
           enum:
             - 0
+            - 1
           example: 0
           type: 'number'
         signature:
@@ -2838,7 +2675,7 @@ components:
           example: '0x0000000000000000000000000000000000000000'
           type: 'string'
         taker_amount:
-          description: 'Outcome tokens out, 6-decimal. `round(volume × 1e6)`.'
+          description: 'What you get, 6-decimal base units: on a buy, outcome tokens `round(volume × 1e6)`; on a sell, USDC `round(price × volume × 1e6)`.'
           example: '100000000'
           type: 'string'
         token_id:
@@ -3232,7 +3069,7 @@ openapi: '3.1.0'
 paths:
   /api/v2/atlas/account/balances:
     get:
-      description: 'Your balances per currency. `balance_safe` (available) and `locked_safe` (reserved) are the mirror of the USDC in your own on-chain Safe — those are the figures that matter. `redeemable_safe` is winnings the contract owes you that you have not redeemed yet: not spendable until you do. `pending_safe` is proceeds of a sale from your Safe that the chain has not paid in yet: not spendable until the sale settles on-chain. `balance` / `locked` / `total` are the operator-held pool, which Calibri does not operate, so they are always "0".'
+      description: 'Your balances per currency. `balance_safe` (available) and `locked_safe` (reserved) are the mirror of the USDC in your own on-chain Safe — those are the figures that matter. `redeemable_safe` is winnings the contract owes you that you have not redeemed yet: not spendable until you do. `pending_safe` is proceeds of a sale from your Safe that the chain has not paid in yet: not spendable until the sale settles on-chain.'
       parameters: []
       responses:
         "200":
@@ -3326,7 +3163,7 @@ paths:
         - 'Other'
   /api/v2/atlas/account/bridge/transfers/{id}/consent:
     post:
-      description: 'When gas is high, a cross-chain deposit waits in `awaiting_consent` with a `quote`: bridging now costs `quote.target_fee`, more than the standard fee. Send that exact amount as `max_fee` to accept it; the deposit is then bridged and you receive the amount minus that fee. If the fee has changed since you saw it, the answer is 409 with the current `quote` (and `code`: `quote_changed`, `stale_quote` or `not_awaiting_consent`) — show it and ask again. Not accepting is fine: the bridge re-checks gas every 10 minutes and bridges on its own once the standard fee covers the cost. Rate limited to 10 per minute.'
+      description: 'When gas is high, a cross-chain deposit waits in `awaiting_consent` with a `quote`: bridging now costs `quote.target_fee`, more than the standard fee. Send that exact amount as `max_fee` to accept it; the deposit is then bridged and you receive the amount minus that fee. If the fee has changed since you saw it, the answer is 409 with the current `quote` (and `code`: `quote_changed`, `stale_quote` or `not_awaiting_consent`) — show it and ask again. Not accepting is fine: the deposit is bridged on its own once the standard fee covers the cost. Rate limited to 10 per minute.'
       parameters:
         - in: 'path'
           name: 'id'
@@ -3479,20 +3316,6 @@ paths:
       summary: 'Contract by id'
       tags:
         - 'Positions'
-  /api/v2/atlas/account/limits:
-    get:
-      description: 'Funding-method and global limits for your account. Use before submitting a deposit or withdrawal so you fail client-side instead of on the wire. Pass `with_remaining` to include how much of each limit is left; filter with `currency` and `reference_type`.'
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LimitsEntity'
-          description: ''
-      summary: 'Account limits'
-      tags:
-        - 'Account'
   /api/v2/atlas/account/orders:
     post:
       description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
@@ -3797,7 +3620,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/transactions:
     get:
-      description: 'Your ledger across deposits, withdrawals, trades, internal transfers, referral earnings and maker rewards. Filter with `currency`, `type`, and time bounds; paginate with `page` and `limit` — totals land in the `Page` / `Per-Page` / `Total` response headers.'
+      description: 'Your ledger across deposits, withdrawals, trades, referral earnings and maker rewards. Filter with `currency`, `type`, and time bounds; paginate with `page` and `limit` — totals land in the `Page` / `Per-Page` / `Total` response headers.'
       parameters:
         - description: 'Entries per page, 1–1000. Defaults to 50.'
           example: 50
@@ -3958,7 +3781,7 @@ paths:
         - 'Wallet'
   /api/v2/atlas/account/wallet/markets/{id}:
     get:
-      description: 'Everything needed to build and sign an order for one market. Check `safe_status` first: on `setup_required` an order will rest and then fail to settle.'
+      description: 'Everything needed to build and sign an order for one market. Check `safe_status` first: on `setup_required` an order is rejected with `422` `Member safe is not settlement-ready`.'
       parameters:
         - in: 'path'
           name: 'id'
@@ -4079,7 +3902,7 @@ paths:
         - 'Wallet'
   /api/v2/atlas/account/wallet/session-key:
     delete:
-      description: 'Returns the Safe call to revoke one grant, or every outstanding grant when `key_id` is omitted. Revocation takes effect the moment it is relayed and does kill resting orders that key signed.'
+      description: 'Returns the Safe call to revoke one grant, or every outstanding grant when `key_id` is omitted. Revocation takes effect the moment it is relayed. Resting orders that key signed stay on the book; a fill against one fails to settle and is voided.'
       parameters: []
       requestBody:
         content:
@@ -4110,7 +3933,7 @@ paths:
       tags:
         - 'Wallet'
     post:
-      description: 'Returns the Safe calls that authorise a browser-held P-256 key to sign orders. Nothing is authorised until you sign and relay them. `expires_at` is clamped DOWN to policy. The key is never a Safe owner, so withdraw and redeem stay passkey-only.'
+      description: 'Returns the Safe calls that authorise a browser-held P-256 key to sign orders. Nothing is authorised until you sign and relay them. `expires_at` is clamped DOWN to policy. The key is never a Safe owner, so it cannot withdraw or redeem.'
       parameters: []
       requestBody:
         content:
