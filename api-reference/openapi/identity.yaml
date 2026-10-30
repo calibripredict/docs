@@ -139,33 +139,6 @@ components:
         - 'value'
         - 'scope'
       type: 'object'
-    EmailAddConfirmRequest:
-      properties:
-        code:
-          description: 'The 6-digit code emailed by POST /users/email.'
-          example: '482913'
-          type: 'string'
-      required:
-        - 'code'
-      type: 'object'
-    EmailAddRequest:
-      properties:
-        email:
-          description: 'The address to add. Lowercased; a 6-digit code is emailed to it.'
-          example: 'alex@example.com'
-          type: 'string'
-      required:
-        - 'email'
-      type: 'object'
-    EmailCodeSentEntity:
-      properties:
-        email:
-          description: 'The (lowercased) address the code went to. The code is valid for 15 minutes.'
-          example: 'alex@example.com'
-          type: 'string'
-      required:
-        - 'email'
-      type: 'object'
     EmailConfirmRequest:
       properties:
         token:
@@ -684,29 +657,6 @@ components:
         - 'created_at'
         - 'updated_at'
       type: 'object'
-    WalletLinkRequest:
-      properties:
-        message:
-          description: 'The signed SIWE message, exactly as returned by /sessions/web3/nonce.'
-          example: 'Sign in to Calibri: 8f21c4a9e0b7'
-          type: 'string'
-        signature:
-          description: 'The signature over `message`.'
-          example: '0x7b21…'
-          type: 'string'
-      required:
-        - 'message'
-        - 'signature'
-      type: 'object'
-    WalletLinkedEntity:
-      properties:
-        wallet_address:
-          description: 'The EOA now attached to the account. It is also written into the session, so the next request carries it as a JWT claim.'
-          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
-          type: 'string'
-      required:
-        - 'wallet_address'
-      type: 'object'
   securitySchemes:
     apiKey:
       description: 'HMAC-signed API key. Send X-Auth-Apikey, X-Auth-Nonce and X-Auth-Signature.'
@@ -714,12 +664,12 @@ components:
       name: 'X-Auth-Apikey'
       type: 'apiKey'
 info:
-  description: 'Account reads and wallet linking for machine integrations.
+  description: 'Account reads for machine integrations.
 
 
-    Browser sign-in, API-key minting, 2FA setup and KYC submission are
+    Browser sign-in, API-key minting, 2FA setup, wallet linking, email changes and
 
-    product-UI flows and are not published here. HMAC auth for private
+    KYC submission are product-UI flows and are not published here. HMAC auth for private
 
     requests is documented in the knowledge base. This service establishes
 
@@ -836,44 +786,6 @@ paths:
       summary: 'Request a password reset'
       tags:
         - 'Account'
-  /api/v2/persona/resource/users/email:
-    post:
-      description: 'For an account without a real email (`can_add_email`): emails a 6-digit code (valid 15 minutes) to the address. A new request replaces the previous code. 409 if another account has the address or the account already has an email.'
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailAddRequest'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmailCodeSentEntity'
-          description: ''
-      summary: 'Add an email: send the code'
-      tags:
-        - 'Account'
-  /api/v2/persona/resource/users/email/confirm:
-    post:
-      description: 'Checks the emailed code and makes its address the account email, marked verified. Returns the account as GET /resource/users/me does (`can_add_email` now false). Wrong codes are rate limited per account.'
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EmailAddConfirmRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CurrentUserEntity'
-          description: ''
-      summary: 'Add an email: confirm the code'
-      tags:
-        - 'Account'
   /api/v2/persona/resource/users/me:
     get:
       description: 'The signed-in member plus `kyc`, the eleven-step verification checklist, and the public labels it is computed from. This is the payload a client gates onboarding on.'
@@ -905,25 +817,6 @@ paths:
                 $ref: '#/components/schemas/MessageEntity'
           description: ''
       summary: 'Change password'
-      tags:
-        - 'Account'
-  /api/v2/persona/resource/users/wallet:
-    post:
-      description: 'Attaches a verified EOA to the SIGNED-IN account, so an email or social member can trade non-custodially. Distinct from wallet login, which finds or creates an account for the wallet. Returns 409 if either the account or the wallet is already linked.'
-      parameters: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/WalletLinkRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WalletLinkedEntity'
-          description: ''
-      summary: 'Link a wallet to this account'
       tags:
         - 'Account'
 security:
