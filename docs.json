@@ -239,9 +239,6 @@
                   "api-reference/models/business-profile-metadata-entity",
                   "api-reference/models/current-user-entity",
                   "api-reference/models/current-user-label-entity",
-                  "api-reference/models/email-add-confirm-request",
-                  "api-reference/models/email-add-request",
-                  "api-reference/models/email-code-sent-entity",
                   "api-reference/models/email-confirm-request",
                   "api-reference/models/kyc-item-entity",
                   "api-reference/models/kyc-status-entity",
@@ -254,9 +251,7 @@
                   "api-reference/models/profile-entity",
                   "api-reference/models/register-request",
                   "api-reference/models/session-user-entity",
-                  "api-reference/models/user-entity",
-                  "api-reference/models/wallet-link-request",
-                  "api-reference/models/wallet-linked-entity"
+                  "api-reference/models/user-entity"
                 ]
               }
             ]
