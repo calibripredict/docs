@@ -68,8 +68,9 @@ paths:
         engine index; terminal history (`done`, `cancel`, `reject`) from
         storage. Pass `state=wait` for the open-orders tab — that is what
         the product calls for resting orders, custodial and non-custodial
-        alike. Placement path differs (Atlas signed-order vs this service's
-        direct POST); list and cancel do not.
+        alike. Placement differs (signed orders via
+        `POST /api/v2/atlas/account/orders` vs direct `POST`); list and
+        cancel do not.
 
         Pagination: `page` / `limit` in, totals in the `Page` / `Per-Page` /
         `Total` response headers.
@@ -615,8 +616,8 @@ paths:
           schema:
             type: integer
         - description: >-
-            `slim` reduces each event and market to the card fields (see
-            api.SlimEvent); anything else returns the full object
+            `slim` reduces each event and market to the card fields; anything
+            else returns the full object
           in: query
           name: fields
           schema:
@@ -657,9 +658,9 @@ paths:
         The path takes the event's slug or its numeric id; an all-digit value is
         an id.
 
-        Falls back to MySQL for older windows that have left the live
+        Older events and closed series windows are still served, so
 
-        cache, so bookmarked and historical links keep resolving.
+        bookmarked and historical links keep resolving.
 
 
         `include` bundles the per-market live data the event page
@@ -2919,22 +2920,17 @@ components:
           type: boolean
         confirmed:
           description: >-
-            Confirmed: the candle we hold was read AFTER its bucket closed, so
-            it can
+            Confirmed: the candle was read AFTER its bucket closed, so it can no
 
-            no longer change. Distinct from Complete, and the distinction is the
-            whole
+            longer change. Distinct from Complete: for a few seconds after a
+            window
 
-            point — for the seconds between a window closing and the poller
-            re-reading
+            closes, Complete can be true while the close is still a
+            mid-formation
 
-            it, the clock says finished while the stored close is still a
+            value. Showing that as final would mean showing a number that then
 
-            mid-formation value. Showing that as final would mean showing a
-            number
-
-            that then moves, on the one figure that decides whether a member
-            won.
+            moves, on the one figure that decides whether a member won.
           example: true
           type: boolean
         granularity_seconds:
@@ -2948,16 +2944,12 @@ components:
           type: number
         open:
           description: >-
-            Pointers, because present-but-empty is a real state: the poller has
-            not
+            Omitted when the data for this bucket is not available yet, which is
 
-            read this bucket yet, which is normal in the first seconds of a
-            window.
+            normal in the first seconds of a window. Omitted rather than zeroed
+            so a
 
-            Omitted rather than zeroed so a client shows a placeholder instead
-            of
-
-            drawing a $0.00 open.
+            client shows a placeholder instead of drawing a $0.00 open.
           example: 65380.25
           type: number
         symbol:
@@ -3094,11 +3086,7 @@ components:
           example: crypto
           type: string
         created_at:
-          description: >-
-            CreatedAt (RFC3339, from events.created_at) backs the "newest" list
-            sort.
-
-            Before it was surfaced, "newest" fell back to id DESC.
+          description: CreatedAt (RFC3339) backs the "newest" list sort.
           example: '2026-08-07T10:00:00Z'
           type:
             - string
@@ -3123,19 +3111,15 @@ components:
           type: string
         effective_taker_fee_rate_bps:
           description: >-
-            EffectiveTakerFeeRateBps is the resolved fee rate the matching
-            engine
+            EffectiveTakerFeeRateBps is the taker fee rate, in basis points,
+            charged
 
-            will charge for trades in any of this event's markets. Computed at
+            on trades in any of this event's markets: the event's override if
+            set,
 
-            load time as: COALESCE(override, category default). NULL/nil means
+            otherwise its category's rate. Null means no rate is configured, and
 
-            UNRESOLVED — no override and no fee_categories row for the category
-            —
-
-            which order placement rejects (distinct from a resolved 0 = free).
-
-            Read-only — not persisted as its own column.
+            orders on the event are rejected (distinct from 0, which is free).
           example: 200
           type:
             - integer
@@ -3189,14 +3173,12 @@ components:
                             "above $110k"). Several legs resolve YES together so it is
                             not one_winner, but the legs are nested so it is not
                             independent either: prices fall monotonically down the
-                            ladder, ordered by markets.event_rank.
+                            ladder, ordered by each market's `event_rank`.
 
-            Kalshi carries the same three as MECNET / DIRECNET / none.
+            Used for display and validation only; it does not change how
+            collateral
 
-
-            Display + validation only. Neither Kalshi's collateral netting nor
-
-            Polymarket's NegRiskAdapter is implemented on our side.
+            or settlement work.
           example: independent
           type: string
         price_feed:
@@ -3221,7 +3203,7 @@ components:
           example: btc-above-70k-december-2026
           type: string
         status:
-          description: The event's own lifecycle state (events.aasm_state).
+          description: The event's own lifecycle state.
           enum:
             - submitted
             - initialized
@@ -3257,13 +3239,9 @@ components:
           type: array
           uniqueItems: false
         taker_fee_rate_bps_override:
-          description: >-
-            TakerFeeRateBpsOverride mirrors events.taker_fee_rate_bps_override
-
-            (NULL = inherit from category default, or global default if no
-            category row).
-
-            Persisted to the DB; included in JSON for admin consumers.
+          description: |-
+            TakerFeeRateBpsOverride is an event-specific taker fee rate in basis
+            points. Null when no override is set.
           example: 200
           type:
             - integer
@@ -3328,16 +3306,15 @@ components:
             distinct from close, which is only when trading stops.
 
 
-            Published so a member is told the gap in advance. Kalshi's
-            daily-high
+            Published so a member is told the gap in advance. Some markets
+            settle
 
-            temperature markets settle 6–7 hours after close because the
-            authoritative
+            hours after close because the authoritative source publishes hours
+            after
 
-            report lands hours after the weather; without this field that reads
-            as a
+            the event (a daily-high temperature report, for example); this field
 
-            stuck market rather than a documented wait.
+            marks that as a documented wait rather than a stuck market.
 
 
             Null when the outcome is expected at close.
@@ -3355,8 +3332,7 @@ components:
             EventRank is the operator's manual ordering of this market WITHIN
             its
 
-            event (`markets.event_rank`), ascending. nil = unranked. It exists
-            because
+            event, ascending. Null = unranked. It exists because
 
             the natural order of a ladder is not derivable from price: a date
             ladder
@@ -3418,17 +3394,10 @@ components:
             - string
             - 'null'
         group_item_title:
-          description: >-
-            GroupItemTitle (markets.group_item_title) is this market's short
-            label
-
-            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the
-            frontend
-
-            derives one from the title, which is why an unlabelled contender
-            list
-
-            currently reads "Will Abiy Ahmed be the next Prime Min…".
+          description: |-
+            GroupItemTitle is this market's short label WITHIN its event —
+            "Atlanta Hawks", "O/U 2.5". Null when unset; a client then derives a
+            label from the title.
           example: Above $70,000
           type:
             - string
@@ -3482,14 +3451,7 @@ components:
             - string
             - 'null'
         open_interest:
-          description: >-
-            Outstanding complete YES/NO sets — see readOpenInterest. Attached
-            after
-
-            paging, so only the markets a response actually carries are read.
-            Null
-
-            when it cannot be read.
+          description: Outstanding complete YES/NO sets. Null when it cannot be read.
           example: '1250'
           type:
             - string
@@ -3568,13 +3530,9 @@ components:
             - $ref: '#/components/schemas/SettlementPanel'
             - type: 'null'
         status:
-          description: >-
-            Status SHADOWS MarketMeta.Status (shallower field wins), so a nested
-
-            market speaks the same public vocabulary as /public/markets: the raw
-
-            aasm_state carries internal states publicMarketStatus exists to
-            withhold.
+          description: |-
+            The market's lifecycle state, as on `/public/markets`. Only `active`
+            accepts orders.
           enum:
             - active
             - closed
@@ -3670,11 +3628,7 @@ components:
           example: crypto
           type: string
         created_at:
-          description: >-
-            CreatedAt (RFC3339, from events.created_at) backs the "newest" list
-            sort.
-
-            Before it was surfaced, "newest" fell back to id DESC.
+          description: CreatedAt (RFC3339) backs the "newest" list sort.
           example: '2026-08-07T10:00:00Z'
           type:
             - string
@@ -3699,19 +3653,15 @@ components:
           type: string
         effective_taker_fee_rate_bps:
           description: >-
-            EffectiveTakerFeeRateBps is the resolved fee rate the matching
-            engine
+            EffectiveTakerFeeRateBps is the taker fee rate, in basis points,
+            charged
 
-            will charge for trades in any of this event's markets. Computed at
+            on trades in any of this event's markets: the event's override if
+            set,
 
-            load time as: COALESCE(override, category default). NULL/nil means
+            otherwise its category's rate. Null means no rate is configured, and
 
-            UNRESOLVED — no override and no fee_categories row for the category
-            —
-
-            which order placement rejects (distinct from a resolved 0 = free).
-
-            Read-only — not persisted as its own column.
+            orders on the event are rejected (distinct from 0, which is free).
           example: 200
           type:
             - integer
@@ -3765,14 +3715,12 @@ components:
                             "above $110k"). Several legs resolve YES together so it is
                             not one_winner, but the legs are nested so it is not
                             independent either: prices fall monotonically down the
-                            ladder, ordered by markets.event_rank.
+                            ladder, ordered by each market's `event_rank`.
 
-            Kalshi carries the same three as MECNET / DIRECNET / none.
+            Used for display and validation only; it does not change how
+            collateral
 
-
-            Display + validation only. Neither Kalshi's collateral netting nor
-
-            Polymarket's NegRiskAdapter is implemented on our side.
+            or settlement work.
           example: independent
           type: string
         price_feed:
@@ -3797,7 +3745,7 @@ components:
           example: btc-above-70k-december-2026
           type: string
         status:
-          description: The event's own lifecycle state (events.aasm_state).
+          description: The event's own lifecycle state.
           enum:
             - submitted
             - initialized
@@ -3833,13 +3781,9 @@ components:
           type: array
           uniqueItems: false
         taker_fee_rate_bps_override:
-          description: >-
-            TakerFeeRateBpsOverride mirrors events.taker_fee_rate_bps_override
-
-            (NULL = inherit from category default, or global default if no
-            category row).
-
-            Persisted to the DB; included in JSON for admin consumers.
+          description: |-
+            TakerFeeRateBpsOverride is an event-specific taker fee rate in basis
+            points. Null when no override is set.
           example: 200
           type:
             - integer
@@ -3904,16 +3848,15 @@ components:
             distinct from close, which is only when trading stops.
 
 
-            Published so a member is told the gap in advance. Kalshi's
-            daily-high
+            Published so a member is told the gap in advance. Some markets
+            settle
 
-            temperature markets settle 6–7 hours after close because the
-            authoritative
+            hours after close because the authoritative source publishes hours
+            after
 
-            report lands hours after the weather; without this field that reads
-            as a
+            the event (a daily-high temperature report, for example); this field
 
-            stuck market rather than a documented wait.
+            marks that as a documented wait rather than a stuck market.
 
 
             Null when the outcome is expected at close.
@@ -3931,8 +3874,7 @@ components:
             EventRank is the operator's manual ordering of this market WITHIN
             its
 
-            event (`markets.event_rank`), ascending. nil = unranked. It exists
-            because
+            event, ascending. Null = unranked. It exists because
 
             the natural order of a ladder is not derivable from price: a date
             ladder
@@ -3994,17 +3936,10 @@ components:
             - string
             - 'null'
         group_item_title:
-          description: >-
-            GroupItemTitle (markets.group_item_title) is this market's short
-            label
-
-            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the
-            frontend
-
-            derives one from the title, which is why an unlabelled contender
-            list
-
-            currently reads "Will Abiy Ahmed be the next Prime Min…".
+          description: |-
+            GroupItemTitle is this market's short label WITHIN its event —
+            "Atlanta Hawks", "O/U 2.5". Null when unset; a client then derives a
+            label from the title.
           example: Above $70,000
           type:
             - string
@@ -4064,14 +3999,7 @@ components:
             - string
             - 'null'
         open_interest:
-          description: >-
-            Outstanding complete YES/NO sets — see readOpenInterest. Attached
-            after
-
-            paging, so only the markets a response actually carries are read.
-            Null
-
-            when it cannot be read.
+          description: Outstanding complete YES/NO sets. Null when it cannot be read.
           example: '1250'
           type:
             - string
@@ -4158,13 +4086,9 @@ components:
             - $ref: '#/components/schemas/SettlementPanel'
             - type: 'null'
         status:
-          description: >-
-            Status SHADOWS MarketMeta.Status (shallower field wins), so a nested
-
-            market speaks the same public vocabulary as /public/markets: the raw
-
-            aasm_state carries internal states publicMarketStatus exists to
-            withhold.
+          description: |-
+            The market's lifecycle state, as on `/public/markets`. Only `active`
+            accepts orders.
           enum:
             - active
             - closed
@@ -4364,16 +4288,15 @@ components:
             distinct from close, which is only when trading stops.
 
 
-            Published so a member is told the gap in advance. Kalshi's
-            daily-high
+            Published so a member is told the gap in advance. Some markets
+            settle
 
-            temperature markets settle 6–7 hours after close because the
-            authoritative
+            hours after close because the authoritative source publishes hours
+            after
 
-            report lands hours after the weather; without this field that reads
-            as a
+            the event (a daily-high temperature report, for example); this field
 
-            stuck market rather than a documented wait.
+            marks that as a documented wait rather than a stuck market.
 
 
             Null when the outcome is expected at close.
@@ -4391,8 +4314,7 @@ components:
             EventRank is the operator's manual ordering of this market WITHIN
             its
 
-            event (`markets.event_rank`), ascending. nil = unranked. It exists
-            because
+            event, ascending. Null = unranked. It exists because
 
             the natural order of a ladder is not derivable from price: a date
             ladder
@@ -4454,17 +4376,10 @@ components:
             - string
             - 'null'
         group_item_title:
-          description: >-
-            GroupItemTitle (markets.group_item_title) is this market's short
-            label
-
-            WITHIN its event — "Atlanta Hawks", "O/U 2.5". nil means the
-            frontend
-
-            derives one from the title, which is why an unlabelled contender
-            list
-
-            currently reads "Will Abiy Ahmed be the next Prime Min…".
+          description: |-
+            GroupItemTitle is this market's short label WITHIN its event —
+            "Atlanta Hawks", "O/U 2.5". Null when unset; a client then derives a
+            label from the title.
           example: Above $70,000
           type:
             - string
@@ -4515,15 +4430,10 @@ components:
             - string
             - 'null'
         open_interest:
-          description: >-
+          description: |-
             OpenInterest is the number of complete YES/NO sets outstanding — the
-
-            shares outstanding on each outcome — from the market's escrow in
-            Redis
-
-            (see open_interest.go). "0" for a market that has never minted; null
-
-            only when it cannot be read.
+            shares outstanding on each outcome. "0" for a market that has never
+            minted; null only when it cannot be read.
           example: '1250'
           type:
             - string
@@ -4596,30 +4506,16 @@ components:
             - type: 'null'
         status:
           description: >-
-            Status SHADOWS the embedded field of the same json name. The encoder
+            Status is the market's lifecycle state: `active` (open for trading),
 
-            resolves a tag conflict by depth — shallower wins — so this depth-0
-            field
+            `closed` (trading has stopped and the outcome is not final yet),
 
-            is what gets emitted.
+            `determined` (the outcome is known; payout may still be in
+            progress),
 
+            `settled` (paid out), `cancelled` or `voided`. Only `active` accepts
 
-            The published vocabulary is narrower than the column.
-            MarketMeta.Status is
-
-            scanned straight from markets.aasm_state, which carries internal
-            states —
-
-            `escalated` in particular announces to everyone holding a position
-            that two
-
-            reviewers disagreed. Emitting the embedded field raw is precisely
-            the leak
-
-            publicMarketStatus exists to prevent, and shadowing is what makes
-            that
-
-            unmissable rather than a step someone can forget.
+            orders.
           enum:
             - active
             - closed
@@ -4780,33 +4676,18 @@ components:
           type: integer
         market_title:
           description: >-
-            MarketTitle / EventSlug are the order's market context, denormalised
-            onto
+            MarketTitle / EventSlug are the order's market context, so a client
+            can
 
-            the order the same way EventSlug/EventTitle are denormalised onto a
-            market.
+            name the market and link to it (the app routes
 
-
-            Without them `market_id` is a bare id and nothing else: a client
-            listing a
-
-            member's orders can only print "3573", and has no slug to link with
-            (a
-
-            market is not addressable on its own — the app routes
-
-            /event/{slug}?market={id}). The only alternative is a market read
-            per row,
-
-            which is a fan-out over a paginated list for data this handler
-            already
-
-            holds in memory.
+            /event/{slug}?market={id}) without reading each market.
 
 
-            Null when the market's metadata is unknown here (an id that is in
+            Null when the market's metadata is not available; the row still
+            carries
 
-            neither the cache nor storage); the row still carries `market_id`.
+            `market_id`.
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type:
             - string
@@ -5019,13 +4900,10 @@ components:
             - 'null'
         generated:
           description: >-
-            Generated reports whether atlas's roller mints this series' events
-            from a
+            Generated reports whether this series' events are produced
+            automatically
 
-            template (`series.roll_template` is set), rather than them being
-            imported
-
-            or hand-made.
+            from a template, one per window.
 
 
             This is what says the events are the SAME QUESTION per window, and
@@ -5064,10 +4942,8 @@ components:
           type: string
         effective_taker_fee_rate_bps:
           description: >-
-            The fee the ticket quotes. Without it a card opened from the home
-            feed
-
-            (served slim) fell back to the default rate.
+            The taker fee rate, in basis points, charged on this event's
+            markets.
           example: 200
           type:
             - integer
@@ -5345,21 +5221,6 @@ components:
             browse
 
             chip means.
-
-
-            Counted from the same events the feed serves rather than from the
-            database,
-
-            so the two cannot disagree. Counting rows made the Crypto chip read
-            27 and
-
-            open onto 4 cards — the feed collapses a five-minute series to the
-            single
-
-            window a member can act on, and a count that ignores that is a
-            promise the
-
-            page does not keep.
           example: 492
           type: integer
         frequencies:
@@ -5418,11 +5279,7 @@ components:
         the browse chips and the /categories drilldown are built from.
       properties:
         icon:
-          description: >-
-            Icon KEY the frontends map, not an icon. Replaces their hardcoded
-            maps,
-
-            which could not be extended without a deploy.
+          description: Icon key for the client to map to an icon, not an icon itself.
           example: SportsSoccer
           type:
             - string
@@ -5493,18 +5350,10 @@ components:
         `rules` is for a person and free to change its wording; terms are what
         code
 
-        reads, so an integrator never parses a title to learn the strike. Kalshi
-
-        publishes the same thing as strike_type / floor_strike / cap_strike.
+        reads, so an integrator never parses a title to learn the strike.
 
 
-        Stored by atlas (`markets.terms`, derived from the resolution source and
-        its
-
-        params — atlas owns that derivation) and decoded here only so the
-        published
-
-        schema names every field. Null for a market with no automated source.
+        Null for a market with no automated source.
       properties:
         cap_strike:
           example: '77500'
@@ -5573,17 +5422,15 @@ components:
 
         final price, the difference, and which way it went — WITHOUT reading the
 
-        asset price history. That independence is the point: history is recorded
+        asset price history. That independence is the point: the price history
 
-        best-effort over a websocket, so a gap in it must degrade the chart and
+        can have gaps, and a gap must degrade the chart and not the answer.
+        These
 
-        not the answer. These numbers came from the exchange candle that
-        actually
-
-        settled the market.
+        numbers came from the exchange candle that actually settled the market.
 
 
-        nil for anything not settled from a candle.
+        Null for anything not settled from a candle.
       properties:
         candle_start:
           description: >-
@@ -5709,16 +5556,9 @@ components:
             - 'null'
       type: object
     SeriesRef:
-      description: >-
-        Series is the FEED this event came from — Polymarket's `atp` /
-        `mls-2025`,
-
-        Kalshi's `series_ticker`. Usually absent: a one-off competition has no
-        feed
-
-        behind it, and Polymarket returns `series: []` on every Wimbledon event
-
-        including the matches. Null when unset.
+      description: |-
+        Series is the recurring feed this event belongs to. Usually absent: a
+        one-off competition has no feed behind it. Null when unset.
       properties:
         frequency:
           description: >-
@@ -5735,13 +5575,10 @@ components:
             - 'null'
         generated:
           description: >-
-            Generated reports whether atlas's roller mints this series' events
-            from a
+            Generated reports whether this series' events are produced
+            automatically
 
-            template (`series.roll_template` is set), rather than them being
-            imported
-
-            or hand-made.
+            from a template, one per window.
 
 
             This is what says the events are the SAME QUESTION per window, and
@@ -5774,15 +5611,10 @@ components:
       description: |-
         SettlementPanel is the PUBLISHED, ordered list of authorities this
         market's outcome may be determined from, resolved from the market's own
-        override or inherited from its series.
+        override or inherited from its series. Published so it can be read
+        before trading.
 
-        Carried on the public payload deliberately. The panel's whole value is
-        that a member could read it BEFORE they traded — an unpublished rule is
-        not the rule anyone agreed to, and a hierarchy that lives only in the
-        admin tool cannot be quoted back at us in a dispute, which is the one
-        situation it exists for.
-
-        nil when no panel governs the market, which is the normal case for
+        Null when no panel governs the market, which is the normal case for
         anything a machine settles.
       properties:
         description:
