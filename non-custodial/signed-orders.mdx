@@ -16,7 +16,7 @@ resting order locks your [`locked_safe`](/non-custodial/balances) pool.
 
 **`GET /api/v2/atlas/account/wallet/markets/:id`**
 
-Returns your funding config plus the market's `condition_id`, `yes_token_id`, and `no_token_id`. Returns `404` if the market is custodial-only (not CTF-registered).
+Returns your funding config plus the market's `condition_id`, `yes_token_id`, and `no_token_id`. Returns `404` if the market is not CTF-registered.
 
 The config gives you every value needed to build and sign the order:
 `exchange_address`, `chain_id`, `domain_name`, `proxy_address` (your Safe / the

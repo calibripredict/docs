@@ -28,7 +28,7 @@ The owner also determines the signature type your orders use: `2`
 contract. The config below tells you which — see
 [Signed orders](/non-custodial/signed-orders).
 
-A member with neither a linked wallet nor a passkey is custodial-only.
+A member with neither a linked wallet nor a passkey has no Safe yet.
 
 ## The bridge module
 
@@ -110,7 +110,7 @@ Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_
 | `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first |
 | `error` | Lookup failed; retryable (the Safe is not presented as absent) |
 | `unavailable` | You have an owner but no Safe factory is available |
-| `unlinked` | Custodial-only — no wallet linked and no passkey enrolled |
+| `unlinked` | No wallet linked and no passkey enrolled yet |
 
 <Warning>
   Do not trade on `setup_required`. An order placed before the approvals land is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. A Safe that stops being ready **after** an order is placed — an approval revoked, USDC moved out — can fail to settle a match; see [If a match fails to settle](/non-custodial/signed-orders#if-a-match-fails-to-settle).

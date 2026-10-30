@@ -23,55 +23,28 @@ secret is shown once, when the key is created.
 
 ### Scopes
 
-Each key carries `read`, optionally `trade`, and optionally `withdraw`, chosen
-when you create it:
+Each key carries `read`, and optionally `trade`, chosen when you create it:
 
 | Scope | Allows |
 |---|---|
 | `read` | `GET` requests only, including deposit, withdrawal, transfer and ledger history. A key with `read` alone is read-only: it suits an accountant or a reporting tool |
 | `trade` | Any request an API key may make (includes `read`) |
-| `withdraw` | Custodial withdrawals (`/atlas/account/withdraws`) without a two-factor code, to a saved beneficiary only. Off unless you turn it on |
 
-Keys created before scopes existed act as both `read` and `trade`, never
-`withdraw`. A request outside the key's scope is refused with `403`
+Keys created before scopes existed act as both `read` and `trade`. A request outside the key's scope is refused with `403`
 `authz.invalid_permission_scope`.
-
-### Withdrawals with an API key
-
-`withdraw` applies to a custodial balance only. A self-custody account withdraws
-on-chain from its Safe, which needs a wallet signature, so Settings offers the
-scope only to accounts without one.
-
-A `withdraw` key sends no two-factor code, so it is limited to destinations you
-have already proved you control:
-
-- `beneficiary_id` must name a beneficiary you added in the browser **and
-  confirmed with its emailed PIN**.
-- A raw `address`, or a beneficiary saved by an earlier withdrawal to a raw
-  address without a PIN, is refused with `422`
-  `account.withdraw.api_requires_saved_beneficiary`.
-- The key cannot add or confirm beneficiaries; that stays browser-only.
-
-Anyone holding the key and its secret can send funds to those saved addresses,
-so give `withdraw` only to a key whose secret you store as carefully as your
-password.
 
 ### Browser-only actions
 
 Some actions change who controls the account or where its money can go. An API
 key cannot reach them — they return `403` and must be done in the browser,
-signed in. The exceptions: any key may **read** withdrawal and transfer history
-(`GET`), and a key with the `withdraw` scope can make custodial withdrawals (see
-above):
+signed in. The exception: any key may **read** withdrawal and transfer history
+(`GET`):
 
 - API key management
 - Linking a wallet
 - Changing your email
 - Webhook settings
 - Passkey registration (`/atlas/account/wallet/passkey`)
-- Beneficiaries
-- Making custodial withdrawals (`/atlas/account/withdraws`), and withdrawal quotes
-- Making internal transfers
 - GraphQL
 
 Self-custody actions — orders, Safe relays, signing-key changes — are not on
@@ -240,7 +213,7 @@ signs — and whether it can sign at all:
 | **`2`** | An address you hold the private key for (MetaMask, Rainbow, WalletConnect) | Yes — your key signs the order directly |
 
 Every order on Calibri is a signed order placed through
-`POST /api/v2/atlas/account/orders`. The unsigned (custodial)
+`POST /api/v2/atlas/account/orders`. The unsigned
 `POST /api/v2/pythia/orders` is not available on Calibri.
 
 Open your type below.

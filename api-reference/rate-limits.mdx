@@ -80,7 +80,6 @@ Keyed **per member**.
 | `GET /atlas/account/bridge/withdraw/quote` | 10 per minute |
 | `POST /atlas/account/onramp/checkout-sessions` | 20 per 10 minutes |
 | `GET /atlas/account/onramp/checkout-sessions/{uid}` | 60 per 10 minutes, across all checkouts |
-| `POST /atlas/account/withdraws` (custodial withdrawals) | 10 per 10 minutes |
 
 Order placement is the loosest limit on the API at ten per second sustained,
 because it is the one endpoint where a legitimate client is genuinely fast.

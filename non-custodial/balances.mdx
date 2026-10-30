@@ -24,7 +24,7 @@ Every row reflects the live pools at the time of the request.
 | `redeemable_safe` | Winnings from settled markets that have **not been redeemed yet**. The USDC is still in the ConditionalTokens contract, so this is **not spendable** until it is redeemed into your Safe — see [Redeeming winnings](/non-custodial/redeeming-winnings) |
 
 <Note>
-  The response also carries `balance` and `locked`. These belong to an operator-held balance model that Calibri does not offer — they read `"0"`. The pools that matter to you are `balance_safe` and `locked_safe`.
+  The response also carries `balance` and `locked`. They read `"0"`; ignore them. The pools that matter to you are `balance_safe` and `locked_safe`.
 </Note>
 
 ## Example row
