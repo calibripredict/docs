@@ -370,15 +370,12 @@ order.duplicate_client_order_id`; upstream failures return `502`.
 The engine matches off-chain; the operator then submits the match to the exchange
 contract. An order is only accepted from a `ready` Safe, but a Safe can stop being
 able to settle after its order is placed — USDC moved out, an approval revoked, the
-signing key revoked. The match transaction then reverts.
-
-Network and broadcast errors are retried. A revert is final once it is confirmed,
-and the match is then **voided** off-chain — rolled back as if it never happened:
+signing key revoked. The match then fails on-chain and is **voided** — rolled
+back as if it never happened:
 
 - Both sides get back what the match moved: each buyer's stake, a seller's
   tokens, or both sellers' tokens on a merge. The **taker fee is refunded**.
-- Nobody is debited. The member whose Safe could not settle is frozen and their
-  resting orders are cancelled.
+- Nobody is debited.
 - If the other side was the **maker** (its order was resting), the order gets the
   voided volume back and keeps its place on the book.
 - If the other side was the **taker**, its order is cancelled and its stake
