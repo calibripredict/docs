@@ -198,7 +198,7 @@ components:
             $ref: '#/components/schemas/BridgeChainEntity'
           type: 'array'
         custodial_address:
-          description: 'Your custodial deposit address, if you have one (same on every chain).'
+          description: 'Not used on Calibri.'
           example: null
           type:
             - 'string'
@@ -384,7 +384,7 @@ components:
           example: '2026-09-24T10:00:00Z'
           type: 'string'
         custody:
-          description: '`safe` or `custodial`.'
+          description: 'Always `safe`.'
           example: 'safe'
           type: 'string'
         deliver_by:
@@ -743,7 +743,7 @@ components:
             - 'string'
             - 'null'
         settlement_status:
-          description: 'The on-chain mint badge: `pending` until confirmed, `reversed` if the market voided. Null for a custodial fill.'
+          description: 'The on-chain mint badge: `pending` until confirmed, `reversed` if the market voided.'
           enum:
             - 'pending'
             - 'confirmed'
@@ -1356,11 +1356,11 @@ components:
           example: '2026-08-07T10:00:00Z'
           type: 'string'
         deposit_enabled:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: false
           type: 'boolean'
         deposit_fee:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: '0'
           type: 'string'
         description:
@@ -1376,7 +1376,7 @@ components:
           example: 'usdc'
           type: 'string'
         min_collection_amount:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: '0'
           type: 'string'
         min_confirmations:
@@ -1384,11 +1384,11 @@ components:
           example: 12
           type: 'number'
         min_deposit_amount:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: '0'
           type: 'string'
         min_withdraw_amount:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: '0'
           type: 'string'
         name:
@@ -1433,11 +1433,11 @@ components:
           example: true
           type: 'boolean'
         withdraw_fee:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: '0'
           type: 'string'
         withdrawal_enabled:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: false
           type: 'boolean'
       required:
@@ -1450,7 +1450,7 @@ components:
         errors:
           description: 'Match on the code, not the HTTP status or the human text.'
           example:
-            - 'account.custody.deposits_disabled'
+            - 'market.order.insufficient_balance'
           items:
             type: 'string'
           type: 'array'
@@ -2020,9 +2020,8 @@ components:
           example: '183'
           type: 'string'
         custody:
-          description: 'Which pool backs it. `self` holdings are real ERC-1155 tokens in your Safe; `custodial` are ledger entries. The two never net against each other.'
+          description: 'Always `self`: the holding is ERC-1155 tokens in your Safe.'
           enum:
-            - 'custodial'
             - 'self'
           example: 'self'
           type: 'string'
@@ -2063,7 +2062,7 @@ components:
             type: 'string'
           type: 'array'
         pending_volume:
-          description: 'Contracts from a buy that has not settled on-chain yet ("settling"). Held, but not sellable until the trade is confirmed on-chain; then they move into `sellable_volume`. Always `0` for `custodial`.'
+          description: 'Contracts from a buy that has not settled on-chain yet ("settling"). Held, but not sellable until the trade is confirmed on-chain; then they move into `sellable_volume`.'
           example: '0'
           type: 'string'
         quote_currency:
@@ -2784,7 +2783,7 @@ components:
             - 'string'
             - 'null'
         settlement_status:
-          description: 'On-chain settlement state, or `null` when this holding never touched the chain (a custodial fill has nothing to confirm).'
+          description: 'On-chain settlement state, or `null` when there is nothing to confirm on-chain.'
           enum:
             - 'confirmed'
             - 'pending'
@@ -2983,7 +2982,7 @@ components:
             - 'string'
             - 'null'
         beneficiary_id:
-          description: 'Custodial funding only — not used on Calibri.'
+          description: 'Not used on Calibri.'
           example: null
           type:
             - 'number'
@@ -4234,7 +4233,7 @@ paths:
         - 'Wallet'
   /api/v2/atlas/public/currencies:
     get:
-      description: 'Visible currencies in the registry. Collateral is USDC (6-decimal) on the chain named by `blockchain_key`. Fields describing operator-custodied funding — deposit and withdrawal fees, minimums, enabled flags — are retained for schema stability and do not apply: funding happens on your own Safe.'
+      description: 'Visible currencies in the registry. Collateral is USDC (6-decimal) on the chain named by `blockchain_key`. Deposit and withdrawal fee, minimum and enabled fields are retained for schema stability and do not apply: funding happens on your own Safe.'
       parameters: []
       responses:
         "200":
