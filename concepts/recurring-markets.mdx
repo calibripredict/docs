@@ -54,12 +54,12 @@ disagreement is somebody watching one number and being paid on another.
 
 ## What settles a window
 
-A candle-direction window resolves on one question: **did the candle close at or
-above its own open?**
+A candle-direction window resolves on one question: **did this window close at or
+above the previous window's close?**
 
-- The **open** is fixed the moment the window starts. It is shown from the exchange's own candle, not from the first price the chart happened to see — so arriving mid-window still shows you the real level to beat.
+- The **level to beat** is the previous window's close. It is fixed the moment the window starts, so arriving mid-window still shows you the real level to beat. The candle's own open is not used — see [Up/down markets](/concepts/resolution-sources#up%2Fdown-markets).
 - The **close** moves until the window ends, and it is the same number the resolution source compares against.
-- **A tie resolves up.** `close == open` exactly is a real outcome on a quiet five-minute market, not a rounding artefact, and the rule is stated rather than left to chance.
+- **A tie resolves up.** A close exactly equal to the previous close is a real outcome on a quiet five-minute market, not a rounding artefact, and the rule is stated rather than left to chance.
 
 <Note>
   There is a short gap between a window closing *by the clock* and the final candle being confirmed. During it the displayed close is still forming. The app distinguishes the two states so you are never shown a "final" price that then moves.
