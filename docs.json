@@ -94,7 +94,8 @@
               "api-reference/quickstart",
               "api-reference/authentication",
               "api-reference/errors",
-              "api-reference/rate-limits"
+              "api-reference/rate-limits",
+              "api-reference/status"
             ]
           },
           {

@@ -124,14 +124,17 @@ Responses are **plain JSON** — a resource object or an array of them. There is
 **no `{ success, data }` envelope**.
 
 Monetary and volume values are **strings** — parse them as decimals, not floats.
+Ids are **numbers**, except on-chain token ids, which are decimal strings. A field
+that can be empty is always present as `null`. Timestamps named `*_at` are RFC
+3339 in UTC to the second; `timestamp` fields are Unix seconds.
 
 ```json
 {
   "id": 90231,
-  "market": "12",
+  "market_id": 12,
   "side": "yes",
   "ord_type": "limit",
-  "price": "0.60",
+  "price": "0.6",
   "remaining_volume": "100",
   "origin_volume": "100",
   "locked": "61.68",
@@ -156,8 +159,9 @@ header. See [Authentication](/api-reference/authentication).
 
 ## Pagination
 
-List endpoints that page accept `page` and `limit` (or similar). Totals come
-back in response headers:
+List endpoints that page accept `page` and `limit` (or similar) — among them
+`GET /pythia/orders` and `GET /pythia/public/events`. Totals come back in
+response headers:
 
 | Header | Meaning |
 |---|---|

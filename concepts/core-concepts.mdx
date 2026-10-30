@@ -63,9 +63,11 @@ buyer — and settlement pays whoever holds the winning side.
 
 - Your **position** in a market is the set of contract legs you hold (net YES,
   net NO, or flat).
-- You can hold a position to resolution or **sell** it before then. Buying the
-  opposite side does not net against the first — each leg is collateralised
-  independently, so it locks additional capital instead of returning any.
+- You can hold a position to resolution or **sell** it before then. Selling is
+  the only way to exit early: the sale's USDC is yours once the trade settles
+  on-chain. Buying the opposite side does not net against the first — each leg
+  is collateralised independently, so it locks additional capital until the
+  market resolves, when each YES+NO pair pays 1.00.
 
 ## Settlement — winner takes 1.00, loser takes 0
 

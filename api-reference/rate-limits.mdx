@@ -14,6 +14,21 @@ Every limit below is enforced server-side and is not configurable per account.
 A throttled request returns **`429 Too Many Requests`**. Identity endpoints tag
 the body with the error code `identity.too_many_requests`.
 
+The `/atlas` limits below also send three headers on every counted request,
+throttled or not:
+
+| Header | Value |
+|---|---|
+| `X-RateLimit-Limit` | The allowance for this window |
+| `X-RateLimit-Remaining` | Requests left in it |
+| `X-RateLimit-Reset` | Unix time (seconds) when the window resets |
+
+Atlas sends no `Retry-After`; read `X-RateLimit-Reset` instead. The `/pythia`
+order limit sends the same three headers and also `Retry-After` (seconds) on a
+`429`. Its windows are
+fixed, starting at your first counted request, and have no extra block period —
+the allowance is back as soon as the window ends.
+
 <Warning>
   Several identity limits **block for longer than the window they measure**. Ten failed sign-in attempts in a minute does not free up after that minute — it blocks for five. Retrying at the window boundary re-arms the block; see [Backing off](#backing-off).
 </Warning>
@@ -57,12 +72,34 @@ Keyed **per member**.
 
 | Endpoints | Allowance |
 |---|---|
-| `POST /atlas/account/orders` | 120 per minute |
+| `POST /atlas/account/orders` (signed orders)<br/>`POST /atlas/account/orders/batch`<br/>`POST /atlas/account/orders/{id}/replace` | 600 per minute, **shared**; a batch counts one per order in it |
+| `POST /pythia/orders`<br/>`POST /pythia/orders/{id}/cancel`<br/>`POST /pythia/orders/cancel` | 600 per minute, **shared** by all three |
 | `POST /atlas/account/wallet/relay` | 30 per 5 minutes |
-| `POST /atlas/account/wallet/passkey`<br/>`POST /atlas/account/wallet/session-key`<br/>`DELETE /atlas/account/wallet/session-key`<br/>`POST /atlas/account/market_requests` | 5 per hour |
+| `POST /atlas/account/wallet/passkey`<br/>`POST /atlas/account/wallet/owners`<br/>`POST /atlas/account/wallet/session-key`<br/>`DELETE /atlas/account/wallet/session-key`<br/>`POST /atlas/account/market_requests` | 5 per hour, per URL |
+| `POST /atlas/account/bridge/transfers/{id}/consent` | 10 per minute |
+| `GET /atlas/account/bridge/withdraw/quote` | 10 per minute |
+| `POST /atlas/account/onramp/checkout-sessions` | 20 per 10 minutes |
+| `GET /atlas/account/onramp/checkout-sessions/{uid}` | 60 per 10 minutes, across all checkouts |
+| `POST /atlas/account/withdraws` (custodial withdrawals) | 10 per 10 minutes |
 
-Order placement is the loosest limit on the API at two per second sustained,
+Order placement is the loosest limit on the API at ten per second sustained,
 because it is the one endpoint where a legitimate client is genuinely fast.
+
+The signed-order budget on `/atlas` and the engine budget on `/pythia` are
+**separate**. Placing a signed order counts against the `/atlas` budget only;
+cancelling it counts against the `/pythia` one. A replace counts as one order
+on `/atlas` and nothing on `/pythia`, so re-quoting by replace costs half what
+cancel-then-place does. A batch of 20 orders counts 20; a batch over the
+remaining budget is refused whole, never partly placed, and leaves the rest
+of the budget untouched. The engine budget is shared by
+creates and cancels together, so a client that re-quotes by cancel-and-replace
+spends one engine request per cancel. A throttled engine request returns `429`
+with `market.order.rate_limited`.
+
+The 5-per-hour class is counted **per URL**, not per method: `POST` and `DELETE`
+on `/wallet/session-key` are the same URL and share one bucket of 5, while
+`/wallet/passkey`, `/wallet/owners`, `/wallet/session-key` and
+`/market_requests` each have their own.
 
 The relay limit is tighter than it looks because **the operator pays the gas** for
 every relayed transaction — it is a spend limit as much as a rate limit. The
@@ -72,7 +109,9 @@ client repeats in a loop.
 ## Market data
 
 Public market-data reads are **not currently rate-limited**, but they are cached
-— see the `Cache-Control` table in the [API overview](/api-reference/introduction).
+for **5 to 15 seconds** — 5 on live data such as order books, depth, the trade
+tape and tickers, 15 on browse data such as events and markets. See
+[Caching](/api-reference/introduction#caching) in the API overview.
 Polling inside the TTL returns the same bytes and gains you nothing.
 
 <Warning>
@@ -99,7 +138,7 @@ Three rules that matter more than the curve:
 
 ## If you need more
 
-Order placement at 120/minute is sized for a normal trading client. If you are
+Order placement at 600/minute is sized for a quoting client. If you are
 building something that genuinely needs more — a market maker quoting across many
 markets — raise a support ticket at
 [support.calibri.io/contact](https://support.calibri.io/contact).

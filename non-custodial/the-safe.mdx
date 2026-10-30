@@ -112,7 +112,7 @@ Returns your funding config: `proxy_address` (your Safe), `owner_address` (your 
 | `unlinked` | Custodial-only — no wallet linked and no passkey enrolled |
 
 <Warning>
-  Do not trade on `setup_required`. An order placed before the approvals land will **rest on the book and then fail to settle** — worse than being rejected outright. Only `ready` is safe to trade on.
+  Do not trade on `setup_required`. An order placed before the approvals land is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. A Safe that stops being ready **after** an order is placed — an approval revoked, USDC moved out — can fail to settle a match; see [If a match fails to settle](/non-custodial/signed-orders#if-a-match-fails-to-settle).
 </Warning>
 
 <Note>

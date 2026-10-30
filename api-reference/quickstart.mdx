@@ -72,7 +72,7 @@ sequential nonces — relay those **in order**. Re-read the config until
 `safe_status` is `ready`.
 
 <Warning>
-  Do not place orders on `setup_required`. The order will rest on the book and then **fail to settle** — worse than being rejected. Only `ready` is safe to trade on. Full detail in [The Safe](/non-custodial/the-safe).
+  Do not place orders on `setup_required`. The order is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Full detail in [The Safe](/non-custodial/the-safe).
 </Warning>
 
 ## 3. Fund the Safe
@@ -96,10 +96,24 @@ operate; they are always `"0"`. See [Balances](/non-custodial/balances).
 Public, no authentication:
 
 ```
+GET /api/v2/pythia/public/events?q=bitcoin&expand_series=true&page=1&limit=100
+GET /api/v2/pythia/public/events/{slug or id}
 GET /api/v2/pythia/public/markets
+GET /api/v2/pythia/public/markets?token_id={ctf token id}
 GET /api/v2/pythia/public/markets/{market}/order-book
 GET /api/v2/pythia/public/markets/{market}/ticker
 ```
+
+- **`q`** searches event titles, descriptions, categories, tags and market
+  titles. Paging is `page` / `limit` (up to 100), with the `Total` header.
+- A rolling series (a five-minute crypto window, say) is listed as **one** event
+  by default. **`expand_series=true`** lists every window as its own event.
+- **`/public/events/{…}`** takes the slug or the numeric event id that markets,
+  orders and positions carry.
+- **`token_id`** finds the live market holding that outcome token
+  (`yes_token_id` / `no_token_id`, exactly as published); `[]` when none.
+- Every market carries its limits (`min_amount`, `amount_precision`,
+  `min_price`, `max_price`) and `open_interest`.
 
 ## 5. Sign and place an order
 
@@ -115,8 +129,9 @@ Build the EIP-712 `Order`, sign it, and post it:
 
 ```json
 {
-  "market": "will-x-happen",
+  "market_id": 12,
   "side": "yes",
+  "direction": "buy",
   "ord_type": "limit",
   "price": "0.60",
   "volume": "100",
@@ -125,12 +140,18 @@ Build the EIP-712 `Order`, sign it, and post it:
 }
 ```
 
-Returns `201` with the order object. The struct, the unit rules and the
-signature types are in [Signed orders](/non-custodial/signed-orders) — three
-things catch people out:
+Returns `201` with the order object. Up to 20 orders go in one request with
+`POST /api/v2/atlas/account/orders/batch`, and
+`POST /api/v2/atlas/account/orders/{id}/replace` swaps a resting order for a new
+one in one step. The struct, the unit rules, the signature types, batch and
+replace are in [Signed orders](/non-custodial/signed-orders) — three things catch
+people out:
 
-- **Units are 6-decimal.** `takerAmount = volume × 1e6`,
-  `makerAmount = price × volume × 1e6`.
+- **`market_id` is the numeric market id** (`12`), not a slug — read it from
+  the `id` of a market in the public event or market payload.
+- **Units are 6-decimal.** On a buy, `takerAmount = volume × 1e6`,
+  `makerAmount = price × volume × 1e6`; a sell swaps the two and signs
+  `side: 1`.
 - **Sign the served `domain_name`**, never a copied constant.
 - **On a passkey Safe (`signature_type: 3`), sign the SafeMessage — not the
   order hash.** Safe re-wraps the hash before checking it, so signing
@@ -145,6 +166,9 @@ things catch people out:
 ## 6. Follow the order
 
 **`GET /api/v2/pythia/orders?state=wait`** — your resting orders.
+**`GET /api/v2/pythia/orders?state=wait,done,cancel,reject`** — every order, in
+any state. Open orders are read live; a list that includes a finished state is
+read from order history, which trails the live book by about a second.
 **`GET /api/v2/pythia/orders/{id}`** — one order, open or terminal.
 
 | Field | What it tells you |
@@ -152,10 +176,19 @@ things catch people out:
 | `state` | `wait` (resting) · `done` · `cancel` · `reject` |
 | `remaining_volume` | Still working on the book |
 | `filled_volume` | Matched so far |
+| `avg_price` | Average fill price, in the order's own outcome; `null` until it fills |
+| `filled_cost` | Cash for the filled part (paid on a buy, received on a sell), before fees |
+| `fee` | Taker fee charged to this order so far; `"0"` for a maker |
 | `contracts_count` | How many fills it has produced |
 | `locked` | Currently reserved against this order |
+| `token_id` | The on-chain token of the order's outcome; `null` if the market has none |
+| `ioc` · `post_only` · `expires_at` | How the order was placed; `expires_at` is when its signature lapses |
+
+Timestamps are RFC 3339 in UTC.
 
 Cancel with **`POST /api/v2/pythia/orders/{id}/cancel`** → `{ "id": 1420, "state": "cancel" }`.
+Cancel everything with **`POST /api/v2/pythia/orders/cancel`** (optionally
+`?market_id=` and/or `?side=yes|no`, or the same as a JSON body); the response lists the cancelled `orders`.
 
 Then the results of the fill:
 
@@ -164,6 +197,14 @@ GET /api/v2/atlas/account/contracts    # your fills
 GET /api/v2/atlas/account/positions    # net holdings, and what is sellable now
 GET /api/v2/atlas/account/rewards/pending   # maker rebates accrued so far
 ```
+
+Each fill on `/account/contracts` carries `order_id` — your own order on that
+fill — so you can attribute fills to orders (or filter with `?order_id=`). It
+also says whether you were `taker_or_maker`, the `fee` **you** paid (a maker
+pays none), and the `token_id` of your side. `?time_from=` (inclusive) and
+`?time_to=` (exclusive), in Unix seconds, bound the list. Positions carry `token_id` too.
+`price`, `avg_price`, `volume`, `funds_spent`, `proceeds` and
+`taker_fee_amount` are **decimal strings**; parse them as decimals, not floats.
 
 <Note>
   Orders are **placed** through `/atlas` (so the signature is validated and attached) and **read** back from `/pythia`. Listing and cancelling are the same calls for every order, however it was placed.

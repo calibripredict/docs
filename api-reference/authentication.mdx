@@ -15,6 +15,68 @@ Public endpoints need no authentication.
   Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign. A compromised API key can read your account — it cannot spend from your Safe.
 </Warning>
 
+## API keys
+
+Create keys in **Settings** on calibri.io. Creating, changing or deleting a key
+requires a current two-factor code, so 2FA must be enabled on the account. The
+secret is shown once, when the key is created.
+
+### Scopes
+
+Each key carries `read`, optionally `trade`, and optionally `withdraw`, chosen
+when you create it:
+
+| Scope | Allows |
+|---|---|
+| `read` | `GET` requests only, including deposit, withdrawal, transfer and ledger history. A key with `read` alone is read-only: it suits an accountant or a reporting tool |
+| `trade` | Any request an API key may make (includes `read`) |
+| `withdraw` | Custodial withdrawals (`/atlas/account/withdraws`) without a two-factor code, to a saved beneficiary only. Off unless you turn it on |
+
+Keys created before scopes existed act as both `read` and `trade`, never
+`withdraw`. A request outside the key's scope is refused with `403`
+`authz.invalid_permission_scope`.
+
+### Withdrawals with an API key
+
+`withdraw` applies to a custodial balance only. A self-custody account withdraws
+on-chain from its Safe, which needs a wallet signature, so Settings offers the
+scope only to accounts without one.
+
+A `withdraw` key sends no two-factor code, so it is limited to destinations you
+have already proved you control:
+
+- `beneficiary_id` must name a beneficiary you added in the browser **and
+  confirmed with its emailed PIN**.
+- A raw `address`, or a beneficiary saved by an earlier withdrawal to a raw
+  address without a PIN, is refused with `422`
+  `account.withdraw.api_requires_saved_beneficiary`.
+- The key cannot add or confirm beneficiaries; that stays browser-only.
+
+Anyone holding the key and its secret can send funds to those saved addresses,
+so give `withdraw` only to a key whose secret you store as carefully as your
+password.
+
+### Browser-only actions
+
+Some actions change who controls the account or where its money can go. An API
+key cannot reach them — they return `403` and must be done in the browser,
+signed in. The exceptions: any key may **read** withdrawal and transfer history
+(`GET`), and a key with the `withdraw` scope can make custodial withdrawals (see
+above):
+
+- API key management
+- Linking a wallet
+- Changing your email
+- Webhook settings
+- Passkey registration (`/atlas/account/wallet/passkey`)
+- Beneficiaries
+- Making custodial withdrawals (`/atlas/account/withdraws`), and withdrawal quotes
+- Making internal transfers
+- GraphQL
+
+Self-custody actions — orders, Safe relays, signing-key changes — are not on
+this list: each already needs a wallet signature an API key cannot produce.
+
 ## API-key (HMAC) authentication
 
 Send three headers on every private request:
@@ -136,11 +198,16 @@ func sign(method, path, body string) map[string]string {
   Sign the body you actually send. If your HTTP client re-serialises JSON — reordering keys or changing whitespace — after you compute the signature, the signature will not match. Build the body string once, sign that string, and transmit it verbatim.
 </Note>
 
-### Clock skew
+### Clock skew and replay
 
-`X-Auth-Nonce` is checked against server time. Read
-`GET /api/v2/atlas/public/timestamp` (Unix **milliseconds**) to measure your
-offset before signing.
+`X-Auth-Nonce` is checked against server time: it must be within **10 seconds**
+of it, in either direction, or the request is rejected with
+`authz.nonce_expired`. Read `GET /api/v2/atlas/public/timestamp` (Unix
+**milliseconds**) to measure your offset before signing.
+
+Each signature is **single-use**. Sending the same signed request twice — same
+nonce, method, path and body — is rejected the second time with
+`authz.nonce_reused`. To retry, sign again with a fresh nonce.
 
 ## WebSocket
 
@@ -171,7 +238,10 @@ signs — and whether it can sign at all:
 |---|---|---|
 | **`3`** | A passkey | Only after you add a [second signing key](/non-custodial/signing-keys) — a passkey cannot sign outside its browser |
 | **`2`** | An address you hold the private key for (MetaMask, Rainbow, WalletConnect) | Yes — your key signs the order directly |
-| **Custodial** | Calibri holds your funds; there is no Safe | No signature is involved — orders are ordinary API calls |
+
+Every order on Calibri is a signed order placed through
+`POST /api/v2/atlas/account/orders`. The unsigned (custodial)
+`POST /api/v2/pythia/orders` is not available on Calibri.
 
 Open your type below.
 
@@ -240,11 +310,6 @@ Open your type below.
 
     A browser wallet like MetaMask will not hand its key to a server — use an
     account you control directly.
-  </Tab>
-  <Tab title="Custodial">
-    **Nothing extra to sign.** Orders placed from your Calibri balance carry no
-    order signature at all, and withdrawals go through the normal withdrawal
-    endpoints. The API key is everything your client needs.
   </Tab>
 </Tabs>
 

@@ -100,7 +100,8 @@ cap elapsed. A void is the same whichever way it happens.
 
 - **Every share pays 0.50 USDC, YES and NO alike.** The on-chain payout vector is
   `[1,1]`; the off-chain ledger pays the same figure from the market's escrow.
-- **The taker fee on every matched trade is refunded.**
+- **The taker fee on every matched trade is kept.** The trade happened and was
+  charged when it matched; a void only sets what each share pays.
 - **Resting (unmatched) orders are cancelled** and their locked collateral released
   in full. They never became positions.
 - **You redeem the 0.50 per share yourself**, exactly like a win. See

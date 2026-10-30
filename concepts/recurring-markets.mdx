@@ -24,6 +24,10 @@ countdown to close, and the windows listed ahead.
   Not every daily feed collapses. A tennis tour publishes a different fixture each day — those are genuinely different questions and each is listed in full. Only feeds that ask the *same* question each round collapse behind one card.
 </Note>
 
+<Note>
+  Through the API, `GET /api/v2/pythia/public/events` collapses a series the same way. Add `series={slug}` to list one series' windows, or `expand_series=true` to list every window of every series as its own event — what a trading client usually wants.
+</Note>
+
 ## Series vs tags
 
 Two different ways markets are grouped, and they are not interchangeable:

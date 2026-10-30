@@ -30,7 +30,7 @@ values and how to verify them.
 - **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature. The one thing that moves without it is the [bridge module](#cross-network-deposits), and all it can do is carry USDC sent to your address on another network to **your own Safe on Polygon**.
 - **The operator can only report** — CalibriResolver reports outcomes; it can't seize collateral. Redemption of winnings happens **directly from the CTF**, so your winnings are never custodied by the operator between resolution and redeem.
 - **You sign, the operator pays gas** — Deploying your Safe, approvals, order settlement, and redemption are all **relayed** by the operator. You sign; you never need to hold gas. The one exception you can opt in to is auto-redeem, where a single approval lets winnings be redeemed back into your Safe without signing each one.
-- **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or refunds. See [Market resolution](/non-custodial/resolution).
+- **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or is voided (0.50 per share). See [Market resolution](/non-custodial/resolution).
 
 ## Cross-network deposits
 

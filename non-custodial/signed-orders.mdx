@@ -24,11 +24,11 @@ maker), `owner_address` (what owns the Safe), `signature_type`,
 `session_keys_enabled`, `safe_status`, and the token ids.
 
 <Note>
-  The YES/NO token ids are also published on the **public** market payload as `ctf_yes_token_id` / `ctf_no_token_id`, so a client that already holds a market can build an order without a per-market authenticated call.
+  The YES/NO token ids are also published on the **public** market payload as `yes_token_id` / `no_token_id`, so a client that already holds a market can build an order without a per-market authenticated call.
 </Note>
 
 <Warning>
-  Check `safe_status` before signing. `setup_required` means approvals are still outstanding: an order placed then will **rest on the book and then fail to settle**, which is worse than being rejected. Only `ready` is safe to trade on.
+  Check `safe_status` before signing. `setup_required` means approvals are still outstanding, and an order placed then is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade.
 </Warning>
 
 <Warning>
@@ -54,19 +54,19 @@ Order(
   address maker,          // your Safe
   address signer,         // your wallet EOA — or the Safe itself, for POLY_1271
   address taker,          // 0x0 (public)
-  uint256 tokenId,        // YES or NO ERC-1155 token id for the order side
-  uint256 makerAmount,    // USDC collateral in, 6-decimal base units
-  uint256 takerAmount,    // outcome tokens out, 6-decimal base units
+  uint256 tokenId,        // YES or NO ERC-1155 token id for the order's outcome
+  uint256 makerAmount,    // what you give: USDC on a buy, outcome tokens on a sell
+  uint256 takerAmount,    // what you get:  outcome tokens on a buy, USDC on a sell
   uint256 expiration,     // unix seconds, non-zero
   uint256 nonce,
   uint256 feeRateBps,     // must be 0
-  uint8   side,           // 0 = BUY (both YES and NO legs are BUYs that mint)
+  uint8   side,           // 0 = BUY, 1 = SELL — must match the order's `direction`
   uint8   signatureType   // 2 = POLY_GNOSIS_SAFE, 3 = POLY_1271
 )
 ```
 
 <Info>
-  YES vs NO is carried **only** by `tokenId`. `side` is always `0` (BUY) — both legs are buys that mint a complete set.
+  YES vs NO is carried **only** by `tokenId`. `side` is the buy/sell axis: `0` (BUY) for a `direction: "buy"` order, `1` (SELL) for a `direction: "sell"` order. A signature whose `side` does not match the order's `direction` is rejected.
 </Info>
 
 ### Signature types
@@ -138,20 +138,40 @@ See [Trading without a prompt per order](/non-custodial/session-keys).
 `CTF_UNIT_SCALE = 1_000_000`. USDC and CTF outcome tokens are **both
 6-decimal** — 1 contract = 1 outcome token = `1e6` base units.
 
-- `takerAmount == round(volume * 1e6)` exactly.
-- `makerAmount == round(legPrice * volume * 1e6)`, where **`legPrice` is the
-  order's own side price** — a NO order signs the NO's own price, **not** an
-  inverted YES probability.
-- The implied price `makerAmount / takerAmount` must equal `price` within
+Which amount is the token side depends on the direction:
+
+| `direction` | `side` | `makerAmount` (you give) | `takerAmount` (you get) |
+|---|---|---|---|
+| `buy` | `0` | USDC paid = `round(legPrice * volume * 1e6)` | Outcome tokens = `round(volume * 1e6)` |
+| `sell` | `1` | Outcome tokens = `round(volume * 1e6)` | USDC received = `round(legPrice * volume * 1e6)` |
+
+- The **token** amount must equal `round(volume * 1e6)` exactly.
+- **`legPrice` is the order's own outcome price** — a NO order signs the NO's
+  own price, **not** an inverted YES probability.
+- The implied price (USDC amount / token amount) must equal `price` within
   `1e-4`.
+- `price` and `volume` must be within the market's precision — prices are whole
+  cents (`0.27`, not `0.275`). A finer value is **rejected**
+  (`market.order.invalid_price_precision` /
+  `market.order.invalid_volume_precision`), never rounded.
 
 **Example** — buy 100 YES contracts at `0.60`:
 
 | Field | Value |
 |---|---|
-| `takerAmount` | `100000000` (100 × 1e6) |
-| `makerAmount` | `60000000` (0.60 × 100 × 1e6) |
+| `side` | `0` |
+| `makerAmount` | `60000000` (0.60 × 100 × 1e6 USDC) |
+| `takerAmount` | `100000000` (100 × 1e6 tokens) |
 | implied price | `60000000 / 100000000 = 0.60` ✓ |
+
+**Example** — sell 100 YES contracts at `0.65`:
+
+| Field | Value |
+|---|---|
+| `side` | `1` |
+| `makerAmount` | `100000000` (100 × 1e6 tokens) |
+| `takerAmount` | `65000000` (0.65 × 100 × 1e6 USDC) |
+| implied price | `65000000 / 100000000 = 0.65` ✓ |
 
 ## 5. Sign and build the wire object
 
@@ -188,16 +208,26 @@ Request body:
 
 ```json
 {
-  "market": "will-x-happen",
+  "market_id": 12,
   "side": "yes",
+  "direction": "buy",
   "ord_type": "limit",
   "price": "0.60",
   "volume": "100",
   "post_only": false,
   "ioc": false,
+  "client_order_id": "bot-7f3a-0001",
   "signed_order": { "…the object from step 5…": "" }
 }
 ```
+
+| Field | Rule |
+|---|---|
+| `market_id` | The **numeric market id** (`12`; a numeric string is also accepted) — not the event or market slug. Read it from the `id` of a market in `GET /api/v2/pythia/public/events/{slug}` or `GET /api/v2/pythia/public/markets` |
+| `side` | The outcome, `yes` or `no` — never buy/sell |
+| `direction` | `buy` (default) or `sell`. Must match the signed `side` (`0` / `1`) |
+| `price` | Whole cents within the market's precision, `0 < price < 1` |
+| `client_order_id` | Optional. Your own id, 1–64 characters of `A-Z a-z 0-9 _ -` |
 
 `ioc` (immediate-or-cancel) is for a **market-style** order: a limit at a price
 ceiling, signed with a short `expiration`. With `ioc: true`, whatever the book
@@ -208,14 +238,97 @@ limit orders (both are `ord_type: "limit"`). Ignored if `post_only` is set.
 If attaching the signature fails, the order is cancelled so no unsignable orphan
 is left behind.
 
+### Selling a position
+
+A `direction: "sell"` order offers outcome tokens you already hold, so it locks
+inventory, not cash. It must be backed by a sellable position: read
+`sellable_volume` from `GET /api/v2/atlas/account/positions` and sell no more than
+that. A sell larger than your sellable holding is rejected with `422`
+(`Insufficient position to sell: …`).
+
+Selling is how you exit a position before resolution. Buying the opposite
+outcome does not: YES and NO are separate positions, each backed by its own stake,
+so a YES holder who buys NO locks more USDC and holds both until the market
+resolves, when each YES+NO pair redeems for 1.00. There is no endpoint that merges
+your own YES and NO back into USDC early.
+
+A sell's proceeds are held as pending until the match settles on-chain, then they
+are in your Safe and spendable. If the match fails to settle, the sale is undone
+and the tokens come back — see
+[If a match fails to settle](#if-a-match-fails-to-settle).
+
+### `client_order_id`
+
+Send your own id to make a placement safe to retry. It is echoed on the order and
+on its `order` WebSocket frames, and you can look an order up by it with
+`GET /api/v2/pythia/orders?client_order_id=…`. Reusing an id you sent in the last
+**7 days** is rejected with `409 order.duplicate_client_order_id`, so a retried
+request can never create a second order.
+
+### Several orders at once
+
+**`POST /api/v2/atlas/account/orders/batch`** takes up to 20 orders, each the
+body `POST /account/orders` takes, each with its own `signed_order`:
+
+```json
+{ "orders": [ { "market_id": 12, "side": "yes", "…": "" }, { "market_id": 12, "side": "no", "…": "" } ] }
+```
+
+Each order is validated and placed exactly as the single route places it, one
+after another. The batch is **not atomic**: one order failing does not stop the
+others. The response is `200` with one entry per order, in request order:
+
+```json
+[
+  { "order": { "id": 1420, "state": "wait", "…": "" } },
+  { "error": { "status": 422, "errors": ["Insufficient balance"] } }
+]
+```
+
+A body that is not an array of 1 to 20 orders is `422` and places nothing. The
+batch counts one order per element against the order rate limit — see
+[Rate limits](/api-reference/rate-limits).
+
+### Replacing an order
+
+**`POST /api/v2/atlas/account/orders/{id}/replace`** cancels one of your open
+orders and places a new one in its place. The body is the body of
+`POST /account/orders`, with a freshly signed `signed_order`, for the **same
+market**. A new `client_order_id` is needed if you send one; the old order's id
+stays taken.
+
+The new order is validated in full first, so a replacement that would be
+refused leaves the old order resting untouched. The cancel and the placement then
+run as one step on the market's matching engine: no fill can land on the old
+order in between. On success the response is `201` with the new order, as
+`POST /account/orders` returns it, plus `replaced_order_id`. The new order has
+its own id and is fresh for its full volume — whatever the old one had already
+filled stays on the old order.
+
+| Status | Error | Meaning |
+|---|---|---|
+| `404` | `market.order.not_found` | No such order of yours |
+| `409` | `order.not_open` | The old order already filled or was cancelled; nothing was placed |
+| `422` | `order.replace_market_mismatch` | The new order is for a different market |
+| `422` | (validation message) | The new order failed validation; the old order is untouched |
+| `503` | `market.engine.busy` | The engine could not take the request; nothing changed — retry |
+
+If the engine cancelled the old order but then refused the new one, the error
+body also carries `replaced_order_id`: the old order is gone and nothing
+replaced it.
+
 ### Server-side validation
 
 Calibri fully validates the signed order before anything is placed, rejecting with
 `422` unless:
 
-- it is a **limit** order with a valid side and `price ∈ (0, 1)`;
-- the market is CTF-registered and `token_id` matches the side's token;
-- `side == 0`, `taker == 0x0`, `fee_rate_bps == 0`;
+- it is a **limit** order with a valid side, a valid direction, and
+  `price ∈ (0, 1)`;
+- the market is CTF-registered (looked up by numeric id) and `token_id` matches
+  the side's token;
+- `price` and `volume` are within the market's precision;
+- the signed `side` matches the direction (`0` for `buy`, `1` for `sell`),
+  `taker == 0x0`, `fee_rate_bps == 0`;
 - `expiration` is non-zero, unexpired, and within 365 days;
 - amounts match the volume and price (see the unit rules above);
 - the maker is a Safe **registered to you** and settlement-ready;
@@ -243,10 +356,38 @@ A check that cannot be completed — blockchain service unreachable, Safe
 readiness unknown — **fails closed**: the order is rejected rather than placed
 unverified.
 
-Common errors: `422 signed_order with signature is required for non-custodial
-orders`, `422 Member safe is not settlement-ready`, `422 signed_order signature
-does not match the signer`. Engine `4xx` responses are passed through; upstream
-failures return `502`.
+A request with no `signed_order`, or one without a `signature`, is rejected
+with `400 signed_order with signature is required for non-custodial orders`.
+
+Common `422` errors: `Market is not CTF-registered` (often a slug sent as
+`market`), `signed_order side must be SELL for a sell order`, `Member safe is not
+settlement-ready`, `signed_order signature does not match the signer`. Engine
+`4xx` responses are passed through — for example `409
+order.duplicate_client_order_id`; upstream failures return `502`.
+
+## If a match fails to settle
+
+The engine matches off-chain; the operator then submits the match to the exchange
+contract. An order is only accepted from a `ready` Safe, but a Safe can stop being
+able to settle after its order is placed — USDC moved out, an approval revoked, the
+signing key revoked. The match transaction then reverts.
+
+Network and broadcast errors are retried. A revert is final once it is confirmed,
+and the match is then **voided** off-chain — rolled back as if it never happened:
+
+- Both sides get back what the match moved: each buyer's stake, a seller's
+  tokens, or both sellers' tokens on a merge. The **taker fee is refunded**.
+- Nobody is debited. The member whose Safe could not settle is frozen and their
+  resting orders are cancelled.
+- If the other side was the **maker** (its order was resting), the order gets the
+  voided volume back and keeps its place on the book.
+- If the other side was the **taker**, its order is cancelled and its stake
+  refunded. It does not get the fill back; send the order again.
+
+Both members receive a `contract` frame with `state: "voided"` and a balance
+update on the private WebSocket, and the affected orders show `cancel` or are
+restored as above. A match that gets no on-chain answer at all within two hours is
+not voided automatically; the operator resolves it by hand.
 
 ## Related
 

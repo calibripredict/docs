@@ -14,11 +14,33 @@ wss://calibri.io/api/v2/websocket/private    # public + private on one connectio
 
 Subscribe by adding one or more `stream=` query parameters to the connection
 URL. You can combine as many as you like — including public and private together
-— so a client needs **one** connection, not several.
+— so a client needs **one** connection, not several. A single `stream=` can also
+carry a comma-separated list.
 
 ```
 ?stream=12.ob-inc&stream=order&stream=contract&stream=balance
+?stream=12.ob-inc,13.ob-inc,order,contract
 ```
+
+### Changing subscriptions on an open connection
+
+Send a JSON message to add or drop streams without reconnecting:
+
+```json
+{ "event": "subscribe", "streams": ["14.ob-inc", "14.trades"] }
+{ "event": "unsubscribe", "streams": ["12.ob-inc"] }
+```
+
+Each is acknowledged with the full list of streams the connection now holds:
+
+```json
+{ "success": { "message": "subscribed", "streams": ["12.ob-inc", "14.ob-inc", "14.trades", "order"] } }
+```
+
+### Keepalive
+
+Send the text frame `ping` (not JSON); the server answers with the text frame
+`pong`. A `ping` does **not** extend a public connection's lifetime — see below.
 
 Each message is a JSON object **keyed by the stream name**, so one handler can
 switch on the key:
@@ -26,6 +48,26 @@ switch on the key:
 ```json
 { "12.ob-inc": { "asks": [], "bids": [["0.60","100"]], "sequence": 9713 } }
 ```
+
+## Connection limits
+
+| Connection | Limit | When it is hit |
+|---|---|---|
+| Public (`/websocket/public`, signed out) | **2 minutes** from open | Closed with `4001` `sign_in_required`. The lifetime is fixed from the moment the connection opens; pings and traffic do not extend it |
+| Public, per IP | **20** open at once | The **new** connection is refused with `4029` `too_many_public_connections`; the existing ones are untouched |
+| Authenticated, per member | **10** open at once | The member's **oldest** connection is closed with `4008` `too_many_connections`, so a reconnect always succeeds |
+| Any | Client not reading fast enough | Closed with `1013` `backlog` once too much is queued for it. Reconnect and resync from REST |
+| Authenticated upgrade | Signature or credentials rejected | Closed with `1008` `Authorization failed` |
+
+An authenticated connection — the API-key-signed upgrade on
+`/api/v2/websocket/private` — has **no lifetime cap**, and it can subscribe to
+public streams as well as private ones. A bot should open **one authenticated
+connection** and put every stream it needs on it, rather than a public
+connection for market data next to a private one for its account.
+
+<Warning>
+  The 10-per-member limit counts every authenticated connection you hold, browser tabs included. A client that reconnects without closing its old socket evicts its own oldest connections, one `4008` at a time.
+</Warning>
 
 ## Channel reference
 
@@ -38,15 +80,86 @@ product id.
 | `{market}.ob-inc` | none | Order-book increments. Subscribing also delivers an initial `.ob-snap` |
 | `{market}.kline-{period}` | none | OHLC candle updates — `[ts, o, h, l, c, v]` |
 | `{market}.trades` | none | Public trade tape (matched contracts), including `taker_side` |
+| `{market}.ticker` | none | Rolling 24h figures — the same object as `GET /public/markets/{market}/ticker` |
 | `crypto.{symbol}` | none | Underlying-asset price ticks |
 | `order` | signed | Your order create / update / fill / cancel events |
 | `contract` | signed | Your own fills |
 | `balance` | signed | Your balance changes |
 | `position` | signed | Your holdings, after any change to one |
 
+## Order-book format
+
+Subscribing to `{market}.ob-inc` first delivers the latest snapshot (keyed
+`{market}.ob-snap`) and the increments since it, then each new increment as it
+happens. Levels are `[price, volume]` string tuples:
+
+```json
+{ "12.ob-snap": { "bids": [["0.60","100"],["0.59","40"]], "asks": [["0.63","25"]], "sequence": 9712, "timestamp": 1795000123 } }
+{ "12.ob-inc":  { "bids": [["0.60","0"]], "sequence": 9713, "timestamp": 1795000124 } }
+```
+
+- **`bids` are YES bids.** **`asks` are NO bids, expressed at the
+  YES-equivalent price** — a NO bid at `0.37` appears as an ask at `0.63`. To
+  show it as a NO price, use `1 − price`.
+- An increment carries the new **total** volume at one level, on whichever side
+  changed. Volume `"0"` means the level is empty: remove it.
+- Each increment's `sequence` is one more than the previous one; a snapshot
+  carries the sequence it is current to.
+
 <Warning>
-  Order-book increments carry a `sequence`. **If it skips, re-subscribe** to get a fresh `.ob-snap` and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
+  **If `sequence` skips, re-subscribe** (unsubscribe and subscribe to `{market}.ob-inc` again) to get a fresh snapshot and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
 </Warning>
+
+## Ticker format
+
+`{market}.ticker` carries the same object as
+`GET /api/v2/pythia/public/markets/{market}/ticker`. Every figure is a string:
+
+```json
+{ "12.ticker": {
+    "timestamp": 1795000123,
+    "ticker": {
+      "buy": "0.58", "buy_volume": "120", "sell": "0.68", "sell_volume": "40",
+      "low": "0.55", "high": "0.72",
+      "last": "0.62", "open": "0.6", "volume": "1500.25", "quote_volume": "900.5",
+      "avg_price": "0.6", "change_24h": "0.0333"
+    }
+  } }
+```
+
+`volume` is contracts traded in 24 hours and `quote_volume` the cash traded.
+`change_24h` is the move of `last` against `open` as a signed fraction —
+`"0.0333"` is +3.33% — and `null` when there is no open price. `timestamp` is
+Unix seconds.
+
+`buy` and `sell` are the best bid and best ask in YES terms, and `buy_volume` and
+`sell_volume` the size resting at each. All four are `null` when that side of
+the book is empty — never `"0"`, which would read as a price.
+
+A frame is sent within about five seconds of a figure changing, and once a minute
+for a market that has not moved. The figures trail fills by several seconds; use
+`{market}.trades` to see each fill as it happens.
+
+## Candle format
+
+`{market}.kline-{period}` carries one candle, the same row as
+`GET /api/v2/pythia/public/markets/{market}/k-line`: `[timestamp, open, high,
+low, close, volume]`, prices in YES terms, `timestamp` the Unix second the
+bucket starts. `{period}` is one of `1m`, `5m`, `15m`, `30m`, `1h`, `2h`, `4h`,
+`6h`, `12h`, `1d`, `3d`, `1w`. Buckets are counted in UTC from 1 January 1970,
+except weeks, which start Monday 00:00 UTC.
+
+```json
+{ "12.kline-1h": [1795000000, 0.60, 0.70, 0.58, 0.65, 240] }
+```
+
+A frame is sent within a second of a fill moving the candle, and again on each
+later fill in the same bucket, with the whole candle so far. A frame with a new
+`timestamp` starts the next candle; the last frame for the previous one is its
+final value. A bucket with no fills sends nothing. Load history with the REST
+route, then replace its last row with each frame of the same `timestamp`, or
+append a frame with a later one. The REST route's last row is the candle as it
+stands, the same as the latest frame.
 
 ## Authenticating a private connection
 
@@ -103,44 +216,127 @@ Throttled to roughly one message per second, newest-wins.
 
 ## Private streams
 
-**Order** — every create, partial fill, full fill, cancel, and rejection:
+Every frame below always carries every key listed for it; a key that does not
+apply is `null`, never left out. Ids are numbers, decimals are strings, `*_at`
+fields are RFC 3339 UTC to the second.
+
+**Order** — one frame per event, in three shapes. Keep your own copy of each
+order and **merge every frame into it by `id`**, rather than replacing it.
+
+Placed:
 
 ```json
 {
   "order": {
     "id": 173757,
-    "market": "12",
+    "timestamp": 1795000019,
+    "market_id": 12,
     "side": "yes",
     "direction": "buy",
-    "ord_type": "limit",
-    "price": "0.60",
+    "price": "0.6",
     "state": "wait",
     "origin_volume": "100",
     "remaining_volume": "100",
-    "locked": "61.68",
-    "contracts_count": 0,
-    "created_at": "2026-08-07T08:46:59Z",
+    "ord_type": "limit",
+    "ioc": false,
+    "client_order_id": "bot-7f3a-0001",
     "updated_at": "2026-08-07T08:46:59Z"
   }
 }
 ```
 
-**Trade** — your own fills. **Balance** — changes to the pool collateralising
-your orders, i.e. the mirror of your Safe:
+`ioc: true` marks an immediate-or-cancel order — that `wait` will not rest on
+the book. `client_order_id` is `null` when you sent none.
+
+Filled, on each fill of the order:
+
+```json
+{
+  "order": {
+    "id": 173757,
+    "client_order_id": "bot-7f3a-0001",
+    "market_id": 12,
+    "side": "yes",
+    "direction": "buy",
+    "state": "wait",
+    "remaining_volume": "40",
+    "contracts_count": 2,
+    "updated_at": "2026-08-07T08:47:03Z"
+  }
+}
+```
+
+`state` turns `done` when nothing remains.
+
+Cancelled, rejected or refunded — including the refund of an IOC remainder and
+an order cancelled as its signature nears expiry:
+
+```json
+{
+  "order": {
+    "id": 173757,
+    "market_id": 12,
+    "side": "yes",
+    "direction": "buy",
+    "state": "cancel",
+    "remaining_volume": "40",
+    "locked": "0",
+    "client_order_id": "bot-7f3a-0001",
+    "updated_at": "2026-08-07T08:47:10Z"
+  }
+}
+```
+
+`state` is `cancel`, `done` or `reject`.
+
+**Contract** — your own fills, one frame per match, with the fields of your row
+in `GET /account/contracts`:
+
+```json
+{
+  "contract": {
+    "id": 41276,
+    "market_id": 12,
+    "order_id": 173757,
+    "side": "yes",
+    "direction": "buy",
+    "taker_or_maker": "taker",
+    "fee": "0.0168",
+    "price": "0.56",
+    "volume": "1",
+    "state": "active",
+    "created_at": "2026-08-07T08:47:03Z"
+  }
+}
+```
+
+`side` is the outcome you traded and `direction` whether you bought or sold it.
+`price` is in YES terms, like the tape: for a NO fill your price is `1 − price`.
+`fee` is what you paid, `"0"` as the maker.
+
+A void sends `id`, `market_id`, `price`, `volume` and `state: "voided"`, with
+`updated_at` in place of `created_at`; match it to the fill by `id`.
+
+**Balance** — changes to the pool collateralising your orders, i.e. the mirror
+of your Safe:
 
 ```json
 {
   "balance": {
     "currency": "usdc",
-    "balance": "10000.00",
+    "custody": "self",
+    "balance": "9938.32",
     "locked": "61.68",
-    "available": "9938.32",
+    "redeemable": null,
     "updated_at": "2026-08-07T08:46:59Z"
   }
 }
 ```
 
-Balance values are strings — parse as decimals, not floats.
+`balance` is what is spendable now, not the total — the total is `balance +
+locked`. `redeemable` is the winnings still to redeem from the chain; it is set
+on frames sent by a settlement, a void or a redemption, and `null`
+otherwise.
 
 <Warning>
   **Settlement does not credit a winner automatically.** On-chain resolution only makes the winning outcome token redeemable; the balance moves when **you redeem**. Do not wait on a balance event at resolution time — see [Redeeming winnings](/non-custodial/redeeming-winnings).
@@ -151,45 +347,69 @@ taker-fee reserve), cancellation, partial fills, rejection, redemption, and
 voids.
 
 **Position** — your holding in a market, after anything changes it: a fill, an
-exit, settlement, or a void.
+exit, settlement, or a void. The same fields as `GET /account/positions`:
 
 ```json
 {
   "position": {
-    "market": "12",
-    "outcome": "yes",
+    "market_id": 12,
+    "side": "yes",
     "custody": "self",
-    "qty": "100",
-    "locked_qty": "0",
-    "sellable_qty": "100",
-    "avg_price": "0.60",
-    "realized_pnl": "0.00",
+    "volume": "100",
+    "locked_volume": "0",
+    "sellable_volume": "100",
+    "avg_price": "0.6",
+    "realized_pnl": "0",
+    "settled_payout": null,
+    "source": null,
     "updated_at": "2026-08-07T08:46:59Z"
   }
 }
 ```
 
-`sellable_qty` is what you can offer right now — `qty` less anything already
-committed to a resting sell. `realized_pnl` banks at the moment you exit, so it
-moves on a sale rather than waiting for the market to resolve.
+`sellable_volume` is what you can offer right now — `volume` less anything
+already committed to a resting sell. `realized_pnl` banks at the moment you
+exit, so it moves on a sale rather than waiting for the market to resolve.
+`avg_price`, `realized_pnl`, `settled_payout` and `source` are `null` when the
+event that sent the frame did not produce them: a settlement sends
+`settled_payout`, a reconcile with the chain sends `source: "chain_reconcile"`.
 
 ## Reading the tape
 
-Each fill on `{market}.trades` carries `taker_side`: the outcome the **aggressor**
-bought, meaning the side that crossed the spread and paid the taker fee. It is
-`"yes"`, `"no"`, or `""`.
+Each fill on `{market}.trades` is one `trade` object, with the same keys
+whatever kind of fill it was:
+
+```json
+{ "14.trades": { "trade": {
+    "id": 41277, "market_id": 14, "match_type": "transfer", "side": "yes",
+    "price": "0.62", "volume": "3", "yes_locked": null, "no_locked": null,
+    "taker_side": "no", "created_at": "2026-08-18T19:40:25Z" } } }
+```
+
+`id` is the fill's id on the REST tape. `price` is always the YES price.
+`match_type` is `mint` when two buyers created new contracts, `transfer` when a
+holder sold to a buyer of the same outcome, and `merge` when holders of both
+outcomes sold into each other. On a transfer, `side` is the token that changed
+hands; it is `null` on a mint or merge. `yes_locked` / `no_locked` are the
+collateral each leg of a mint put up, `null` on the other two.
+
+`taker_side` is the outcome the **aggressor** bought, meaning the side that
+crossed the spread and paid the taker fee. It is `"yes"`, `"no"`, or `null`. A
+taker that **sold** is reported on the other outcome — selling YES is buying NO
+in price terms — so `taker_side` always says which way the fill leant on the
+book. In the example the taker sold YES.
 
 Without it a tape is only a list of prices. Direction inferred from the price
 moving says nothing about the many fills that print at the same price as the one
 before them, and a buy and a sell print identically.
 
 <Warning>
-  **`""` means unknown, not "neither".** Fills matched before taker attribution
-  was recorded report `""`, and so does any row read from the historical tape. Render
-  those as unattributed — do not pick a side for them.
+  **`null` means unknown, not "neither".** Fills matched before taker attribution
+  was recorded report `null`. Render those as unattributed — do not pick a side
+  for them.
 </Warning>
 
-The same field, under the same rule, is on the REST tape at
+The same fields, under the same rules, are on the REST tape at
 `GET /public/markets/{market}/contracts/recent`.
 
 ## Related

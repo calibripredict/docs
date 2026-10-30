@@ -168,7 +168,7 @@ Once an order fills:
   contracts you hold. It locks those contracts, not cash — a sell that takes
   liquidity pays its taker fee out of the sale proceeds — and only the
   quantity not already offered on another resting sell can be sold
-  (`sellable_qty` on `/account/positions`). In the app, use **Sell** on the
+  (`sellable_volume` on `/account/positions`). In the app, use **Sell** on the
   holding.
 - Buying the opposite side does not close the first position — it opens a
   second, separately collateralised one, locking more money rather than

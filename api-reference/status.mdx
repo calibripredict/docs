@@ -1,0 +1,60 @@
+---
+title: "Status and Maintenance"
+description: "Check whether the platform is up, and how the API behaves during scheduled maintenance."
+---
+
+## Platform status
+
+```bash
+curl -s https://calibri.io/api/v2/status
+```
+
+```json
+{
+  "status": "ok",
+  "eta": null,
+  "message": null,
+  "updated_at": "2026-10-19T11:22:23Z"
+}
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `status` | `"ok"` \| `"maintenance"` \| `"error"` | `ok`: the API is serving. `maintenance`: scheduled maintenance is on. `error`: no maintenance was announced, but the API is not answering. |
+| `eta` | string \| null | When maintenance is expected to end (RFC 3339, UTC). Null when none was announced, and outside maintenance. |
+| `message` | string \| null | What the maintenance is for. Null outside maintenance. |
+| `updated_at` | string | When this answer was produced (RFC 3339, UTC). |
+
+This endpoint needs no authentication and is answered at the edge, in front of
+the platform, so it keeps answering while the platform itself is down. It is
+cached for 5 seconds.
+
+## During maintenance
+
+Every other API request, including websocket connections, is refused with
+**`503 Service Unavailable`**, a `Retry-After` header (seconds until `eta`, or
+300 when no `eta` was announced) and this body:
+
+```json
+{
+  "errors": ["maintenance"],
+  "status": "maintenance",
+  "eta": "2026-10-20T14:00:00Z",
+  "message": "Upgrading the matching engine."
+}
+```
+
+The error code is `maintenance`; match on it as on any other
+[error code](/api-reference/errors).
+
+What a client should do:
+
+- Stop sending orders and cancels; nothing reaches the matching engine, so
+  nothing is placed or cancelled while maintenance is on.
+- Poll `GET /api/v2/status` (no more than once every 5 seconds) until it reads
+  `ok`, then reconnect websockets and resynchronise: re-read open orders,
+  balances and positions rather than assuming nothing changed.
+- Open orders stay on the book unless the maintenance notice says otherwise.
+
+In CCXT, `fetchStatus()` reads this endpoint (`status`, `eta`, `updated`), and a
+request refused for maintenance raises `OnMaintenance`.

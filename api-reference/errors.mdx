@@ -31,7 +31,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | 422 | Unprocessable Entity | Understood, but the data provided is incorrect |
 | 429 | Too Many Requests | Rate limited — back off exponentially |
 | 500 | Internal Server Error | A problem on our side |
-| 503 | Service Unavailable | Temporarily offline for maintenance |
+| 503 | Service Unavailable | Scheduled maintenance — see [Status and Maintenance](/api-reference/status) |
 
 ## Trading and orders
 
@@ -57,9 +57,10 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.insufficient_market_liquidity` | 422 | Not enough resting liquidity to fill the order to the requested size |
 | `market.order.spend_amount_*` | 400 | Misuse of `spend_amount` / `max_spend` / `use_max_available`. `spend_amount_too_small` is the exception, at 422 |
 | `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
-| `prediction.event.not_found` | 404 | Unknown event slug |
+| `prediction.event.not_found` | 404 | Unknown event slug or id |
 | `auth.required` | 401 | Authentication required |
 | `server.error` | 500 | Unexpected server error |
+| `maintenance` | 503 | Scheduled maintenance; the body carries `eta` and `message` ([Status and Maintenance](/api-reference/status)) |
 
 ## Self-custody — Safe, relay, and session keys
 
@@ -82,7 +83,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `This account already has a self-custody wallet…` | 422 | Passkey enrolment on an account that already has a wallet-derived Safe. One self-custody wallet per account |
 
 <Note>
-  There are no deposit, withdrawal, or beneficiary error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits).
+  There are no deposit, withdrawal, or beneficiary error codes: Calibri holds no balance for you, so funding and withdrawal are on-chain actions on your own Safe rather than API calls. See [Funding your account](/wallet-deposits). The exception is an account with a custodial balance withdrawing through a `withdraw`-scoped API key, which can get `422` `account.withdraw.api_requires_saved_beneficiary` — see [Authentication](/api-reference/authentication#withdrawals-with-an-api-key).
 </Note>
 
 ## Identity and sessions
