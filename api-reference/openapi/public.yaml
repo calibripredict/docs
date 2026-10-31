@@ -2699,7 +2699,7 @@ paths:
         `{"market_id": 12, "side": "yes"}` (a body field wins over the same
         query parameter). `orders` lists the orders cancelled, as `GET /orders`
         rows (state `cancel`); `failed` counts orders that could not be.
-        Shares a per-member budget with order placement and single cancels
+        Shares a per-member budget with single cancels
         (429 `market.order.rate_limited` over it).
       parameters:
       - description: Only orders in this market
