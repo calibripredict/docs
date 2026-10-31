@@ -2806,10 +2806,11 @@ paths:
   /api/v2/pythia/public/assets/{symbol}/candles:
     get:
       description: |-
-        The EXCHANGE'S OWN published candles, stored verbatim — not recomputed
-        from sampled ticks. A candle derived from samples has systematically
-        narrower wicks, and a member trading off the chart is paid off the
-        exchange's candle, so the two have to be the same numbers by construction.
+        The candles a market settles on. For a Coinbase product, Coinbase's own
+        published candles, stored verbatim — not recomputed from sampled ticks.
+        For a product that settles on Chainlink (BTC-USD), candles built from
+        the Chainlink 60-second TWAP at whole seconds. Either way a member
+        trading off the chart is paid off the same numbers.
 
         Paged BACKWARD only: send the returned next_to as the new to.
       parameters:
@@ -2904,8 +2905,10 @@ paths:
   /api/v2/pythia/public/assets/{symbol}/window:
     get:
       description: |-
-        The exchange's own candle for ONE window — the price to beat, and the
-        price so far. This is the figure a candle-direction market settles on.
+        The stored candle for ONE window — its open, high, low and the close so
+        far. An up/down market compares this window's close with the PREVIOUS
+        window's close, not with this window's open: request the previous
+        window for the level to beat.
 
         Two flags, and the distinction matters: `complete` means the window is
         over BY THE CLOCK; `confirmed` means the stored candle was read AFTER its
