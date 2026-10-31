@@ -383,7 +383,7 @@ components:
             - 'string'
             - 'null'
         deposit_credited:
-          description: 'True once that deposit has credited your balance (it was accepted, or later). Use this rather than `deposit_state`: `false` while unlinked, still being checked, on hold, held in suspense, or rejected.'
+          description: 'True once that deposit has credited your balance (it was accepted, or later). Use this rather than `deposit_state`: `false` until it is credited.'
           example: true
           type: 'boolean'
         deposit_id:
@@ -907,7 +907,7 @@ components:
         safe_setup:
           $ref: '#/components/schemas/SafeSetupEntity'
         safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
             - 'ready'
             - 'setup_required'
@@ -990,7 +990,7 @@ components:
         safe_setup:
           $ref: '#/components/schemas/SafeSetupEntity'
         safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
             - 'ready'
             - 'setup_required'
@@ -1074,7 +1074,7 @@ components:
         safe_setup:
           $ref: '#/components/schemas/SafeSetupEntity'
         safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
             - 'ready'
             - 'setup_required'
@@ -1210,7 +1210,7 @@ components:
         safe_setup:
           $ref: '#/components/schemas/SafeSetupEntity'
         safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
             - 'ready'
             - 'setup_required'
@@ -1286,7 +1286,7 @@ components:
         safe_setup:
           $ref: '#/components/schemas/SafeSetupEntity'
         safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means an order would REST AND THEN FAIL TO SETTLE — worse than being rejected, so do not trade on it.'
+          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
             - 'ready'
             - 'setup_required'
@@ -2347,7 +2347,7 @@ components:
     SafeOwnersEntity:
       properties:
         owners:
-          description: 'Every address that can sign for this wallet. Empty until the Safe is deployed, which happens on your first deposit.'
+          description: 'Every address that can sign for this wallet. Empty until the Safe is deployed.'
           example:
             - '0x7790…e855'
           items:
@@ -2497,10 +2497,6 @@ components:
           description: 'Whether the Safe''s session-aware fallback handler is installed.'
           example: true
           type: 'boolean'
-        idle_lock_seconds:
-          description: 'How long a device may hold an unlocked key without placing an order. Served rather than compiled into the client — a missing value must never be read as "no lock".'
-          example: 900
-          type: 'number'
         last_key_id:
           description: 'Highest grant id issued. Every order signature carries it, so read this after relaying an authorisation.'
           example: '7'
@@ -3085,7 +3081,7 @@ paths:
         - 'Account'
   /api/v2/atlas/account/balances/{currency}:
     get:
-      description: 'One currency''s balance. Same shape as a list element — prefer `balance_safe` / `locked_safe` / `redeemable_safe` over the always-zero operator pool fields.'
+      description: 'One currency''s balance. Same shape as a list element.'
       parameters:
         - in: 'path'
           name: 'currency'
@@ -3318,7 +3314,7 @@ paths:
         - 'Positions'
   /api/v2/atlas/account/orders:
     post:
-      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in the browser it was registered in, and browser-held session keys are non-extractable, so neither can sign from a script. To place orders programmatically, add a SECOND SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in a browser on a device that holds it, and a browser-held session key cannot be read out of the browser, so neither can sign from a script. To place orders programmatically, add a SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
       parameters: []
       requestBody:
         content:
@@ -3682,7 +3678,6 @@ paths:
             enum:
               - 'deposit'
               - 'withdraw'
-              - 'internal_transfer'
               - 'trade'
               - 'referral'
               - 'referral_reward'
