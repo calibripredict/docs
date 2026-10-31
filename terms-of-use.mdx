@@ -104,9 +104,9 @@ withdrawal:
   complete delivery at its own cost. Calibri is not responsible for delays caused by Circle or by
   the destination network. Anyone, including you, may complete the delivery using
   Circle's published attestation;
-- Calibri delivers only withdrawals made through the app with the fee it shows. A
-  transfer sent by other means, or without that fee, is not delivered by Calibri, and you
-  may deliver it yourself;
+- Calibri delivers a withdrawal only when the same transaction pays Calibri's fee, at
+  least the published minimum fee, as a withdrawal made through the app does. A transfer
+  without that fee is not delivered by Calibri, and you may deliver it yourself;
 - withdrawals to other networks are subject to the published minimums. Withdrawals on
   Polygon do not carry this fee.
 
@@ -145,8 +145,7 @@ The rules that matter most:
 - **The source named on the market decides it.** For crypto price markets that is the source named in the market's terms: Coinbase's own published data for the stated interval, or, for BTC-USD markets that name it, the Chainlink BTC/USD 60-second TWAP.
 - **Settlement is final.** A settled market is terminal. If the source later restates its data, or there was an outage, an unusual print, or any other issue at or around the deciding moment, **the settlement stands.** Calibri does not retroactively correct a settled market.
 - **Ties on up/down markets resolve up.** An interval closing exactly at the previous interval's close resolves YES.
-- **Manual settlements are reviewed** before anything is paid.
-- **A market that cannot be resolved fairly is voided.** A void pays 0.50 per share on both outcomes. The taker fee is kept. It is not a refund of the price paid.
+- **A market that cannot be resolved fairly is voided.** A voided market pays 0.50 per share on both outcomes. The taker fee is kept. It is not a refund of the price paid.
 
 Resolution is reported **on-chain**, and the escalation ladder that follows it is
 permissionless: if Calibri fails to report, anyone can escalate the question, and

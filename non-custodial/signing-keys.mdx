@@ -3,8 +3,8 @@ title: "Signing keys"
 description: "Adding a second key that can sign for your wallet — what it enables, what it can do, how to remove it, and what happens if it removes your passkey."
 ---
 
-Your wallet starts with **one** thing that can authorise it: your passkey. You can add a
-**second** — an Ethereum wallet you hold the private key for — in
+Your wallet starts with **one** thing that can authorise it: your passkey. You can add
+more — Ethereum wallets you hold the private keys for — in
 **Settings → Wallet → Signing keys**.
 
 It is the same wallet either way. Same address, same balance, same positions, same open
@@ -17,7 +17,7 @@ orders. You are adding a key that can sign for it; nothing moves.
     Lose your passkey with no second key and the funds are gone — permanently, for you and for us. A second key means you can still reach them.
   </Card>
   <Card title="Trading from your own code" icon="code">
-    Your passkey only signs in this browser. A wallet key signs anywhere, so an API client can place orders, withdraw, and redeem.
+    Your passkey signs only in a browser on a device that holds it. A wallet key signs anywhere, so an API client can place orders, withdraw, and redeem.
   </Card>
 </CardGroup>
 
@@ -35,7 +35,7 @@ otherwise would be the dangerous kind of simplification.
 | Works outside this browser | No | Yes | No |
 
 <Warning>
-  **A signing key can remove your passkey.** Both keys are equal owners of your wallet, and either can act alone — that is what lets one of them rescue you when the other is lost, and it is also the whole risk. Add a key only if you control it and trust wherever it is kept. A key on a server is a key that can empty the wallet if that server is compromised.
+  **A signing key can remove your passkey.** Every key is an equal owner of your wallet, and any one can act alone — that is what lets one of them rescue you when another is lost, and it is also the whole risk. Add a key only if you control it and trust wherever it is kept. A key on a server is a key that can empty the wallet if that server is compromised.
 </Warning>
 
 ## Adding one
@@ -62,7 +62,7 @@ is not emailed.
 
 ## Removing one
 
-Same place, at any time. Either key can sign the removal — your passkey, or the wallet
+Same place, at any time. Any key on the wallet can sign the removal — your passkey, or the wallet
 itself if it is the one connected — so you are not locked out of cleaning up when the
 passkey is the thing you lost.
 

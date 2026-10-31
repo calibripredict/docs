@@ -78,7 +78,7 @@ Whether your passkey survives losing your device depends entirely on where your 
 
 ## How signing works, briefly
 
-You never send a blockchain transaction and you never need gas. What you do is **approve**, and here is what that approval actually is:
+Apart from funding your Safe from your own wallet (a USDC transfer that wallet pays gas for), you never send a blockchain transaction and you never need gas. What you do is **approve**, and here is what that approval actually is:
 
 <Steps>
   <Step title="You build an order">
@@ -112,7 +112,7 @@ Everything above is enforced by contracts you can read yourself. Nothing about c
 | --- | --- |
 | **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds — except that the bridge module can carry USDC sent on another supported network to your own Safe on Polygon |
 | **ConditionalTokens** | Gnosis' audited framework. Holds the collateral and mints the YES / NO outcome tokens. Winnings redeem straight from it |
-| **CTF Exchange** | Matches and settles signed orders on-chain |
+| **CTF Exchange** | Settles matched signed orders on-chain |
 | **CalibriResolver** | Reports each market's outcome. It can **only report** — it cannot take or freeze funds |
 
 <Card title="Deployed addresses" icon="magnifying-glass" href="/smart-contracts/deployed-addresses">

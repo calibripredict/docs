@@ -68,7 +68,8 @@ network you pick, **before you sign**. If it and this page ever disagree, the fo
   withdrawal, then the other networks. For another network the form shows the fee, what
   you receive, the expected time and the minimum.
 - **Withdrawals in progress**, under the form — each withdrawal on its way out, from the
-  burn on Polygon to delivery at your address, and each one finished in the last day.
+  burn on Polygon to delivery at your address, and each one finished in the last ten
+  minutes, up to five in all.
 - **A withdrawal waiting on gas**, if gas rose after you sent it, with the time by which
   it will be completed. See [If gas rises after you send it](#if-gas-rises-after-you-send-it).
 
@@ -146,7 +147,7 @@ You would do this yourself if Calibri were unreachable, or if you do not want to
 </Steps>
 
 <Warning>
-  **We deliver only withdrawals made through the withdraw form, with the fee it shows.** A burn you send any other way — for example a transfer you build yourself, or one that pays less than the minimum fee — is recorded against your balance but **not delivered by Calibri**. Your USDC is still yours: deliver it yourself with the steps above.
+  **We deliver a withdrawal only when the same transaction pays Calibri's fee, at least the minimum fee** — as the withdraw form does. A burn that pays no fee, or less than the minimum, is recorded against your balance but **not delivered by Calibri**. Your USDC is still yours: deliver it yourself with the steps above.
 </Warning>
 
 ## Why this is still non-custodial

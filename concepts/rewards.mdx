@@ -52,7 +52,9 @@ wait for a market to resolve to get paid.
 <Steps>
   <Step title="Get paid daily">
     A **daily sweep** pays out pending rewards — whether or not the market has
-    resolved. A reward earned today is paid the next day. This deliberately
+    resolved. A maker rebate or referral reward earned today is paid by the
+    next sweep; a liquidity reward is scored the day after it is earned and paid
+    by the sweep after that. This deliberately
     rewards early and continuous quoting rather than waiting for markets to
     settle.
   </Step>
@@ -79,8 +81,7 @@ paid as normal and paid rewards stay yours.
 > **Make markets, earn a rebate.** When your resting order gets filled, you earn
 > a share of the taker's fee. **Refer traders, earn a share** of the fees on
 > their trades. Rewards **accrue live** and are **paid out once a day**, whether
-> or not the market has settled, landing in your Safe once the amount clears
-> gas. Void a market and you get 0.50 per share and keep any rewards already paid; the taker fee is not returned.
+> or not the market has settled, landing in your Safe. Void a market and you get 0.50 per share and keep any rewards already paid; the taker fee is not returned.
 
 ## Related
 

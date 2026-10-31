@@ -40,8 +40,9 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `Invalid order side` / `Invalid order price` / `Invalid order volume` | 422 | `side` is not `yes` or `no`, or the price or volume is missing or malformed |
 | `market_id must be a market id (a number or a numeric string)` | 422 | `market_id` is missing or not a numeric id |
 | `market.order.invalid_price` | 422 | Price outside `0.01`–`0.99` |
-| `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral: an order locks stake **plus** the taker-fee reserve |
-| `market.order.expired` | 400 | The order's signature expires in under 30 seconds (or already has), so a fill could not settle in time |
+| `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral (an order locks stake **plus** the taker-fee reserve) or, on a sell, more shares than your `sellable_volume` |
+| `market.order.tokens_settling` | 422 | A sell of shares that are still settling on-chain; they can be sold once the match confirms |
+| `market.order.expired` | 400 | The order's signature expires in under 30 seconds, so a fill could not settle in time. A signature that has already expired is refused before this, with `422` `signed_order expiration is out of range` |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
 | `market.order.kyc_required` | 403 | KYC level below the market's minimum |
 | `market.order.invalid_state` | 422 | Cancel refused: the order is already terminal or fully matched |

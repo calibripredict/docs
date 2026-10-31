@@ -91,8 +91,8 @@ Whatever you pick, the key cannot withdraw.
 ## For API clients
 
 A session key is a **browser** convenience, and it stays in the browser: it is
-generated as a non-extractable key so that no script — ours or anyone's — can
-read it out. That is what makes it safe to leave unlocked, and it also means it
+stored encrypted and, once stored, held as a non-extractable key, so no script —
+ours or anyone's — can read it out. That is what makes it safe to leave unlocked, and it also means it
 cannot be copied to a server.
 
 So if you use a **passkey wallet**:
@@ -122,7 +122,7 @@ trading is not offered. An already-unlocked session key still signs first, since
 no prompt at all.
 
 <Note>
-  A session key stays in the browser by design, not by omission: it is generated non-extractable so that no script — ours or anyone's — can lift it, which is what makes it safe to leave unlocked. A key a server could use has to be one you deliberately add and can remove, which is what a [signing key](/non-custodial/signing-keys) is. Other markets reach the same place by holding an exportable key on your behalf from the start: see [how this compares](/non-custodial/wallets#how-this-compares-to-email-wallets-elsewhere).
+  A session key stays in the browser by design, not by omission: it is stored encrypted and held as a non-extractable key, so that no script — ours or anyone's — can lift it, which is what makes it safe to leave unlocked. A key a server could use has to be one you deliberately add and can remove, which is what a [signing key](/non-custodial/signing-keys) is. Other markets reach the same place by holding an exportable key on your behalf from the start: see [how this compares](/non-custodial/wallets#how-this-compares-to-email-wallets-elsewhere).
 </Note>
 
 ## Related

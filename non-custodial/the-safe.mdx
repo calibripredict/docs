@@ -8,9 +8,9 @@ holds your USDC on-chain and is the maker of your orders. The operator deploys
 and relays it gaslessly — you only ever sign.
 
 It starts as **1-of-1**: one owner, either your wallet or the signer contract
-derived from your passkey. It becomes **1-of-2** if you add a
-[signing key](/non-custodial/signing-keys) — a second key of your own, where
-either one alone can sign. Calibri is never an owner in any configuration.
+derived from your passkey. It gains one owner for each
+[signing key](/non-custodial/signing-keys) you add — keys of your own, where
+any one alone can sign. Calibri is never an owner in any configuration.
 
 ## How the Safe fits in
 
@@ -144,6 +144,10 @@ Before its first trade, the Safe must set four on-chain approvals:
    takes the taker fee in the same transaction
 4. Set the **operator's** USDC allowance to **zero**
 
+A passkey wallet's setup also switches the Safe's fallback handler to the
+**SessionAwareFallbackHandler** ([deployed addresses](/smart-contracts/deployed-addresses)),
+so [session keys](/non-custodial/session-keys) can sign orders.
+
 The operator holds no allowance on your Safe. The matcher can take a fee only as
 part of a match your signed order allows, at no more than the contract's maximum
 fee rate.
@@ -154,7 +158,7 @@ with your Safe's owner and relay it (see below).
 
 Handle both shapes: the approvals may arrive batched through Safe's
 **MultiSend** as a **single** call with `operation: 1` (`DELEGATECALL`) — one
-signature instead of four — or as separate calls at sequential Safe
+signature for the whole set — or as separate calls at sequential Safe
 nonces, which must be relayed **in order**. Either way, when setup is complete
 the config reports:
 
@@ -207,7 +211,8 @@ SafeTx(
 ```
 
 Use `value = safeTxGas = baseGas = gasPrice = 0`, `gasToken = refundReceiver =
-0x0`, `operation = 0` (CALL), and `nonce` = the Safe's current on-chain
+0x0`, the call's own `operation` (`0` for a single CALL, `1` for a MultiSend
+batch such as the setup approvals), and `nonce` = the Safe's current on-chain
 `nonce()`.
 
 A withdrawal to another network is the exception: Calibri builds it for you as one

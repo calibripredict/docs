@@ -69,7 +69,7 @@ the moment you place, so a fee is never taken out of the stake backing a
 contract. Anything left over is released when the order fills, rests, or is
 cancelled.
 
-- A **limit** buy reserves the fee at its own limit price.
+- A **limit** buy reserves the fee at its own limit price, and never pays more than that reserve. On a fill at a price nearer `0.50` than the limit, the fee is capped at the reserve still unpaid, so it can be less than the formula above gives.
 - A **post-only** order reserves **nothing** — it can only ever be a maker, and makers pay no fee.
 - A **sell** reserves **nothing**. It locks the contracts it offers, and if it takes liquidity its fee is deducted from the sale proceeds.
 

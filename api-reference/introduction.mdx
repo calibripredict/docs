@@ -127,7 +127,7 @@ Monetary and volume values are **strings** — parse them as decimals, not float
 exception is chart and price-feed series — k-line rows, asset prices, candles and
 windows, and the `kline-*` and `crypto.*` WebSocket streams — which are numbers.
 Ids are **numbers**, except on-chain token ids, which are decimal strings. A field
-that can be empty is always present as `null`. Timestamps named `*_at` are RFC
+that can be empty is present as `null`, unless its description says it is omitted. Timestamps named `*_at` are RFC
 3339 in UTC to the second; `timestamp` fields are Unix seconds.
 
 ```json

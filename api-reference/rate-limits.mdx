@@ -27,7 +27,7 @@ throttled or not:
 | `X-RateLimit-Remaining` | Requests left in it |
 | `X-RateLimit-Reset` | Unix time (seconds) when the window resets |
 
-Atlas sends no `Retry-After`; read `X-RateLimit-Reset` instead. The `/pythia`
+The `/atlas` routes send no `Retry-After`; read `X-RateLimit-Reset` instead. The `/pythia`
 order limit sends the same three headers and also `Retry-After` (seconds) on a
 `429`. Its windows are
 fixed, starting at your first counted request, and have no extra block period —

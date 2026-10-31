@@ -31,9 +31,10 @@ USDC**.
 
 The CTF Exchange was deployed on **7 October 2026** and carries Calibri's own
 EIP-712 domain name, **Calibri CTF Prediction Markets** — it is not a shared or
-third-party exchange. That domain name is hashed into every order signature, which is
-why the app serves it rather than hard-coding it, and why signatures made against a
-different exchange cannot be replayed here.
+third-party exchange. The domain name, this exchange's address and the chain id are
+hashed into every order signature. The address and chain id are why a signature made
+for a different exchange cannot be replayed on Calibri; the app serves the domain name
+rather than hard-coding it.
 
 <Note>
   **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified — its bytecode is identical to that build, which you can compare on Polygonscan. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.
@@ -59,9 +60,10 @@ wallet we never got around to creating.
 | **Safe singleton** (Safe 1.3.0) | `0xd9Db270c1B5E3Bd161E8c8503c55cEABeE709552` | The implementation every Safe proxy delegatecalls |
 | **Safe fallback handler** (Safe 1.3.0) | `0xf48f2B2d2a534e402487b3ee7C18c33Aec0Fe5e4` | Handles signature checks and other non-core calls |
 | **WebAuthn signer factory** | `0x2508Ef28544e00392a544A062ab3D2334F0C0d5a` | Deploys the secp256r1 signer contract a passkey owns |
+| **SessionAwareFallbackHandler** | `0xdA6753dF098D630fbc20dC2E2E1653d21fc6979C` | Replaces the stock fallback handler on a passkey wallet's Safe during setup, so [session keys](/non-custodial/session-keys) can sign orders |
 
 <Note>
-  The singleton and the fallback handler are Safe's own canonical 1.3.0 deployments, used by Safes across every network. All four are fixed per network, identical for every member and not secret: the factory is also readable from the exchange's own `safeFactory` view, and the singleton and handler from any deployed Safe's storage.
+  The singleton and the stock fallback handler are Safe's own canonical 1.3.0 deployments, used by Safes across every network. Every address above is fixed per network, identical for every member and not secret: the factory is also readable from the exchange's own `safeFactory` view, and the singleton and current handler from any deployed Safe's storage.
 </Note>
 
 ## Cross-network deposits

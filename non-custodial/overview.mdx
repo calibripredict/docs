@@ -22,7 +22,7 @@ request to a company.
 
 | Stage | What happens |
 |---|---|
-| **Funds** | USDC lives in your own Gnosis Safe on-chain — 1-of-1, or 1-of-2 if you add a [signing key](/non-custodial/signing-keys) |
+| **Funds** | USDC lives in your own Gnosis Safe on-chain — 1-of-1, plus one owner for each [signing key](/non-custodial/signing-keys) you add |
 | **Balances** | `balance_safe` / `locked_safe` mirror your Safe — see [Balances](/non-custodial/balances) |
 | **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; Calibri validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
 | **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
@@ -34,8 +34,10 @@ request to a company.
 
 ## You only ever sign
 
-Signing is the whole of your involvement in the on-chain machinery. You never
-need to hold a gas token, approve a network fee, or send a transaction yourself:
+Signing is the whole of your involvement in the on-chain machinery. Apart from
+funding your Safe from your own wallet (a USDC transfer that wallet pays gas
+for), you never need to hold a gas token, approve a network fee, or send a
+transaction yourself:
 
 - **Deploying** your Safe and signer contracts — operator pays, when you set up a passkey wallet or first sign a wallet transaction
 - **Approvals** that let the exchange settle your trades — operator relays

@@ -114,8 +114,8 @@ tells them apart by length alone — never by a client-supplied flag:
 | **Safe owner** | A plain ECDSA signature — **65 bytes** (`0x` + 130 hex chars) — from a [second signing key](/non-custodial/signing-keys) you added |
 
 The third is the only one a server-side client can produce: a passkey signs
-only in the browser that registered it, and session keys are generated
-non-extractable. Add your own wallet as a signing key and your code signs as an
+only in a browser on a device that holds it, and a session key cannot be read
+out of the browser. Add your own wallet as a signing key and your code signs as an
 owner of the Safe.
 
 It signs the **SafeMessage**, not the order hash. Safe re-wraps the hash before
@@ -244,13 +244,15 @@ A `direction: "sell"` order offers outcome tokens you already hold, so it locks
 inventory, not cash. It must be backed by a sellable position: read
 `sellable_volume` from `GET /api/v2/atlas/account/positions` and sell no more than
 that. A sell larger than your sellable holding is rejected with `422`
-(`Insufficient position to sell: …`).
+`market.order.create_failed`, or `422` `market.order.tokens_settling` when the
+shortfall is shares still settling on-chain.
 
 Selling is how you exit a position before resolution. Buying the opposite
 outcome does not: YES and NO are separate positions, each backed by its own stake,
 so a YES holder who buys NO locks more USDC and holds both until the market
-resolves, when each YES+NO pair redeems for 1.00. There is no endpoint that merges
-your own YES and NO back into USDC early.
+resolves, when each YES+NO pair redeems for 1.00. Calibri does not merge your
+YES and NO back into USDC before resolution; your Safe can do it itself by calling
+`mergePositions` on the ConditionalTokens contract.
 
 A sell's proceeds are held as pending until the match settles on-chain, then they
 are in your Safe and spendable. If the match fails to settle, the sale is undone
