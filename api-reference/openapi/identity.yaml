@@ -590,7 +590,7 @@ components:
           example: 2
           type: 'number'
         member_id:
-          description: 'The trading identity in atlas. Null until one is provisioned.'
+          description: 'Your trading account id. Null until one is provisioned.'
           example: 4821
           type:
             - 'number'
