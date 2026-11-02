@@ -6534,7 +6534,7 @@ components:
         settlement_status:
           description: >-
             The on-chain mint badge: `pending` until confirmed, `reversed` if
-            the market voided.
+            this match failed to settle and was unwound.
           enum:
             - pending
             - confirmed
