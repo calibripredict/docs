@@ -726,7 +726,7 @@ components:
             - 'string'
             - 'null'
         settlement_status:
-          description: 'The on-chain mint badge: `pending` until confirmed, `reversed` if the market voided.'
+          description: 'The on-chain mint badge: `pending` until confirmed, `reversed` if this match failed to settle and was unwound.'
           enum:
             - 'pending'
             - 'confirmed'
