@@ -101,6 +101,9 @@ cap elapsed. A void is the same whichever way it happens.
   `[1,1]`; the off-chain ledger pays the same figure from the market's escrow.
 - **The taker fee on every matched trade is kept.** The trade happened and was
   charged when it matched; a void only sets what each share pays.
+- **A trade not yet settled on-chain is unwound instead.** If a match had not
+  settled on-chain when the market was voided, it is rolled back: each side gets
+  back what the match moved, at its exact stake, and the taker fee is refunded.
 - **Resting (unmatched) orders are cancelled** and their locked collateral released
   in full. They never became positions.
 - **You redeem the 0.50 per share yourself**, exactly like a win. See

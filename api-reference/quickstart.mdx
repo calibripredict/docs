@@ -157,8 +157,7 @@ people out:
 - **Sign the served `domain_name`**, never a copied constant.
 - **On a passkey Safe (`signature_type: 3`), sign the SafeMessage — not the
   order hash.** Safe re-wraps the hash before checking it, so signing
-  `orderHash` directly is rejected as *signed_order signature was not accepted
-  by the maker wallet*, even though the signature recovers to your key when you
+  `orderHash` directly is rejected as *That order was signed by a key that cannot sign for your wallet…*, even though the signature recovers to your key when you
   check it yourself. Recipe under **type 3** in
   [Authentication](/api-reference/authentication).
 - **Placing locks stake *plus* the maximum taker fee** the fill could incur; the

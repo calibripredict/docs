@@ -37,9 +37,8 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 
 | Code | Status | Meaning |
 |---|---|---|
-| `Invalid order side` / `Invalid order price` / `Invalid order volume` | 422 | `side` is not `yes` or `no`, or the price or volume is missing or malformed |
+| `Invalid order side` / `Invalid order direction` / `Invalid order price` / `Invalid order volume` | 422 | `side` is not `yes` or `no`, `direction` is not `buy` or `sell`, the price is missing or not strictly between 0 and 1, or the volume is missing or not positive |
 | `market_id must be a market id (a number or a numeric string)` | 422 | `market_id` is missing or not a numeric id |
-| `market.order.invalid_price` | 422 | Price outside `0.01`–`0.99` |
 | `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral (an order locks stake **plus** the taker-fee reserve) or, on a sell, more shares than your `sellable_volume` |
 | `market.order.tokens_settling` | 422 | A sell of shares that are still settling on-chain; they can be sold once the match confirms |
 | `market.order.expired` | 400 | The order's signature expires in under 30 seconds, so a fill could not settle in time. A signature that has already expired is refused before this, with `422` `signed_order expiration is out of range` |
@@ -48,6 +47,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.invalid_state` | 422 | Cancel refused: the order is already terminal or fully matched |
 | `market.order.not_found` | 404 | Order does not exist or is not yours |
 | `public.market.doesnt_exist` | 404 | Unknown market |
+| `market.market.disabled` | 422 | The market is not open for trading — not open yet, or closed |
 | `market.engine.not_found` | 404 | Market data is unavailable for this market |
 | `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
 | `prediction.event.not_found` | 404 | Unknown event slug or id |
@@ -65,9 +65,10 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 | `Market is not CTF-registered` | 422 | No on-chain condition exists for this market yet (`404` on `GET /account/wallet/markets/{id}`) |
 | `signed_order with signature is required for non-custodial orders` | 400 | The order was posted without a `signed_order`, or without its `signature` |
 | `Member safe is not settlement-ready` | 422 | Approvals outstanding — relay `safe_setup.calls` first |
-| `signed_order maker is not a Safe registered to this member` | 422 | The `maker` is not your Safe |
+| `signed_order maker is not a Safe registered to this member` / `signed_order maker must be the member safe wallet` | 422 | The `maker` is not your Safe (type `3` / type `2`) |
 | `signed_order signature does not match the signer` | 422 | The signature does not verify |
-| `Your trading key has expired or been revoked — approve with your passkey` | 422 | The [session key](/non-custodial/session-keys) grant is no longer valid |
+| `Your trading key has expired or been revoked — approve with your passkey` | 422 | The [session key](/non-custodial/session-keys) grant has expired. A revoked grant fails the signature check instead |
+| `That order was signed by a key that cannot sign for your wallet…` | 422 | The signature is from a key that is not an owner of the Safe — including an order hash signed directly instead of the SafeMessage |
 | `safe does not belong to this member` | 400 | The relayed Safe is not yours |
 | `Session keys are not enabled` | 400 | Session-key trading is not available |
 | `Session keys require a passkey wallet` | 400 | The member has no passkey wallet |
@@ -76,7 +77,7 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 | `A two-factor code is required to add a signing key` | 422 | `POST /account/wallet/owners` without `otp`. Only adding needs it; removing does not |
 | `That two-factor code is not valid` | 422 | Wrong code, or 2FA is not enabled on the account |
 | `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 400 | Refused: the passkey cannot be removed through the API |
-| `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a wallet-derived Safe. One self-custody wallet per account |
+| `This account already signs with your own wallet…` / `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a self-custody wallet. One per account |
 
 <Note>
   Funding and withdrawing on Polygon are on-chain actions on your own Safe, not API calls, so they have no error codes here. See [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.

@@ -120,16 +120,17 @@ owner of the Safe.
 
 It signs the **SafeMessage**, not the order hash. Safe re-wraps the hash before
 checking it, so signing `orderHash` directly recovers to a different address and
-the Safe rejects it — reported as `422 signed_order signature was not accepted
-by the maker wallet`, on a signature that verifies perfectly if you check it
+the Safe rejects it — reported as `422 That order was signed by a key that
+cannot sign for your wallet…`, on a signature that verifies perfectly if you check it
 yourself. The full recipe, computable without a node, is under **type 3** in
 [Authentication](/api-reference/authentication).
 
 The grant id is read out of the envelope's first word, so a client cannot name a
 live grant while signing with an expired key. A session-signed order is
-additionally checked against its grant's expiry at intake; an expired or revoked
-grant is rejected with `422 Your trading key has expired or been revoked —
-approve with your passkey`.
+additionally checked against its grant's expiry at intake; an expired grant is
+rejected with `422 Your trading key has expired or been revoked — approve with
+your passkey`. A revoked grant fails the wallet's signature check instead and is
+rejected with `422` and a signature error.
 
 See [Trading without a prompt per order](/non-custodial/session-keys).
 
@@ -283,7 +284,7 @@ others. The response is `200` with one entry per order, in request order:
 ```json
 [
   { "order": { "id": 1420, "state": "wait", "…": "" } },
-  { "error": { "status": 422, "errors": ["Insufficient balance"] } }
+  { "error": { "status": 422, "errors": ["market.order.create_failed"] } }
 ]
 ```
 
@@ -300,9 +301,10 @@ market**. A new `client_order_id` is needed if you send one; the old order's id
 stays taken.
 
 The new order is validated in full first, so a replacement that would be
-refused leaves the old order resting untouched. The cancel and the placement then
-run as one step on the market's matching engine: no fill can land on the old
-order in between. On success the response is `201` with the new order, as
+refused leaves the old order resting untouched. The engine then cancels the old
+order and places the new one, in that order: no fill can land on the old order
+once the replace has cancelled it, but the placement can still be refused (see
+below). On success the response is `201` with the new order, as
 `POST /account/orders` returns it, plus `replaced_order_id`. The new order has
 its own id and is fresh for its full volume — whatever the old one had already
 filled stays on the old order.

@@ -179,17 +179,15 @@ Closing and answering are two different moments.
 - **Close** is when trading stops.
 - **The answer deadline** is when the outcome is expected to become knowable. Markets state it separately when the two differ — some sources publish hours after the event.
 
-Crypto markets settle **shortly after they close** — typically within seconds.
-Calibri waits a few seconds after an interval ends so Coinbase's candle is final
-(a Chainlink TWAP value needs no wait), reads it, and commits the outcome; there is no further hold for a closed candle.
-Sources that report
-judgement-based results (sports, events) keep a short review window before the
-outcome is committed. Once committed, resolution is reported on-chain and your
+Crypto markets settle **shortly after they close** — typically within seconds:
+Calibri reads the closing value once it is final and commits the outcome.
+Sports and event
+results are committed a short time after the source publishes them. Once committed, resolution is reported on-chain and your
 winning shares become redeemable.
 
 ## Market terms — reading a market in code
 
-Every automated market publishes **`terms`** on its public payload
+An automated market with a structured question publishes **`terms`** on its public payload
 (`GET /api/v2/pythia/public/markets/{id}` and the event endpoints): the same
 conditions the market's `rules` state in prose, as structured fields. Read these
 instead of parsing a title — titles are written for people and their wording can
@@ -218,8 +216,9 @@ change.
 | `measure.basis` | `close`, or `close_vs_previous_close` for up/down markets |
 | `settles_on` | The resolution source that settles the market |
 
-`terms` is `null` for markets settled by hand, which are described by their
-`rules` alone.
+`terms` is `null` for markets settled by hand and for markets whose question is
+not structured — a parlay of other markets, or a question judged against cited
+sources. Those are described by their `rules` alone.
 
 ## Related
 

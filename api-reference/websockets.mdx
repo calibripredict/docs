@@ -57,7 +57,7 @@ switch on the key:
 | Public, per IP | **20** open at once | The **new** connection is refused with `4029` `too_many_public_connections`; the existing ones are untouched |
 | Authenticated, per member | **10** open at once | The member's **oldest** connection is closed with `4008` `too_many_connections`, so a reconnect always succeeds |
 | Any | Client not reading fast enough | Closed with `1013` `backlog` once too much is queued for it. Reconnect and resync from REST |
-| Authenticated upgrade | Signature or credentials rejected | Closed with `1008` `Authorization failed` |
+| Authenticated upgrade | Signature or credentials rejected | The upgrade is refused with HTTP `401` and an `authz.*` code, as for any request ([Errors](/api-reference/errors)); no connection opens |
 
 An authenticated connection — the API-key-signed upgrade on
 `/api/v2/websocket/private` — has **no lifetime cap**, and it can subscribe to
@@ -76,7 +76,7 @@ such as `BTC-USD`.
 
 | Stream | Auth | Payload |
 |---|---|---|
-| `{market}.ob-snap` | none | Full order-book snapshot, sent once on subscribe |
+| `{market}.ob-snap` | none | Full order-book snapshot, each time the engine publishes one — not on subscribe. For the current book on subscribe, use `.ob-inc` |
 | `{market}.ob-inc` | none | Order-book increments. Subscribing also delivers an initial `.ob-snap` |
 | `{market}.kline-{period}` | none | OHLC candle updates — `[ts, o, h, l, c, v]` |
 | `{market}.trades` | none | Public trade tape (matched contracts), including `taker_side` |
