@@ -218,8 +218,9 @@ second. Later prices in the same second are not sent.
 
 ## Private streams
 
-Every frame below, except **Balance**, always carries every key listed for it; a
-key that does not apply is `null`, never left out. Ids are numbers, decimals are strings, `*_at`
+Every frame below, except **Balance** and a void's **Contract** frame (both
+described in their sections), always carries every key listed for it; a key that does
+not apply is `null`, never left out. Ids are numbers, decimals are strings, `*_at`
 fields are RFC 3339 UTC to the second.
 
 **Order** — one frame per event, in three shapes. Keep your own copy of each
