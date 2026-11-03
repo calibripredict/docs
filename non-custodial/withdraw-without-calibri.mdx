@@ -5,8 +5,8 @@ description: "How to move funds out of your Safe if Calibri is unreachable, has 
 
 Self-custody only means something if it holds on our worst day. So: **your funds
 do not depend on Calibri existing.** Your money sits in a standard Gnosis Safe
-that only your own signer can move, and the transaction that moves it can be
-broadcast by anyone, from anywhere.
+that only your own signer can send anywhere, and the transaction that moves it can
+be broadcast by anyone, from anywhere.
 
 This page is how you do that, and — just as important — what you need to keep in
 order to be able to.
@@ -17,8 +17,9 @@ order to be able to.
   Builds the transfer, has you sign it with your passkey or a signing wallet, and hands you the transaction to send.
 </Card>
 
-It calls **no Calibri service**. Not for your Safe address, not for balances, not
-for the signature, not for broadcasting. It reads the chain through an RPC URL
+The page itself calls **no Calibri service**. Not for your Safe address, not for
+balances, not for the signature, not for broadcasting — the app around it may try to
+reach Calibri, and works on without it. It reads the chain through an RPC URL
 **you** choose and it signs in your browser. If our API, our app, or our company
 is gone, that page still works.
 

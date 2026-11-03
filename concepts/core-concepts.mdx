@@ -54,10 +54,12 @@ for all four order kinds and what each match does.
 
 ## What a contract is
 
-A **contract** is created the moment the engine matches a YES buyer with a NO
-buyer. Their two payments, which add up to 1.00 USDC, go into the market's
-escrow: one member holds the YES side, the other holds the NO side, and together
-their stakes fund the full 1.00 USDC that the winner will eventually collect.
+A **contract** is the record of a match. When a YES buyer meets a NO buyer, a new
+pair is created: their two payments, which add up to 1.00 USDC, go into the
+market's escrow, one member holds the YES side, the other the NO side, and together
+their stakes fund the full 1.00 USDC that the winner will eventually collect. A
+buyer matched with a seller transfers an existing side instead, and two sellers
+matched together close a pair and take their USDC back out.
 Once created, a contract can change hands — a holder can sell it to another
 buyer — and settlement pays whoever holds the winning side.
 

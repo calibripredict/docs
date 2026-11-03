@@ -91,7 +91,7 @@ Apart from funding your Safe from your own wallet (a USDC transfer that wallet p
     We verify the signature really came from your wallet before the order reaches the book. An order we cannot verify is rejected, not placed.
   </Step>
   <Step title="A match settles on-chain">
-    When your order matches, the contracts pull the collateral from your Safe and mint the outcome tokens. Calibri submits the transaction and pays the gas — but it can only ever submit orders both sides have signed.
+    When your order matches, the contracts settle it on-chain — minting new outcome tokens from your collateral, moving existing ones between buyer and seller, or merging a pair back into USDC. Calibri submits the transaction and pays the gas — but it can only ever submit orders both sides have signed.
   </Step>
   <Step title="You claim your winnings">
     Resolution makes your winning shares redeemable. You sign the claim; we relay it and pay the gas. Nothing is pushed to you unless you turn on [auto-redeem](/non-custodial/redeeming-winnings#auto-redeem).

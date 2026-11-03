@@ -161,7 +161,10 @@ header. See [Authentication](/api-reference/authentication).
   Authentication proves **who you are**. It does not authorise the movement of
   funds. Every order carries your own EIP-712 signature; every transfer out of
   your Safe is a transaction you sign, apart from a matched order's taker fee,
-  which the matcher takes under the approval you gave at setup.
+  which the matcher takes under the approval you gave at setup; USDC sent to your
+  address on another network, which can only be carried to your own Safe on
+  Polygon; and, if you turn on auto-redeem, resolved positions redeemed back into
+  your Safe.
 </Warning>
 
 ## Pagination

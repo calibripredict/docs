@@ -20,7 +20,7 @@ Given by you when you sign up:
 
 - **Email address** — the account identifier and how we contact you.
 - **Password** — stored hashed, never in readable form. We cannot see it. Accounts created with Google or a wallet get a random one they never use.
-- **Google account identifier**, if you continue with Google. Google sends us a signed token containing your **email address, whether Google has verified it, and an account identifier**; we store the identifier so the same Google account signs you back in. We do not receive your Google password, and we do not gain access to anything else in your Google account.
+- **Google account identifier**, if you continue with Google. Google sends us a signed token containing your **email address, whether Google has verified it, and an account identifier**; we store the identifier with your account; signing in with Google finds your account by its email address. We do not receive your Google password, and we do not gain access to anything else in your Google account.
 - **Wallet address**, if you sign in with a wallet, or the **public half of your passkey credential** if you enrol one. The private half of a passkey never leaves your device and is never sent to us.
 - **Referral code**, where you arrived through one.
 
@@ -125,7 +125,7 @@ protection, since otherwise anyone could ask for your data.
 Passwords are hashed. Sessions are HTTP-only cookies with CSRF protection and a
 sliding expiry. API requests are signed so a captured signature cannot be
 replayed against a different request. Passkeys and wallet keys stay on your
-device — we never hold a key that can move your funds.
+device — we never hold a key that can move your funds anywhere but your own Safe, apart from fees: the taker fee on an order you signed and the capped fee for carrying a deposit from another network.
 
 No system is perfectly secure. Keep your credentials, passkeys, API keys, and
 [session keys](/non-custodial/session-keys) to yourself, and revoke anything you

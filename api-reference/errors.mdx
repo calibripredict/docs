@@ -80,7 +80,7 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 | `This account already signs with your own wallet…` / `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a self-custody wallet. One per account |
 
 <Note>
-  Funding is sending USDC to your Safe on-chain, not an API call. A withdrawal on Polygon is a Safe transaction you sign and relay through `POST /api/v2/atlas/account/wallet/relay`, whose refusals are `422` with a `code` — see the API reference and [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.
+  Funding is sending USDC to your Safe on-chain, not an API call. A withdrawal on Polygon is a Safe transaction you sign and relay through `POST /api/v2/atlas/account/wallet/relay`. It refuses with `400` (fields missing, or a Safe that is not yours), `409` (for example `wallet.deposit_required`, `wallet.deploying`, `quote_mismatch`) or `422` (with a `code` when the transaction itself is refused) — see the API reference and [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.
 </Note>
 
 ## Identity and sessions
