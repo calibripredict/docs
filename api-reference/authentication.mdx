@@ -12,7 +12,7 @@ belongs to for the rest of the request.
 Public endpoints need no authentication.
 
 <Warning>
-  Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign — apart from a matched order's taker fee, which the matcher takes under the approval you gave at setup; USDC sent to your address on another network, which can only be carried to your own Safe on Polygon; and, if you turn on auto-redeem, resolved positions redeemed back into your Safe. A compromised API key can read your account — it cannot spend from your Safe.
+  Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign — apart from a matched order's taker fee, which the matcher takes under the approval you gave at setup; USDC sent to your address on another network, which can only be carried to your own Safe on Polygon; and, if you turn on auto-redeem, resolved positions redeemed back into your Safe. A compromised API key can read your account. With the `trade` scope it can also cancel your orders and accept a bridge fee Calibri has quoted on a cross-network deposit — taken from that deposit, with the rest still delivered only to your Safe on Polygon. It cannot place an order without your signature or move USDC anywhere else.
 </Warning>
 
 ## API keys
