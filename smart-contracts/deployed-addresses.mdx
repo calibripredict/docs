@@ -22,6 +22,7 @@ USDC**.
 | Contract | Address | Verify |
 |---|---|---|
 | **CTF Exchange** (Calibri) | `0xA06be29A9077DA70c70601156aac9F2cE0E3b595` | [View on Polygonscan](https://polygonscan.com/address/0xA06be29A9077DA70c70601156aac9F2cE0E3b595) |
+| **CalibriMatcher** (settlement and fees) | `0x974533370a52DDfBeBAFf98e6C12f232485A0293` | [View on Polygonscan](https://polygonscan.com/address/0x974533370a52DDfBeBAFf98e6C12f232485A0293) |
 | **USDC** (collateral) | `0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359` | [View on Polygonscan](https://polygonscan.com/address/0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359) |
 | **ConditionalTokens** (Gnosis CTF) | `0x53aB2e11ea7a7e90a11F002FAa859124729611F4` | [View on Polygonscan](https://polygonscan.com/address/0x53aB2e11ea7a7e90a11F002FAa859124729611F4) |
 | **CalibriResolver** (oracle) | `0xCe6c7e8E72CaF5A315ec645ae753d084b1DdF7d8` | [View on Polygonscan](https://polygonscan.com/address/0xCe6c7e8E72CaF5A315ec645ae753d084b1DdF7d8) |
@@ -35,6 +36,13 @@ third-party exchange. The domain name, this exchange's address and the chain id 
 hashed into every order signature. The address and chain id are why a signature made
 for a different exchange cannot be replayed on Calibri; the app serves the domain name
 rather than hard-coding it.
+
+The CalibriMatcher was deployed on **2 November 2026**. It is an operator of the CTF
+Exchange — `isOperator(0x974533370a52DDfBeBAFf98e6C12f232485A0293)` on the exchange
+returns `true` — and its `exchange()` and `collateral()` views return the CTF Exchange and
+USDC addresses above. `maxFeeRateBps()` is the highest fee it can take from an order,
+in basis points of that order's fill; `FEE_RATE_CEILING_BPS()` is the most that limit can
+ever be set to.
 
 <Note>
   **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified — its bytecode is identical to that build, which you can compare on Polygonscan. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.
