@@ -1867,10 +1867,9 @@ paths:
     get:
       description: >-
         Liquidity rewards earned for resting orders, one row per market per UTC
-        day, newest first. Scored once a day for the previous UTC day and paid
-        by the daily sweep — `status` moves pending → paying → paid. Filter with
-        `status`; paginate with `page` and `limit` (totals in the `Page` /
-        `Per-Page` / `Total` headers).
+        day, newest first. Paid daily — `status` moves pending → paying → paid.
+        Filter with `status`; paginate with `page` and `limit` (totals in the
+        `Page` / `Per-Page` / `Total` headers).
       parameters: []
       responses:
         '200':
@@ -1889,11 +1888,9 @@ paths:
   /api/v2/atlas/account/rewards/pending:
     get:
       description: >-
-        Maker rebates, referral rewards and liquidity rewards accrued but not
-        yet swept. Rebates and referral rewards accrue the moment a trade fills,
-        liquidity rewards once a day; all are paid on a daily sweep, so this
-        ticks up between payouts. Reaching 0 after a sweep is expected, not an
-        error.
+        Maker rebates, referral rewards and liquidity rewards earned but not yet
+        paid. Rewards are paid daily, so this ticks up between payouts. Reaching
+        0 after a payout is expected, not an error.
       parameters: []
       responses:
         '200':
