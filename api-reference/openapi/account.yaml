@@ -40,7 +40,7 @@ components:
           example: '12.5'
           type: 'string'
         redeemable_safe:
-          description: 'Winnings you have made but NOT yet collected. When a market resolves in your favour the payout stays in the ConditionalTokens contract until you redeem it — only you can, from your own Safe. This is NOT spendable: it is not part of `balance_safe` and cannot back an order until you redeem, at which point it moves into `balance_safe`.'
+          description: 'Winnings you have made but NOT yet collected. When a market resolves in your favour the payout stays in the ConditionalTokens contract until it is redeemed into your own Safe — by you, or by auto-redeem if you turned it on. This is NOT spendable: it is not part of `balance_safe` and cannot back an order until you redeem, at which point it moves into `balance_safe`.'
           example: '318'
           type: 'string'
       required:
@@ -1610,7 +1610,7 @@ components:
           example: 'usdc'
           type: 'string'
         liquidity:
-          description: 'Liquidity rewards — earned for QUOTING rather than for filling, from how long your size rested inside the spread band. Scored once a day, so this steps rather than ticks.'
+          description: 'Liquidity rewards — earned for QUOTING rather than for filling, from how long your size rested inside the spread band.'
           example: '0.75'
           type: 'string'
         maker:
