@@ -2513,8 +2513,7 @@ info:
     Market data and authenticated order management for Calibri prediction
     markets.
 
-    Public routes need no authentication and send Cache-Control (15s on
-    browse, 5s on live data, `immutable` on a closed asset range).
+    Public routes need no authentication and send Cache-Control.
     Authenticated order routes use the same HMAC API key as the account
     API under `/api/v2/atlas`.
 
