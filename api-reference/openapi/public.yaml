@@ -2255,35 +2255,40 @@ components:
       type: object
     PriceSettlement:
       description: |-
-        PriceSettlement is the pair of numbers that decided a price-feed market:
-        the deciding candle's open and close.
+        PriceSettlement is the pair of numbers that decided an up/down price
+        market: the price to beat — the previous window's close — and the deciding
+        window's close.
 
         Published so a settled window can show what happened — price to beat,
         final price, the difference, and which way it went — WITHOUT reading the
         asset price history. That independence is the point: the price history
         can have gaps, and a gap must degrade the chart and not the answer. These
-        numbers came from the exchange candle that actually settled the market.
+        numbers came from the source that settled the market: Coinbase candles, or
+        the Chainlink TWAP for markets that settle on it.
 
-        Null for anything not settled from a candle.
+        Null for anything not settled this way.
       properties:
         candle_start:
           description: |-
-            The deciding candle's opening instant, ISO-8601 UTC. Reproducible: anyone
-            can re-request this exact candle and get these exact numbers.
+            The deciding window's start, ISO-8601 UTC. On a Coinbase market, this
+            candle and the one before it can be re-requested and give these numbers.
           example: "2026-07-22T18:00:00Z"
           type: string
         close:
+          description: The deciding window's close, as a decimal string.
           example: "69200.5"
           type: string
         granularity_seconds:
           example: 300
           type: integer
         open:
-          description: The price to beat and the deciding close, as decimal strings.
+          description: |-
+            The price to beat, as a decimal string: the previous window's close. A
+            window settled before that rule applied carries its own opening price here.
           example: "68500.75"
           type: string
         symbol:
-          description: Coinbase product id, e.g. "BTC-USD".
+          description: Product id, e.g. "BTC-USD".
           example: BTC-USD
           type: string
         tie:
@@ -2308,7 +2313,7 @@ components:
         chart and no idea what to draw on it.
 
         Null for anything not judged against a fixed level — an up/down window's
-        reference is its own opening price, which is PriceSettlement's business.
+        reference is the previous window's close, which is PriceSettlement's business.
       properties:
         cap_strike:
           example: "77500"
