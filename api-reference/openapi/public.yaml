@@ -1612,7 +1612,6 @@ components:
         ord_type:
           enum:
           - limit
-          - market
           example: limit
           type: string
         origin_locked:
@@ -2543,7 +2542,7 @@ paths:
         name: market_id
         schema:
           type: integer
-      - description: limit or market
+      - description: limit — every Calibri order is a signed limit order
         in: query
         name: ord_type
         schema:
