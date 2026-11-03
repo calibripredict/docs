@@ -422,7 +422,8 @@ components:
             The event's lifecycle state. `active` while its markets are open for
             trading; `closed` once trading has stopped and the outcome is not yet
             known; `determined` once the outcome is known and payout may still be in
-            progress; `settled` once paid out; `cancelled` if the event was cancelled.
+            progress; `settled` once positions are settled (winnings redeemable, and in
+            your Safe once redeemed); `cancelled` if the event was cancelled.
           enum:
           - active
           - closed
@@ -856,7 +857,8 @@ components:
             The event's lifecycle state. `active` while its markets are open for
             trading; `closed` once trading has stopped and the outcome is not yet
             known; `determined` once the outcome is known and payout may still be in
-            progress; `settled` once paid out; `cancelled` if the event was cancelled.
+            progress; `settled` once positions are settled (winnings redeemable, and in
+            your Safe once redeemed); `cancelled` if the event was cancelled.
           enum:
           - active
           - closed
