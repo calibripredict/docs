@@ -129,7 +129,8 @@ The grant id is read out of the envelope's first word, so a client cannot name a
 live grant while signing with an expired key. A session-signed order is
 additionally checked against its grant's expiry at intake; an expired grant is
 rejected with `422 Your trading key has expired or been revoked — approve with
-your passkey`. A revoked grant fails the wallet's signature check instead and is
+your passkey`. A revoked grant gets the same answer if the key had not placed an
+order before it was revoked; otherwise it fails the wallet's signature check and is
 rejected with `422` and a signature error.
 
 See [Trading without a prompt per order](/non-custodial/session-keys).

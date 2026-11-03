@@ -136,8 +136,8 @@ operator calls the AutoRedeemer, which redeems your positions and sends the
   The AutoRedeemer has no owner and no upgrade path. The only thing it can do with your approval is redeem your **resolved** positions and return the full payout to the Safe they came from — it cannot send funds anywhere else, touch unresolved markets, or move your USDC. Losing tokens are burned in the same call. Revoke the approval at any time to opt out.
 </Note>
 
-On Polygon a winning position is typically redeemed within a minute or so of the
-market resolving. If you press Redeem yourself first, whichever redemption lands
+A winning position is redeemed automatically after the market resolves. If you press
+Redeem yourself first, whichever redemption lands
 first is paid and the other pays nothing — you cannot be paid twice.
 
 ### Check whether it is on

@@ -106,8 +106,8 @@ Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_
 
 | Value | Meaning |
 |---|---|
-| `ready` | Safe exists and is set up — you can trade. Without `?setup=1` it is also shown when the setup check could not be completed; placing an order checks again |
-| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first |
+| `ready` | Safe exists and is set up — you can trade |
+| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first. Without `?setup=1`, `GET /account/wallet` also shows it for a Safe Calibri has not yet seen ready; ask with `?setup=1`, which checks the chain and returns no calls when nothing is outstanding |
 | `error` | Lookup failed; retryable (the Safe is not presented as absent) |
 | `unavailable` | You have an owner but no Safe factory is available |
 | `unlinked` | No wallet linked and no passkey enrolled yet |
