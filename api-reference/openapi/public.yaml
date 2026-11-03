@@ -346,8 +346,8 @@ components:
           description: |-
             EffectiveTakerFeeRateBps is the taker fee rate, in basis points, charged
             on trades in any of this event's markets: the event's override if set,
-            otherwise its category's rate. Null means no rate is configured, and
-            orders on the event are rejected (distinct from 0, which is free).
+            otherwise its category's rate. Null means neither sets one; trades are then
+            charged the default rate of 700 (7%). Distinct from 0, which is free.
           example: 200
           type:
           - integer
@@ -780,8 +780,8 @@ components:
           description: |-
             EffectiveTakerFeeRateBps is the taker fee rate, in basis points, charged
             on trades in any of this event's markets: the event's override if set,
-            otherwise its category's rate. Null means no rate is configured, and
-            orders on the event are rejected (distinct from 0, which is free).
+            otherwise its category's rate. Null means neither sets one; trades are then
+            charged the default rate of 700 (7%). Distinct from 0, which is free.
           example: 200
           type:
           - integer
@@ -2560,17 +2560,20 @@ paths:
         name: client_order_id
         schema:
           type: string
-      - description: Lower bound, Unix SECONDS (not milliseconds)
+      - description: 'Lower bound, Unix SECONDS (not milliseconds). Open orders only:
+          ignored when state includes done, cancel or reject'
         in: query
         name: time_from
         schema:
           type: integer
-      - description: Upper bound, Unix SECONDS (not milliseconds)
+      - description: 'Upper bound, Unix SECONDS (not milliseconds). Open orders only:
+          ignored when state includes done, cancel or reject'
         in: query
         name: time_to
         schema:
           type: integer
-      - description: asc or desc (default desc)
+      - description: 'asc or desc (default desc). Open orders only: order history
+          is always newest first'
         in: query
         name: order_by
         schema:
@@ -2811,15 +2814,17 @@ paths:
   /api/v2/pythia/public/assets/{symbol}/candles:
     get:
       description: |-
-        The candles a market settles on. For a Coinbase product, Coinbase's own
-        published candles, stored verbatim — not recomputed from sampled ticks.
-        For a product that settles on Chainlink (BTC-USD), candles built from
-        the Chainlink 60-second TWAP at whole seconds. Either way a member
-        trading off the chart is paid off the same numbers.
+        The candles for one product, from that product's feed. For a Coinbase
+        product, Coinbase's own published candles, stored verbatim — not
+        recomputed from sampled ticks. For BTC-USD, candles built from the
+        Chainlink 60-second TWAP at whole seconds. A market settles on the same
+        numbers, except a BTC-USD market listed while BTC-USD still settled on
+        Coinbase: it settles on Coinbase candles, while new BTC-USD candles here
+        come from Chainlink.
 
         Paged BACKWARD only: send the returned next_to as the new to.
       parameters:
-      - description: Coinbase product id, e.g. BTC-USD
+      - description: Product id, e.g. BTC-USD
         in: path
         name: symbol
         required: true
