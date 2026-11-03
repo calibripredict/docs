@@ -87,7 +87,7 @@ const apiKey = "123456...";
 const secret = "ABCDEF...";
 
 // path = the request target EXACTLY as you send it, query string included.
-// body = the raw request body bytes; "" for GET/DELETE.
+// body = the raw request body bytes, whatever the method; "" only when there is no body.
 module.exports = (method, path, body = "") => {
   const nonce = String(Date.now());
   const message = nonce + apiKey + method.toUpperCase() + path + body;
@@ -140,7 +140,7 @@ import (
 const apiKey, secret = "123456...", "ABCDEF..."
 
 // path is the request target exactly as sent, query string included.
-// body is "" for GET/DELETE.
+// body is the raw request body, whatever the method; "" only when there is no body.
 func sign(method, path, body string) map[string]string {
 	nonce := fmt.Sprintf("%d", time.Now().UnixMilli())
 	message := nonce + apiKey + strings.ToUpper(method) + path + body

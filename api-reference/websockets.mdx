@@ -138,9 +138,7 @@ Unix seconds.
 `sell_volume` the size resting at each. All four are `null` when that side of
 the book is empty — never `"0"`, which would read as a price.
 
-A frame is sent within about five seconds of a figure changing, and once a minute
-for a market that has not moved. The figures trail fills by several seconds; use
-`{market}.trades` to see each fill as it happens.
+The figures can trail fills; use `{market}.trades` to see each fill as it happens.
 
 ## Candle format
 
@@ -185,9 +183,10 @@ See [Authentication](/api-reference/authentication) for the canonical message.
 
 ## Underlying price feed
 
-`?stream=crypto.{symbol}` republishes the venue a candle-direction market
-settles against, so the line a member watches and the price they are paid on
-cannot diverge.
+`?stream=crypto.{symbol}` republishes each asset's own feed: Chainlink for BTC-USD,
+Coinbase for the other assets — the source its markets settle against, except a
+BTC-USD market listed while BTC-USD still settled on Coinbase (see
+[How markets are resolved](/concepts/resolution-sources#the-chart-and-the-settlement-come-from-the-same-place)).
 
 ```json
 {

@@ -169,7 +169,7 @@ people out:
 **`GET /api/v2/pythia/orders?state=wait`** — your resting orders.
 **`GET /api/v2/pythia/orders?state=wait,done,cancel,reject`** — every order, in
 any state. Open orders are read live; a list that includes a finished state is
-read from order history, which trails the live book by about a second.
+read from order history.
 **`GET /api/v2/pythia/orders/{id}`** — one order, open or terminal.
 
 | Field | What it tells you |
