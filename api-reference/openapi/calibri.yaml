@@ -81,7 +81,7 @@ paths:
           name: market_id
           schema:
             type: integer
-        - description: limit or market
+        - description: limit — every Calibri order is a signed limit order
           in: query
           name: ord_type
           schema:
@@ -2570,24 +2570,6 @@ paths:
       summary: Confirm an email address
       tags:
         - Account
-  /api/v2/persona/identity/users/email/generate_code:
-    post:
-      description: >-
-        Issues a fresh confirmation link for an account that has not confirmed
-        yet. Fails if the email is already verified.
-      parameters: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageEntity'
-          description: ''
-      summary: Resend the confirmation email
-      tags:
-        - Account
-      security:
-        - apiKey: []
   /api/v2/persona/identity/users/password/confirm_code:
     post:
       description: >-
@@ -4656,7 +4638,6 @@ components:
         ord_type:
           enum:
             - limit
-            - market
           example: limit
           type: string
         origin_locked:
@@ -6780,8 +6761,10 @@ components:
             - $ref: '#/components/schemas/SafeSetupEntity'
             - type: 'null'
           description: >-
-            The one-time approvals still to sign. Null unless the request asks
-            for `?setup=1`.
+            The one-time approvals still to sign; `calls` is filled only when
+            the request asks for `?setup=1`. Without it, `GET /account/wallet`
+            returns null here, and the per-market config returns `{ ready,
+            calls: [] }`, or null when readiness could not be read.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
@@ -6884,8 +6867,10 @@ components:
             - $ref: '#/components/schemas/SafeSetupEntity'
             - type: 'null'
           description: >-
-            The one-time approvals still to sign. Null unless the request asks
-            for `?setup=1`.
+            The one-time approvals still to sign; `calls` is filled only when
+            the request asks for `?setup=1`. Without it, `GET /account/wallet`
+            returns null here, and the per-market config returns `{ ready,
+            calls: [] }`, or null when readiness could not be read.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
@@ -6994,8 +6979,10 @@ components:
             - $ref: '#/components/schemas/SafeSetupEntity'
             - type: 'null'
           description: >-
-            The one-time approvals still to sign. Null unless the request asks
-            for `?setup=1`.
+            The one-time approvals still to sign; `calls` is filled only when
+            the request asks for `?setup=1`. Without it, `GET /account/wallet`
+            returns null here, and the per-market config returns `{ ready,
+            calls: [] }`, or null when readiness could not be read.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
@@ -7163,8 +7150,10 @@ components:
             - $ref: '#/components/schemas/SafeSetupEntity'
             - type: 'null'
           description: >-
-            The one-time approvals still to sign. Null unless the request asks
-            for `?setup=1`.
+            The one-time approvals still to sign; `calls` is filled only when
+            the request asks for `?setup=1`. Without it, `GET /account/wallet`
+            returns null here, and the per-market config returns `{ ready,
+            calls: [] }`, or null when readiness could not be read.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
@@ -8011,7 +8000,7 @@ components:
           type: array
         next_payout_at:
           description: When your next payout is due. RFC 3339, UTC. Null when unknown.
-          example: '2026-08-08T02:00:00Z'
+          example: '2026-08-08T14:37:12Z'
           type:
             - string
             - 'null'
@@ -8066,7 +8055,7 @@ components:
           type: string
         paid_at:
           description: RFC 3339, UTC.
-          example: '2026-08-07T02:00:00Z'
+          example: '2026-08-07T14:37:12Z'
           type:
             - string
             - 'null'
@@ -8096,7 +8085,7 @@ components:
           type: object
         last_paid_at:
           description: When commission from them was last paid. RFC 3339, UTC.
-          example: '2026-08-07T02:00:00Z'
+          example: '2026-08-07T14:37:12Z'
           type:
             - string
             - 'null'
@@ -8797,8 +8786,8 @@ components:
           type: number
         signer:
           description: >-
-            Whoever signed. Your wallet EOA for types 0 and 2; the Safe itself
-            for type 3, where a passkey or session key produced the signature.
+            Whoever signed. Your wallet EOA for type 2; the Safe itself for type
+            3, where a passkey or session key produced the signature.
           example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
           type: string
         taker:
