@@ -126,8 +126,9 @@ position stays exactly as traded, and the close moves to the new fixture time. O
 orders were cancelled when the market first closed, so re-place any you still want.
 A reschedule is bounded by the on-chain clock: the new close must fall no later than
 **7 days after the market's original `resolveBy`**, because past that point UMA
-escalation is open to anyone. A fixture pushed further out than that is voided at
-0.50 per share.
+escalation is open to anyone. A fixture pushed further out than that cannot be
+rescheduled: the market stays closed and is resolved through the ladder above —
+reported, escalated to UMA, or voided.
 
 ## Related
 

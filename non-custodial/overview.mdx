@@ -9,7 +9,10 @@ two narrow exceptions: when an order you signed matches, the CalibriMatcher take
 order's taker fee under the USDC approval you gave at setup, within a cap fixed on-chain;
 and the bridge module can move USDC you sent to your address on another supported network,
 only to your own Safe on Polygon. See
-[Deposits from other networks](/non-custodial/deposits-from-other-networks). You authorise every
+[Deposits from other networks](/non-custodial/deposits-from-other-networks). If you turn on
+[auto-redeem](/non-custodial/redeeming-winnings#auto-redeem), your resolved positions can
+also be redeemed without a signature each time, with the whole payout going back to your
+Safe. You authorise every
 trade by signing; the operator relays the signed order and pays the gas.
 
 The practical consequence: your funds are **withdrawable even if Calibri is
@@ -52,6 +55,8 @@ an order you signed matches, under the USDC approval you gave at setup and withi
 fixed on-chain (see [The Safe](/non-custodial/the-safe)); and the bridge module, which can
 only carry USDC sent to your address on another supported network to your own Safe on
 Polygon — see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
+If you turn on auto-redeem, your resolved positions can also be redeemed without a
+signature for each one, with the whole payout paid back to your Safe.
 
 ## No fee at settlement
 

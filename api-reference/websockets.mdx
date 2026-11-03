@@ -31,7 +31,8 @@ Send a JSON message to add or drop streams without reconnecting:
 { "event": "unsubscribe", "streams": ["12.ob-inc"] }
 ```
 
-Each is acknowledged with the full list of streams the connection now holds:
+Each is acknowledged with the full list of streams the connection now holds —
+`"message": "subscribed"` for a subscribe, `"unsubscribed"` for an unsubscribe:
 
 ```json
 { "success": { "message": "subscribed", "streams": ["12.ob-inc", "14.ob-inc", "14.trades", "order"] } }

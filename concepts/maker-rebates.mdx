@@ -15,8 +15,10 @@ uncertain — and smallest at lopsided prices where a quote carries little risk.
 ## What qualifies
 
 You earn a rebate when **your order was already resting on the book and an
-incoming order crossed into it**. That is the only condition — it holds even when the
-incoming order is also yours, in which case you also pay its taker fee.
+incoming order crossed into it** and paid a taker fee on that fill. That is the only
+condition — it holds even when the incoming order is also yours, in which case you also
+pay its taker fee. (A limit buy can fill without a fee once its fee reserve is used up —
+see [Fees](/concepts/fees) — and that fill earns no rebate.)
 
 | Your order | Rebate |
 |---|---|

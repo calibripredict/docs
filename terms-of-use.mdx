@@ -41,8 +41,10 @@ additional signing key you choose to add. Calibri is never an owner, never takes
 custody, never holds a balance for you, and cannot move your funds, except as set out in
 clause 3.1 and except the taker fee: when an order you signed matches, the CalibriMatcher
 contract takes that order's taker fee from your Safe under the USDC approval you sign during
-setup, within a maximum fixed on-chain. Every order is a signature you produce; every other
-transfer out of your Safe is a transaction you sign.
+setup, within a maximum fixed on-chain. If you turn on auto-redeem, your resolved positions
+can be redeemed without a further signature, with the whole payout returned to your Safe.
+Every order is a signature you produce; every other transfer out of your Safe is a
+transaction you sign.
 
 ### 3.1 Deposits from and withdrawals to other networks
 
@@ -67,8 +69,9 @@ for that deposit. If you accept:
 
 - the fee is deducted from that deposit, in USDC, before the remainder is bridged, and is
   never more than the fee shown to you when you accepted;
-- your acceptance applies to that deposit only, and lapses if the bridge is not sent
-  within one hour of your acceptance, in which case you will be asked again;
+- your acceptance applies to that deposit only. When the bridge is sent, it carries a
+  countersignature valid for one hour; if the bridge does not land within that hour, or
+  the fee rises above what you accepted, you will be asked again;
 - once the bridge transaction is sent, the fee is non-refundable.
 
 If you do not accept, the deposit remains at your Safe address until the cost falls within

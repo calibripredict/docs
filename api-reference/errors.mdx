@@ -53,7 +53,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `prediction.event.not_found` | 404 | Unknown event slug or id |
 | `authz.invalid_signature` / `authz.nonce_expired` / `authz.nonce_reused` / `authz.unexistent_apikey` / `authz.apikey_not_active` / `authz.invalid_api_key_headers` / `authz.invalid_session` | 401 | Missing or invalid credentials — see [Authentication](/api-reference/authentication) |
 | `authz.invalid_permission_scope` | 403 | The API key's scope does not allow this request |
-| `server.error` | 500 | Unexpected server error |
+| `server.error` | 500 | Unexpected server error. On `POST /atlas/account/orders`, `/batch` and `/replace` it comes back as `502`: the matching engine failed |
 | `maintenance` | 503 | Scheduled maintenance; the body carries `eta` and `message` ([Status and Maintenance](/api-reference/status)) |
 
 A `post_only` order that would take liquidity is not refused with an error: it is accepted and then moves to state `reject`.

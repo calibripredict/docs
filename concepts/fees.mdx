@@ -15,7 +15,8 @@ nothing.
 The fee is **not** a flat percentage of what you spend. It scales with how
 uncertain the market is, peaking at price `0.50` and falling toward zero at the
 extremes — small at `0.01` or `0.99`, but never zero in a category with a non-zero
-rate:
+rate (a limit buy's fee can still be capped below it — see
+[The fee is set aside when you place the order](#the-fee-is-set-aside-when-you-place-the-order)):
 
 ```
 fee = rate × volume × P × (1 − P)
@@ -69,7 +70,7 @@ the moment you place, so a fee is never taken out of the stake backing a
 contract. Anything left over is released when the order fills, rests, or is
 cancelled.
 
-- A **limit** buy reserves the fee at its own limit price, and never pays more than that reserve. On a fill at a price nearer `0.50` than the limit, the fee is capped at the reserve still unpaid, so it can be less than the formula above gives.
+- A **limit** buy reserves the fee at its own limit price, and never pays more than that reserve. On a fill at a price nearer `0.50` than the limit, the fee is capped at the reserve still unpaid, so it can be less than the formula above gives — and once the reserve is used up, later fills of that order pay no fee. A fill that pays no fee funds no maker rebate or referral reward.
 - A **post-only** order reserves **nothing** — it can only ever be a maker, and makers pay no fee.
 - A **sell** reserves **nothing**. It locks the contracts it offers, and if it takes liquidity its fee is deducted from the sale proceeds.
 
@@ -230,8 +231,8 @@ See [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks
   <Card title="Core concepts" href="/concepts/core-concepts">
     Prices as probabilities and how settlement pays out.
   </Card>
-  <Card title="Account fees endpoint" href="/api-reference/introduction">
-    Read resolved fees programmatically in the API Reference.
+  <Card title="Fee rates in the API" href="/api-reference/introduction">
+    Each event's taker rate is `effective_taker_fee_rate_bps` on the public event and market data.
   </Card>
   <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
     The bridge fee, minimums and timing for USDC sent on another network.
