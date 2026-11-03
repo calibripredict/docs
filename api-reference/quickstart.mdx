@@ -25,7 +25,7 @@ with it (`X-Auth-Apikey`, `X-Auth-Nonce`, `X-Auth-Signature`). See
 
 **`GET /api/v2/atlas/account/wallet?setup=1`**
 
-Without `?setup=1` the response is the same but `safe_setup` is `null`.
+Without `?setup=1`, `safe_setup` is `null` and `safe_status` reports what Calibri has recorded — a Safe it has not yet seen ready reads `setup_required` (see [The Safe](/non-custodial/the-safe)).
 
 This is the entry point to everything on-chain: it tells you which Safe is
 yours, what owns it, which contracts you are trading against, and whether you
