@@ -76,7 +76,7 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 | `Your passkey is no longer able to sign for this wallet…` | 422 | A signing key you added removed your passkey as an owner. Raised on the first order, withdrawal, or redemption the passkey is refused for — see [Signing keys](/non-custodial/signing-keys) |
 | `A two-factor code is required to add a signing key` | 422 | `POST /account/wallet/owners` without `otp`. Only adding needs it; removing does not |
 | `That two-factor code is not valid` | 422 | Wrong code, or 2FA is not enabled on the account |
-| `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 400 | Refused: the passkey cannot be removed through the API |
+| `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 400 | Refused: the owner-removal endpoint will not remove your passkey. A [signing key](/non-custodial/signing-keys) can still remove it with a Safe transaction it signs |
 | `This account already signs with your own wallet…` / `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a self-custody wallet. One per account |
 
 <Note>
