@@ -905,7 +905,10 @@ components:
             - 'string'
             - 'null'
         safe_setup:
-          $ref: '#/components/schemas/SafeSetupEntity'
+          anyOf:
+            - $ref: '#/components/schemas/SafeSetupEntity'
+            - type: 'null'
+          description: 'The one-time approvals still to sign. Null unless the request asks for `?setup=1`.'
         safe_status:
           description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
@@ -988,7 +991,10 @@ components:
             - 'string'
             - 'null'
         safe_setup:
-          $ref: '#/components/schemas/SafeSetupEntity'
+          anyOf:
+            - $ref: '#/components/schemas/SafeSetupEntity'
+            - type: 'null'
+          description: 'The one-time approvals still to sign. Null unless the request asks for `?setup=1`.'
         safe_status:
           description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
@@ -1072,7 +1078,10 @@ components:
             - 'string'
             - 'null'
         safe_setup:
-          $ref: '#/components/schemas/SafeSetupEntity'
+          anyOf:
+            - $ref: '#/components/schemas/SafeSetupEntity'
+            - type: 'null'
+          description: 'The one-time approvals still to sign. Null unless the request asks for `?setup=1`.'
         safe_status:
           description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
@@ -1208,7 +1217,10 @@ components:
           $ref: '#/components/schemas/CtfRedeemableEntity'
           description: 'Present with `include=redeemable`: the body of GET /account/wallet/redeemable.'
         safe_setup:
-          $ref: '#/components/schemas/SafeSetupEntity'
+          anyOf:
+            - $ref: '#/components/schemas/SafeSetupEntity'
+            - type: 'null'
+          description: 'The one-time approvals still to sign. Null unless the request asks for `?setup=1`.'
         safe_status:
           description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
           enum:
@@ -1250,78 +1262,6 @@ components:
         - 'session_keys_enabled'
         - 'safe_status'
         - 'onramp_customer'
-      type: 'object'
-    CtfWalletEntity:
-      properties:
-        blockchain_key:
-          example: 'polygon-mainnet'
-          type: 'string'
-        chain_id:
-          example: 137
-          type: 'number'
-        conditional_tokens_address:
-          description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
-          type: 'string'
-        domain_name:
-          description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
-          example: 'Calibri CTF Prediction Markets'
-          type: 'string'
-        exchange_address:
-          description: 'This deployment''s CTF Exchange.'
-          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
-          type: 'string'
-        owner_address:
-          description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
-          example: '0xE1188438C85C98aADFf1a88f97764E607B4978C3'
-          type:
-            - 'string'
-            - 'null'
-        proxy_address:
-          description: 'Your Safe — the deposit destination and the maker on your orders.'
-          example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
-          type:
-            - 'string'
-            - 'null'
-        safe_setup:
-          $ref: '#/components/schemas/SafeSetupEntity'
-        safe_status:
-          description: 'The single field that answers "can this member trade?". `setup_required` means the one-time approvals are not signed yet: orders are refused with 422 `Member safe is not settlement-ready` until the `safe_setup.calls` are relayed.'
-          enum:
-            - 'ready'
-            - 'setup_required'
-            - 'error'
-            - 'unavailable'
-            - 'unlinked'
-          example: 'ready'
-          type: 'string'
-        session_keys_enabled:
-          description: 'Whether this deployment has session trading keys switched on.'
-          example: true
-          type: 'boolean'
-        signature_type:
-          description: 'How this account signs orders: `2` = POLY_GNOSIS_SAFE (Safe owned by your wallet), `3` = POLY_1271 (Safe owned by a passkey). Sign the way your type requires. Whether the Safe is usable yet is `safe_status`, not this field.'
-          enum:
-            - 2
-            - 3
-          example: 2
-          type: 'number'
-        usdc_address:
-          description: 'The collateral token.'
-          example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
-          type: 'string'
-      required:
-        - 'exchange_address'
-        - 'conditional_tokens_address'
-        - 'usdc_address'
-        - 'chain_id'
-        - 'blockchain_key'
-        - 'domain_name'
-        - 'proxy_address'
-        - 'owner_address'
-        - 'signature_type'
-        - 'session_keys_enabled'
-        - 'safe_status'
       type: 'object'
     CurrencyEntity:
       properties:
@@ -1613,6 +1553,34 @@ components:
         - 'expires_at'
         - 'created_at'
         - 'updated_at'
+      type: 'object'
+    PasskeyEnrolEntity:
+      properties:
+        blockchain_key:
+          example: 'polygon-mainnet'
+          type: 'string'
+        deployed:
+          description: 'Always false here: the signer contract and Safe are deployed afterwards.'
+          example: false
+          type: 'boolean'
+        proxy_address:
+          description: 'Your Safe — the address to deposit to. Live before the contracts are deployed.'
+          example: '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'
+          type: 'string'
+        signature_type:
+          description: 'Always `3` (POLY_1271) for a passkey wallet.'
+          example: 3
+          type: 'number'
+        signer_address:
+          description: 'The passkey signer contract that owns the Safe.'
+          example: '0x2b5ad5c4795c026514f8317c7a215e218dccd6cf'
+          type: 'string'
+      required:
+        - 'signer_address'
+        - 'proxy_address'
+        - 'signature_type'
+        - 'blockchain_key'
+        - 'deployed'
       type: 'object'
     PasskeyEnrolRequest:
       properties:
@@ -1989,7 +1957,7 @@ components:
             $ref: '#/components/schemas/ReferredMemberEntity'
           type: 'array'
         next_payout_at:
-          description: 'When the next payout sweep is due. RFC 3339, UTC. Null when unknown.'
+          description: 'When your next payout is due. RFC 3339, UTC. Null when unknown.'
           example: '2026-08-08T02:00:00Z'
           type:
             - 'string'
@@ -2002,7 +1970,7 @@ components:
             usdc: '12'
           type: 'object'
         payout_interval_seconds:
-          description: 'How often the payout sweep runs, in seconds. Null when unknown.'
+          description: 'How often payouts are made, in seconds. Null when unknown.'
           example: 86400
           type:
             - 'number'
@@ -3861,7 +3829,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CtfWalletEntity'
+                $ref: '#/components/schemas/PasskeyEnrolEntity'
           description: ''
         "400":
           content:
@@ -4021,7 +3989,7 @@ paths:
         - 'Health'
   /api/v2/atlas/public/rates:
     get:
-      description: 'USD-based reference rates, refreshed from a price provider on our own clock. DISPLAY ONLY: every market is priced, collateralised and settled in USDC, and an order signature commits to a USDC amount — these decide what number is shown beside it and nothing else. Served from memory, so poll no faster than `ttl_seconds`.'
+      description: 'USD-based reference rates. DISPLAY ONLY: every market is priced, collateralised and settled in USDC, and an order signature commits to a USDC amount — these decide what number is shown beside it and nothing else. Poll no faster than `ttl_seconds`.'
       parameters: []
       responses:
         "200":
