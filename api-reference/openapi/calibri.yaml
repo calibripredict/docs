@@ -1651,9 +1651,11 @@ paths:
   /api/v2/atlas/account/orders/{id}/replace:
     post:
       description: >-
-        Cancels an open order and places a new signed order in its place,
-        atomically. The body is exactly the body of `POST /account/orders`, with
-        a fresh `signed_order`, and must be for the same market (422
+        Cancels an open order, then places a new signed order in its place.
+        These are two steps, not one transaction: once the old order is
+        cancelled it cannot fill, but the new order can still be refused. The
+        body is exactly the body of `POST /account/orders`, with a fresh
+        `signed_order`, and must be for the same market (422
         `order.replace_market_mismatch`). The new order is validated in full
         before the old one is touched, so a rejected replacement leaves the old
         order resting. An old order that is no longer open (filled or cancelled)
@@ -5366,9 +5368,12 @@ components:
       type: object
     PriceSettlement:
       description: >-
-        PriceSettlement is the pair of numbers that decided a price-feed market:
+        PriceSettlement is the pair of numbers that decided an up/down price
 
-        the deciding candle's open and close.
+        market: the price to beat — the previous window's close — and the
+        deciding
+
+        window's close.
 
 
         Published so a settled window can show what happened — price to beat,
@@ -5380,31 +5385,41 @@ components:
         can have gaps, and a gap must degrade the chart and not the answer.
         These
 
-        numbers came from the exchange candle that actually settled the market.
+        numbers came from the source that settled the market: Coinbase candles,
+        or
+
+        the Chainlink TWAP for markets that settle on it.
 
 
-        Null for anything not settled from a candle.
+        Null for anything not settled this way.
       properties:
         candle_start:
           description: >-
-            The deciding candle's opening instant, ISO-8601 UTC. Reproducible:
-            anyone
+            The deciding window's start, ISO-8601 UTC. On a Coinbase market,
+            this
 
-            can re-request this exact candle and get these exact numbers.
+            candle and the one before it can be re-requested and give these
+            numbers.
           example: '2026-07-22T18:00:00Z'
           type: string
         close:
+          description: The deciding window's close, as a decimal string.
           example: '69200.5'
           type: string
         granularity_seconds:
           example: 300
           type: integer
         open:
-          description: The price to beat and the deciding close, as decimal strings.
+          description: >-
+            The price to beat, as a decimal string: the previous window's close.
+            A
+
+            window settled before that rule applied carries its own opening
+            price here.
           example: '68500.75'
           type: string
         symbol:
-          description: Coinbase product id, e.g. "BTC-USD".
+          description: Product id, e.g. "BTC-USD".
           example: BTC-USD
           type: string
         tie:
@@ -5445,7 +5460,8 @@ components:
 
         Null for anything not judged against a fixed level — an up/down window's
 
-        reference is its own opening price, which is PriceSettlement's business.
+        reference is the previous window's close, which is PriceSettlement's
+        business.
       properties:
         cap_strike:
           example: '77500'
@@ -6073,9 +6089,7 @@ components:
             - string
             - 'null'
         bridge_id:
-          description: >-
-            Stable id of this bridge:
-            `cctp-bridge:{chain_key}:{address}:{run_id}`.
+          description: 'Stable id of this bridge. Opaque: use it as given, do not parse it.'
           example: cctp-bridge:ethereum:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed:0192f3a1-7c1e-7d2a-9b4e-5f6a7b8c9d0e
           type: string
         burn_tx_hash:
@@ -6728,7 +6742,7 @@ components:
           type: number
         conditional_tokens_address:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
         domain_name:
           description: >-
@@ -6744,7 +6758,7 @@ components:
           type: boolean
         exchange_address:
           description: This deployment's CTF Exchange.
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
         owner_address:
           description: >-
@@ -6827,7 +6841,7 @@ components:
           type: string
         conditional_tokens_address:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
         domain_name:
           description: >-
@@ -6839,7 +6853,7 @@ components:
           type: string
         exchange_address:
           description: This deployment's CTF Exchange.
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
         no_token_id:
           description: The same for the NO leg.
@@ -6929,7 +6943,7 @@ components:
           type: number
         conditional_tokens_address:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
         domain_name:
           description: >-
@@ -6941,7 +6955,7 @@ components:
           type: string
         exchange_address:
           description: This deployment's CTF Exchange.
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
         markets:
           description: >-
@@ -7083,7 +7097,7 @@ components:
           type: number
         conditional_tokens_address:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
         domain_name:
           description: >-
@@ -7095,7 +7109,7 @@ components:
           type: string
         exchange_address:
           description: This deployment's CTF Exchange.
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
         onramp_customer:
           description: >-
@@ -7194,7 +7208,7 @@ components:
           type: number
         conditional_tokens_address:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
         domain_name:
           description: >-
@@ -7206,7 +7220,7 @@ components:
           type: string
         exchange_address:
           description: This deployment's CTF Exchange.
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
         owner_address:
           description: >-
@@ -8604,8 +8618,8 @@ components:
           type: number
         enabled:
           description: >-
-            False when the deployment has no session contracts, the service is
-            unreachable, or the member has no passkey wallet. Not an error — the
+            False when the deployment has no session contracts, the status could
+            not be read, or the member has no passkey wallet. Not an error — the
             caller falls back to prompting the passkey per order.
           example: true
           type: boolean
