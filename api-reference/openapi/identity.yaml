@@ -718,20 +718,6 @@ paths:
       summary: 'Confirm an email address'
       tags:
         - 'Account'
-  /api/v2/persona/identity/users/email/generate_code:
-    post:
-      description: 'Issues a fresh confirmation link for an account that has not confirmed yet. Fails if the email is already verified.'
-      parameters: []
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageEntity'
-          description: ''
-      summary: 'Resend the confirmation email'
-      tags:
-        - 'Account'
   /api/v2/persona/identity/users/password/confirm_code:
     post:
       description: 'Consumes the emailed one-time token and sets the new password. Tokens are single-use and expire; a reused or stale token returns a validation error.'
