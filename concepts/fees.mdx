@@ -102,8 +102,8 @@ otherwise the market category's rate.
 A market whose category carries a `0.00%` rate is **free to take** — no fee is
 charged and no rebate or referral reward is generated from it.
 
-The resolved rate is also carried in the market data the app reads, so the
-figure shown in the order ticket is always the one that will be applied.
+The resolved rate is also carried on each event (`effective_taker_fee_rate_bps`), so
+the figure shown in the order ticket is always the one that will be applied.
 
 <Warning>
   Read the rate as the input to the formula above, **not** as a flat percentage of your stake. Because it is multiplied by `P × (1 − P)` — at most `0.25` — the effective cost is always a fraction of the headline rate, and smaller still away from the middle.
@@ -232,7 +232,7 @@ See [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks
     Prices as probabilities and how settlement pays out.
   </Card>
   <Card title="Fee rates in the API" href="/api-reference/introduction">
-    Each event's taker rate is `effective_taker_fee_rate_bps` on the public event and market data.
+    Each event's taker rate is `effective_taker_fee_rate_bps` on the public event data.
   </Card>
   <Card title="Deposits from other networks" href="/non-custodial/deposits-from-other-networks">
     The bridge fee, minimums and timing for USDC sent on another network.
