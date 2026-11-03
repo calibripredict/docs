@@ -2992,9 +2992,13 @@ info:
 
     from a matched order taker fee, which the matcher takes under the
 
-    approval given at setup), so authenticating here proves who you are —
+    approval given at setup; USDC sent to your address on another network,
 
-    it does not authorise the movement of money.'
+    carried only to your own Safe on Polygon; and, with auto-redeem on,
+
+    resolved positions redeemed back into your Safe), so authenticating here
+
+    proves who you are — it does not authorise the movement of money.'
   title: 'Calibri Account & Trading'
   version: '1.0.0'
 openapi: '3.1.0'
