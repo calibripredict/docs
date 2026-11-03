@@ -3102,8 +3102,10 @@ components:
             known; `determined` once the outcome is known and payout may still
             be in
 
-            progress; `settled` once paid out; `cancelled` if the event was
-            cancelled.
+            progress; `settled` once positions are settled (winnings redeemable,
+            and in
+
+            your Safe once redeemed); `cancelled` if the event was cancelled.
           enum:
             - active
             - closed
@@ -3652,8 +3654,10 @@ components:
             known; `determined` once the outcome is known and payout may still
             be in
 
-            progress; `settled` once paid out; `cancelled` if the event was
-            cancelled.
+            progress; `settled` once positions are settled (winnings redeemable,
+            and in
+
+            your Safe once redeemed); `cancelled` if the event was cancelled.
           enum:
             - active
             - closed
@@ -6029,7 +6033,9 @@ components:
           example: '50'
           type: string
         amount_out:
-          description: USDC minted on Polygon.
+          description: >-
+            USDC minted on the destination network: Polygon for a deposit, the
+            chosen network for a withdrawal.
           example: '48'
           type:
             - string
@@ -6198,12 +6204,16 @@ components:
             type: string
           type: array
         mint_tx_hash:
-          description: Polygon mint transaction.
+          description: >-
+            The mint transaction on the destination network (Polygon for a
+            deposit).
           type:
             - string
             - 'null'
         minted_at:
-          description: When the USDC arrived on Polygon.
+          description: >-
+            When the USDC arrived on the destination network (Polygon for a
+            deposit).
           example: '2026-09-24T10:17:00Z'
           type:
             - string
