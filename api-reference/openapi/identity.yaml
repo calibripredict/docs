@@ -788,7 +788,7 @@ paths:
         - 'Account'
   /api/v2/persona/resource/users/me:
     get:
-      description: 'The signed-in member plus `kyc`, the eleven-step verification checklist, and the public labels it is computed from. This is the payload a client gates onboarding on.'
+      description: 'The signed-in member plus `kyc`, the eleven-step verification checklist (computed from the private labels on the account and its level), and every label on the account, public and private. This is the payload a client gates onboarding on.'
       parameters: []
       responses:
         "200":
