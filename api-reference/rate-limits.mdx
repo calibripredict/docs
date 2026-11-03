@@ -45,7 +45,7 @@ Keyed **per IP address**, so these apply before anyone is authenticated.
 | Endpoints | Allowance | Blocked for |
 |---|---|---|
 | `POST /identity/sessions`<br/>`POST /identity/sessions/social`<br/>`POST /identity/sessions/web3/nonce`<br/>`POST /identity/sessions/web3` | 10 per minute | 5 minutes |
-| `POST /identity/users`<br/>`POST /identity/users/password/generate_code`<br/>`POST /identity/users/email/generate_code` | 5 per minute | 5 minutes |
+| `POST /identity/users`<br/>`POST /identity/users/password/generate_code` | 5 per minute | 5 minutes |
 | `POST /identity/users/password/confirm_code`<br/>`POST /identity/users/email/confirm_code` | 10 per minute | 15 minutes |
 
 Note the asymmetry between requesting a code and submitting one: requesting is
@@ -63,14 +63,14 @@ Keyed **per user**, and enforced after authentication.
 | 2FA code on sign-in | 5 per minute | 15 minutes |
 | `POST /resource/phones`<br/>`POST /resource/phones/send_code` | 3 per hour | 1 hour |
 | `POST /resource/phones/verify` | 5 per 15 minutes | 1 hour |
-| Confirmation email: `POST /identity/users/email/generate_code`, and the email resent when an unconfirmed account signs in | 1 per minute | 1 minute |
+| Confirmation email: the app's **Resend confirmation email**, and the email resent when an unconfirmed account signs in | 1 per minute | 1 minute |
 
 <Note>
   The 2FA budget is **shared across all three sign-in paths** — email, social and wallet. Alternating between them does not give you three separate allowances.
 </Note>
 
 The confirmation-email allowance is one budget for both ways of sending it. Over it,
-`generate_code` answers `429 identity.email.confirmation_rate_limited`; a sign-in by
+the resend is refused with `429 identity.email.confirmation_rate_limited`; a sign-in by
 the unconfirmed account still answers as usual but sends no new email.
 
 Sending an SMS costs money and reaching a real handset, so 3 per hour is
@@ -145,7 +145,7 @@ Three rules that matter more than the curve:
 
 ## If you need more
 
-Order placement at 600/minute is sized for a quoting client. If you are
-building something that genuinely needs more — a market maker quoting across many
-markets — raise a support ticket at
+Order placement at 600/minute is sized for a quoting client and is the same for every
+account. If you are building something that needs more — a market maker quoting across
+many markets — tell us at
 [support.calibri.io/contact](https://support.calibri.io/contact).

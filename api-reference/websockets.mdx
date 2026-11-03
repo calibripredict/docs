@@ -353,7 +353,8 @@ Balance updates are triggered by deposits, withdrawals, order creation
 rejection, settlement, redemption, voids and reward payouts.
 
 **Position** — your holding in a market, after anything changes it: a fill, an
-exit, settlement, or a void. The same fields as `GET /account/positions`:
+exit, settlement, or a void. Its own field set — not the same as a
+`GET /account/positions` row:
 
 ```json
 {
@@ -364,6 +365,7 @@ exit, settlement, or a void. The same fields as `GET /account/positions`:
     "volume": "100",
     "locked_volume": "0",
     "sellable_volume": "100",
+    "pending_volume": "0",
     "avg_price": "0.6",
     "realized_pnl": "0",
     "settled_payout": null,
