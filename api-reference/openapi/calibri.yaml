@@ -2589,24 +2589,6 @@ paths:
         - Account
       security:
         - apiKey: []
-  /api/v2/persona/identity/users/me:
-    get:
-      description: >-
-        The signed-in member. Narrower than `/resource/users/me`, which
-        additionally returns the verification checklist.
-      parameters: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserEntity'
-          description: ''
-      summary: Current account
-      tags:
-        - Account
-      security:
-        - apiKey: []
   /api/v2/persona/identity/users/password/confirm_code:
     post:
       description: >-
