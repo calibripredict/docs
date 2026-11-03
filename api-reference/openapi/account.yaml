@@ -324,7 +324,7 @@ components:
             - 'string'
             - 'null'
         bridge_id:
-          description: 'Stable id of this bridge: `cctp-bridge:{chain_key}:{address}:{run_id}`.'
+          description: 'Stable id of this bridge. Opaque: use it as given, do not parse it.'
           example: 'cctp-bridge:ethereum:0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed:0192f3a1-7c1e-7d2a-9b4e-5f6a7b8c9d0e'
           type: 'string'
         burn_tx_hash:
@@ -878,7 +878,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -890,7 +890,7 @@ components:
           type: 'boolean'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         owner_address:
           description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
@@ -961,7 +961,7 @@ components:
           type: 'string'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -969,7 +969,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         no_token_id:
           description: 'The same for the NO leg.'
@@ -1044,7 +1044,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -1052,7 +1052,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         markets:
           description: 'Settled markets whose payout you have not yet redeemed, newest first. Only positive amounts: losing tokens alone are worth nothing.'
@@ -1176,7 +1176,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -1184,7 +1184,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         onramp_customer:
           description: 'Whether the member is a customer at the fiat on-ramp provider already (their first checkout launched). The deposit sheet starts a cash checkout on opening only then.'
@@ -1261,7 +1261,7 @@ components:
           type: 'number'
         conditional_tokens_address:
           description: 'Gnosis'' Conditional Tokens — where your collateral actually sits.'
-          example: '0x4D97DCd97eC945f40cF65F87097ACe5EA0476045'
+          example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: 'string'
         domain_name:
           description: 'The EIP-712 domain name this exchange was DEPLOYED with. Hashed into every order signature, and different per network — sign with the served value, never a hard-coded one, or the signature will not recover.'
@@ -1269,7 +1269,7 @@ components:
           type: 'string'
         exchange_address:
           description: 'This deployment''s CTF Exchange.'
-          example: '0xB6Ac44d5A6388b8C7511F2fb20C0c03fD0CeDC83'
+          example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: 'string'
         owner_address:
           description: 'What owns the Safe: your wallet EOA, or for a passkey member the secp256r1 signer contract. Served so a client can spot that a different wallet is connected — only the owner can sign for the Safe.'
@@ -2506,7 +2506,7 @@ components:
           example: 2592000
           type: 'number'
         enabled:
-          description: 'False when the deployment has no session contracts, the service is unreachable, or the member has no passkey wallet. Not an error — the caller falls back to prompting the passkey per order.'
+          description: 'False when the deployment has no session contracts, the status could not be read, or the member has no passkey wallet. Not an error — the caller falls back to prompting the passkey per order.'
           example: true
           type: 'boolean'
         handler_installed:
@@ -3382,7 +3382,7 @@ paths:
         - 'Trade'
   /api/v2/atlas/account/orders/{id}/replace:
     post:
-      description: 'Cancels an open order and places a new signed order in its place, atomically. The body is exactly the body of `POST /account/orders`, with a fresh `signed_order`, and must be for the same market (422 `order.replace_market_mismatch`). The new order is validated in full before the old one is touched, so a rejected replacement leaves the old order resting. An old order that is no longer open (filled or cancelled) answers 409 `order.not_open` and nothing is placed. On success the response is the new order, as `POST /account/orders` returns it, plus `replaced_order_id`. If the old order was cancelled but the new one was then rejected, the error body also carries `replaced_order_id`: the old order is gone and nothing replaced it. Counts as one order against the order-placement rate limit.'
+      description: 'Cancels an open order, then places a new signed order in its place. These are two steps, not one transaction: once the old order is cancelled it cannot fill, but the new order can still be refused. The body is exactly the body of `POST /account/orders`, with a fresh `signed_order`, and must be for the same market (422 `order.replace_market_mismatch`). The new order is validated in full before the old one is touched, so a rejected replacement leaves the old order resting. An old order that is no longer open (filled or cancelled) answers 409 `order.not_open` and nothing is placed. On success the response is the new order, as `POST /account/orders` returns it, plus `replaced_order_id`. If the old order was cancelled but the new one was then rejected, the error body also carries `replaced_order_id`: the old order is gone and nothing replaced it. Counts as one order against the order-placement rate limit.'
       parameters:
         - in: 'path'
           name: 'id'
