@@ -1477,8 +1477,8 @@ components:
             Status is the market's lifecycle state: `active` (open for trading),
             `closed` (trading has stopped and the outcome is not final yet),
             `determined` (the outcome is known; payout may still be in progress),
-            `settled` (paid out), `cancelled` or `voided`. Only `active` accepts
-            orders.
+            `settled` (positions settled; winnings are redeemable and reach your Safe when
+            redeemed), `cancelled` or `voided`. Only `active` accepts orders.
           enum:
           - active
           - closed
