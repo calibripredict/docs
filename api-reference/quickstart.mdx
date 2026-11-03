@@ -160,9 +160,11 @@ people out:
   `orderHash` directly is rejected as *That order was signed by a key that cannot sign for your wallet…*, even though the signature recovers to your key when you
   check it yourself. Recipe under **type 3** in
   [Authentication](/api-reference/authentication).
-- **Placing locks stake *plus* the maximum taker fee** the fill could incur; the
-  unused reserve is released when the order fills, rests or is cancelled. Budget
-  `stake + max fee`, not just the stake — see [Fees](/concepts/fees).
+- **Placing a buy locks stake *plus* the maximum taker fee** the fill could incur
+  (a post-only buy reserves no fee); the unused reserve is released when the order
+  fills, rests or is cancelled. Budget `stake + max fee`, not just the stake. A sell
+  locks the shares it offers, and its fee comes out of the proceeds — see
+  [Fees](/concepts/fees).
 
 ## 6. Follow the order
 

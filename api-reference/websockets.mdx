@@ -349,7 +349,7 @@ otherwise.
 </Warning>
 
 Balance updates are triggered by deposits, withdrawals, order creation
-(locking stake **plus** the taker-fee reserve), cancellation, partial fills,
+(a buy locks stake **plus** the taker-fee reserve, unless it is post-only), cancellation, partial fills,
 rejection, settlement, redemption, voids and reward payouts.
 
 **Position** — your holding in a market, after anything changes it: a fill, an

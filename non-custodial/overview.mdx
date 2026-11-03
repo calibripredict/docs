@@ -31,8 +31,8 @@ request to a company.
 | **Balances** | `balance_safe` / `locked_safe` mirror your Safe — see [Balances](/non-custodial/balances) |
 | **Placing orders** | EIP-712-signed order via `POST /api/v2/atlas/account/orders`; Calibri validates the signature and relays it. See [Signed orders](/non-custodial/signed-orders) |
 | **Order collateral** | Locks your `locked_safe` pool (the mirror of on-chain Safe USDC) |
-| **Contracts** | A YES buyer matched with a NO buyer; the leg carries a `settlement_status` badge tracking the on-chain mint |
-| **Settlement** | On-chain: a complete set of outcome tokens is minted from Safe collateral |
+| **Contracts** | A matched trade — a YES buyer with a NO buyer, a buyer with a seller, or two sellers; the leg carries a `settlement_status` badge tracking its on-chain settlement |
+| **Settlement** | On-chain: two buyers mint a complete set of outcome tokens from Safe collateral, a buyer and a seller transfer tokens for USDC, and two sellers merge their tokens back into USDC |
 | **Winnings** | Not paid by default — you call `redeemPositions` yourself (relayed, gasless), or opt in to auto-redeem; either way the USDC lands in your Safe. See [Redeeming winnings](/non-custodial/redeeming-winnings) |
 | **Fees** | Taker fee charged **once at trade**, pulled on-chain from your Safe after the match |
 | **Gas** | None **for you** — the operator relays every Safe transaction (deploy, approvals, settlement, redeem) and pays the gas. You only ever sign |

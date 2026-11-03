@@ -39,7 +39,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 |---|---|---|
 | `Invalid order side` / `Invalid order direction` / `Invalid order price` / `Invalid order volume` | 422 | `side` is not `yes` or `no`, `direction` is not `buy` or `sell`, the price is missing or not strictly between 0 and 1, or the volume is missing or not positive |
 | `market_id must be a market id (a number or a numeric string)` | 422 | `market_id` is missing or not a numeric id |
-| `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral (an order locks stake **plus** the taker-fee reserve) or, on a sell, more shares than your `sellable_volume` |
+| `market.order.create_failed` | 422 | The engine refused the order — most often not enough collateral (a buy locks stake **plus** the taker-fee reserve, unless it is post-only) or, on a sell, more shares than your `sellable_volume` |
 | `market.order.tokens_settling` | 422 | A sell of shares that are still settling on-chain; they can be sold once the match confirms |
 | `market.order.expired` | 400 | The order's signature expires in under 30 seconds, so a fill could not settle in time. A signature that has already expired is refused before this, with `422` `signed_order expiration is out of range` |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
@@ -53,7 +53,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `prediction.event.not_found` | 404 | Unknown event slug or id |
 | `authz.invalid_signature` / `authz.nonce_expired` / `authz.nonce_reused` / `authz.unexistent_apikey` / `authz.apikey_not_active` / `authz.invalid_api_key_headers` / `authz.invalid_session` | 401 | Missing or invalid credentials — see [Authentication](/api-reference/authentication) |
 | `authz.invalid_permission_scope` | 403 | The API key's scope does not allow this request |
-| `server.error` | 500 | Unexpected server error. On `POST /atlas/account/orders`, `/batch` and `/replace` it comes back as `502`: the matching engine failed |
+| `server.error` (`/pythia`) / `Internal server error` (`/atlas`) | 500 | Unexpected server error. On `POST /atlas/account/orders`, `/batch` and `/replace` it comes back as `502`: the matching engine failed |
 | `maintenance` | 503 | Scheduled maintenance; the body carries `eta` and `message` ([Status and Maintenance](/api-reference/status)) |
 
 A `post_only` order that would take liquidity is not refused with an error: it is accepted and then moves to state `reject`.
@@ -80,7 +80,7 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 | `This account already signs with your own wallet…` / `This account already has a self-custody wallet…` | 400 | Passkey enrolment on an account that already has a self-custody wallet. One per account |
 
 <Note>
-  Funding and withdrawing on Polygon are on-chain actions on your own Safe, not API calls, so they have no error codes here. See [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.
+  Funding is sending USDC to your Safe on-chain, not an API call. A withdrawal on Polygon is a Safe transaction you sign and relay through `POST /api/v2/atlas/account/wallet/relay`, whose refusals are `422` with a `code` — see the API reference and [Funding your account](/wallet-deposits). A withdrawal to another network is priced by `GET /api/v2/atlas/account/bridge/withdraw/quote`, whose refusals are `422` with a `code` (`below_minimum`, `withdrawals_disabled`, `chain_inactive`, `receive_not_positive`, `no_safe`, `no_wallet`, `destination_is_safe`, `destination_not_linked_wallet`) — see the API reference.
 </Note>
 
 ## Identity and sessions
