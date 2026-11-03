@@ -384,7 +384,8 @@ back as if it never happened:
   tokens, or both sellers' tokens on a merge. The **taker fee is refunded**.
 - Nobody is debited.
 - If the other side was the **maker** (its order was resting), the order gets the
-  voided volume back and keeps its place on the book.
+  voided volume back and goes back on the book at its price, behind the orders already
+  resting there.
 - If the other side was the **taker**, its stake is refunded to its balance. Its
   order is left as it is and does not get the fill back; send the order again.
 - The resting orders of the side whose settlement failed are cancelled.

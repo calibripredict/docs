@@ -39,8 +39,10 @@ Calibri is **fully self-custodial**. Your USDC sits in a **Gnosis Safe that only
 you control**, on-chain — owned by your passkey or your wallet, and by any
 additional signing key you choose to add. Calibri is never an owner, never takes
 custody, never holds a balance for you, and cannot move your funds, except as set out in
-clause 3.1. Every order is a signature you produce; every other transfer out of your Safe is
-a transaction you sign.
+clause 3.1 and except the taker fee: when an order you signed matches, the CalibriMatcher
+contract takes that order's taker fee from your Safe under the USDC approval you sign during
+setup, within a maximum fixed on-chain. Every order is a signature you produce; every other
+transfer out of your Safe is a transaction you sign.
 
 ### 3.1 Deposits from and withdrawals to other networks
 
@@ -128,7 +130,7 @@ conducted with them.
 - Orders are matched by price and time. Depending on the two orders, a match creates a new YES/NO **contract** pair (a YES buyer with a NO buyer), transfers existing contracts from a seller to a buyer, or closes out a YES/NO pair (a YES seller with a NO seller).
 - You may cancel the unmatched remainder of a resting order at any time. You cannot cancel a matched trade. A match that fails to settle on-chain is voided, and both sides are refunded.
 - You may sell contracts you hold before the market closes by placing a sell order. A sell fills only if another trader takes your price; Calibri does not guarantee a buyer or any exit price. Contracts you have not sold are held to resolution.
-- Placing a buy order locks its collateral **and** a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees). Placing a sell order locks the contracts it offers until it fills or you cancel it; no fee is reserved, and when a sell takes liquidity its taker fee is deducted from the sale proceeds.
+- Placing a buy order locks its collateral **and**, unless it is post-only, a taker-fee reserve; unused reserve is released. See [Fees](/concepts/fees). Placing a sell order locks the contracts it offers until it fills or you cancel it; no fee is reserved, and when a sell takes liquidity its taker fee is deducted from the sale proceeds.
 - Markets stop accepting orders at their stated close time.
 - **Market prices are not advice.** A price is what other people are willing to pay. It is not a forecast Calibri endorses, and nothing on the platform is financial advice.
 

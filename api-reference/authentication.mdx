@@ -12,7 +12,7 @@ belongs to for the rest of the request.
 Public endpoints need no authentication.
 
 <Warning>
-  Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign. A compromised API key can read your account — it cannot spend from your Safe.
+  Authentication proves **who you are**. It does not authorise the movement of any funds. Every order additionally carries your own [EIP-712 signature](/non-custodial/signed-orders), and every transfer out of your Safe is a transaction you sign — apart from a matched order's taker fee, which the matcher takes under the approval you gave at setup. A compromised API key can read your account — it cannot spend from your Safe.
 </Warning>
 
 ## API keys
@@ -73,7 +73,7 @@ Concatenated with **no separators**. Each part is exact:
 | `apiKey` | The same value you send in `X-Auth-Apikey` |
 | `METHOD` | HTTP method, **upper-cased** |
 | `path` | The request target **exactly as sent** — leading `/`, full `/api/v2/…` prefix, and the **query string** if there is one. Not normalised, not stripped |
-| `body` | The raw request body, byte-for-byte. The **empty string** for `GET`/`DELETE` and any bodyless request |
+| `body` | The raw request body, byte-for-byte, whatever the method — a `DELETE` that sends JSON (such as `DELETE /account/wallet/session-key` with a `key_id`) signs that JSON. The **empty string** only when the request has no body |
 
 Because the method, path, and body are covered, one signature authorises exactly
 **one** request. It cannot be replayed against a different path, a different

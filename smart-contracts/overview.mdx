@@ -45,7 +45,7 @@ for the member-facing flow.
 | **CalibriSafeFactoryV2** | Creates member Safes. Same address formula as before, but every Safe it creates has the bridge module enabled **in the same transaction** — a Safe never exists without it. **Permissionless**: `createProxyFor(owner)` makes a Safe owned solely by `owner`, whoever calls it. |
 | **SafeModuleSetup** | A stateless helper the Safe runs during its own setup to switch the module on. It holds nothing and does nothing if called directly. |
 | **CctpBridgeModule** | The module on every Safe. Two entry points: `bridge(safe, amount, fee, maxCctpFee)` for the standard capped fee, and `bridgeWithConsent(consent, sig)` for a higher fee a member accepted in the app. Both move that network's USDC through **Circle's CCTP** to **the same Safe address on Polygon**. The destination is fixed in code, never a parameter. No owner, no upgrade path; its only storage is two replay guards for accepted fees: a per-Safe bridge counter (`bridgeSeq`) and the set of used consent nonces (`usedConsents`). On Polygon itself it is inert. |
-| **BridgeFeeConfig** | Holds three addresses: the **relayer** allowed to charge the bridge fee, the **treasury** the fee is paid to, and the dedicated **consent signer** that countersigns a fee a member accepted above the cap. Its admin can change those three and nothing else. |
+| **BridgeFeeConfig** | Holds three addresses: the **relayer** allowed to charge the bridge fee, the **treasury** the fee is paid to, and the dedicated **consent signer** that countersigns a fee a member accepted above the cap. Its admin can change those three and hand the admin role over (two-step), and nothing else. |
 
 ### What the module can and cannot do
 
@@ -76,7 +76,7 @@ factory and different Safe addresses.
 |---|---|---|
 | **Anyone** | Call `bridge` with `fee = 0` for any Safe; create any member's Safe with `createProxyFor` | Send funds anywhere but the Safe's own address on Polygon; take a fee; move any token but USDC; send ETH; delegatecall |
 | **Relayer** (set in BridgeFeeConfig) | Everything anyone can, plus one fee per whole-balance bridge, at most `min(10 USDC, 20%)`, paid to the treasury; and submit an accepted fee the consent signer countersigned | Take a fee on part of the balance; exceed the caps without a countersigned acceptance; redirect the burn or the fee |
-| **Consent signer** (set in BridgeFeeConfig, a dedicated key) | Countersign a member's accepted fee: with the relayer, charge that fee — up to the Safe's balance — once | Submit anything itself; redirect the burn or the fee |
+| **Consent signer** (set in BridgeFeeConfig, a dedicated key) | Countersign a member's accepted fee: with the relayer, charge that fee — anything below the Safe's balance — once | Submit anything itself; redirect the burn or the fee |
 | **Fee-config admin** | Change the relayer, the treasury and the consent signer; hand the admin role over (two-step) | Change the fee caps, destination, token or Circle's messenger — all fixed in the module; renounce the role |
 | **Safe owner — your wallet** | Everything a Safe owner can, on every network, including switching the module off | — |
 | **Safe owner — a passkey** | Everything, on Polygon | Anything on another network: the passkey's signer contract exists only on Polygon, so the module cannot be switched off there and is the only way USDC leaves |

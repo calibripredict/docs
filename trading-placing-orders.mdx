@@ -172,7 +172,9 @@ Once an order fills:
   holding.
 - Buying the opposite side does not close the first position — it opens a
   second, separately collateralised one, locking more money rather than
-  releasing any. Sell the contracts you hold instead.
+  releasing any. Sell the contracts you hold instead. (Calibri does not merge YES
+  and NO pairs back into USDC for you; your Safe can, by calling `mergePositions`
+  on ConditionalTokens.)
 - Open (unfilled) limit orders can be **cancelled** while the market is open; the
   collateral they locked is released back to you.
 

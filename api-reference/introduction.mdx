@@ -131,7 +131,8 @@ Ids that name something else are strings: on-chain token ids (decimal strings),
 condition ids, currency ids such as `usdc`, session-key ids, the bridge's `bridge_id`,
 `quote_id` and `consent_id`, and your own `client_order_id`. A field
 that can be empty is present as `null`, unless its description says it is omitted. Timestamps named `*_at` are RFC
-3339 in UTC to the second; `timestamp` fields are Unix seconds.
+3339 in UTC to the second, except a session key's `expires_at`, which is Unix seconds;
+`timestamp` fields are Unix seconds.
 
 ```json
 {

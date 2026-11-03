@@ -37,8 +37,9 @@ the session key.
 
 <Steps>
   <Step title="Unlock trading">
-    On the order form, choose **Unlock trading**. Your browser generates the
-    keypair and never releases the private half.
+    When you place an order, or set up your wallet on the Wallet page, the approval
+    step offers **Turn on quick trading** (**Unlock trading** once this device holds a
+    key). Your browser generates the keypair and never releases the private half.
   </Step>
   <Step title="Approve with your passkey">
     One Face ID / Touch ID / PIN prompt authorises the key on your Safe. This is
@@ -105,7 +106,7 @@ So if you use a **passkey wallet**:
 | **Withdrawing, redeeming** | Not possible. Owner-only, and your passkey is the owner |
 
 To trade from your own code, **add a second signing key** to your wallet
-(Settings → Wallet → Signing keys) and sign with that. It is an owner of the same
+(Settings → Trading → Your wallet → Signing keys) and sign with that. It is an owner of the same
 Safe, so it can place orders, withdraw and redeem — and it is a key you hold, so a
 script can use it. See [Signing keys](/non-custodial/signing-keys).
 

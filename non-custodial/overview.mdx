@@ -5,8 +5,10 @@ description: "How trading on Calibri works when the money never leaves your own 
 
 Calibri is **fully non-custodial**. Your USDC sits in **your own Gnosis Safe**
 on-chain — owned by your keys, never ours — and Calibri has no ability to move it, with
-one narrow exception: the bridge module can move USDC you sent to your address on another
-supported network, and only to your own Safe on Polygon. See
+two narrow exceptions: when an order you signed matches, the CalibriMatcher takes that
+order's taker fee under the USDC approval you gave at setup, within a cap fixed on-chain;
+and the bridge module can move USDC you sent to your address on another supported network,
+only to your own Safe on Polygon. See
 [Deposits from other networks](/non-custodial/deposits-from-other-networks). You authorise every
 trade by signing; the operator relays the signed order and pays the gas.
 
