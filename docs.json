@@ -195,8 +195,6 @@
                   "api-reference/models/error-entity",
                   "api-reference/models/liquidity-reward-entity",
                   "api-reference/models/order-entity",
-                  "api-reference/models/passkey-enrol-entity",
-                  "api-reference/models/passkey-enrol-request",
                   "api-reference/models/pending-rewards-entity",
                   "api-reference/models/pnl-capital-entity",
                   "api-reference/models/pnl-entity",
