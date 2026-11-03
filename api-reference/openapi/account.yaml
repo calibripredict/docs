@@ -1928,12 +1928,28 @@ components:
           description: 'Opt out of the public leaderboard. Your masked display name stops appearing; settled contracts still count toward your own stats.'
           example: false
           type: 'boolean'
+        marketing_emails:
+          description: 'Receive marketing email: new features, promotions and market highlights.'
+          example: false
+          type: 'boolean'
+        settlement_alerts:
+          description: 'Push notification, and an email if you won, when a market you traded settles or is voided. Off stops both; the result still appears in your in-app notifications.'
+          example: true
+          type: 'boolean'
       type: 'object'
     PreferencesUpdateRequest:
       properties:
         leaderboard_opt_out:
           description: 'Opt out of the public leaderboard. Your settled contracts still count toward your own stats.'
           example: false
+          type: 'boolean'
+        marketing_emails:
+          description: 'Receive marketing email: new features, promotions and market highlights.'
+          example: false
+          type: 'boolean'
+        settlement_alerts:
+          description: 'Push notification, and an email if you won, when a market you traded settles or is voided. Off stops both; the result still appears in your in-app notifications.'
+          example: true
           type: 'boolean'
       type: 'object'
     RatesEntity:
@@ -3475,7 +3491,7 @@ paths:
         - 'Positions'
   /api/v2/atlas/account/preferences:
     get:
-      description: 'Your display preferences. Today: `leaderboard_opt_out` — whether your username appears on the public PnL leaderboard.'
+      description: 'Your display and notification preferences: `leaderboard_opt_out` — whether your username appears on the public PnL leaderboard; `settlement_alerts` — push and email when a market you traded settles; `marketing_emails` — consent to marketing email.'
       parameters: []
       responses:
         "200":
