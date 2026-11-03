@@ -1439,7 +1439,7 @@ components:
           example: '2026-08-12'
           type: 'string'
         status:
-          description: '`pending` — earned, awaiting the daily sweep. `paying` — sweep in flight. `paid` — in your balance.'
+          description: '`pending` — earned, awaiting the daily sweep. `paying` — being paid. `paid` — paid to your Safe.'
           enum:
             - 'pending'
             - 'paying'
@@ -3175,7 +3175,7 @@ paths:
         - 'Other'
   /api/v2/atlas/account/bridge/transfers/{id}/consent:
     post:
-      description: 'When gas is high, a cross-chain deposit waits in `awaiting_consent` with a `quote`: bridging now costs `quote.target_fee`, more than the standard fee. Send that exact amount as `max_fee` to accept it; the deposit is then bridged and you receive the amount minus that fee. If the fee has changed since you saw it, the answer is 409 with the current `quote` (and `code`: `quote_changed`, `stale_quote` or `not_awaiting_consent`) — show it and ask again. Not accepting is fine: the deposit is bridged on its own once the standard fee covers the cost. Rate limited to 10 per minute.'
+      description: 'When gas is high, a cross-chain deposit waits in `awaiting_consent` with a `quote`: bridging now costs `quote.target_fee`, more than the standard fee. Send that exact amount as `max_fee` to accept it; the deposit is then bridged and you receive the amount minus at most that fee — less if gas has fallen by the time it is sent. If the fee has changed since you saw it, the answer is 409 with the current `quote` (and `code`: `quote_changed`, `stale_quote` or `not_awaiting_consent`) — show it and ask again. Not accepting is fine: the deposit is bridged on its own once the standard fee covers the cost. Rate limited to 10 per minute.'
       parameters:
         - in: 'path'
           name: 'id'
@@ -3234,7 +3234,7 @@ paths:
         - 'Other'
   /api/v2/atlas/account/contracts:
     get:
-      description: 'Your matched positions. A winning contract settles to the full 1.00 per share — the fee was taken at trade time — but winnings are NOT auto-paid: you redeem them yourself.'
+      description: 'Your matched positions. A winning contract settles to the full 1.00 per share — the fee was taken at trade time — but winnings are not paid out automatically: you redeem them yourself, or turn on auto-redeem.'
       parameters:
         - description: 'Contracts per page. Defaults to 50.'
           example: 25
@@ -3330,7 +3330,7 @@ paths:
         - 'Positions'
   /api/v2/atlas/account/orders:
     post:
-      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing locks the stake PLUS the maximum taker fee the fill could incur; the unused reserve is released. PASSKEY WALLETS: a passkey signs only in a browser on a device that holds it, and a browser-held session key cannot be read out of the browser, so neither can sign from a script. To place orders programmatically, add a SIGNING KEY to your wallet (Settings → Wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
+      description: 'Places a non-custodial order. `signed_order` is an EIP-712 signature over the CTF Exchange Order struct. Calibri validates it — a signature it cannot verify is rejected rather than placed — then places the order with the signature attached. Placing a buy locks the stake PLUS the maximum taker fee the fill could incur, except a post-only buy, which can only rest and reserves no fee; the unused reserve is released. A sell reserves no fee: its taker fee comes out of the proceeds. PASSKEY WALLETS: a passkey signs only in a browser on a device that holds it, and a browser-held session key cannot be read out of the browser, so neither can sign from a script. To place orders programmatically, add a SIGNING KEY to your wallet (Settings → Trading → Your wallet → Signing keys) — an address you hold the key for, which becomes an owner of the same Safe. Orders stay `signature_type` 3 with maker == signer == the Safe; the signature becomes a standard Safe owner signature over the EIP-712 `SafeMessage(bytes message)` whose message is `abi.encode(orderHash)`, in a domain of (chainId, the Safe). Signing the order hash directly always fails. MARKET ORDERS AND EXPIRY: a market-style order is a limit at a price ceiling; send `ioc: true` and the unfilled remainder is refunded rather than rested. The signature''s `expiration` is enforced by the engine — it never matches an order within 30 seconds of its expiry (a fill must settle on-chain before the signature lapses), cancels and refunds a resting order at that point, and rejects an order that arrives inside that window (`market.order.expired`).'
       parameters: []
       requestBody:
         content:
@@ -3537,7 +3537,7 @@ paths:
         - 'Rewards'
   /api/v2/atlas/account/rewards/liquidity:
     get:
-      description: 'Liquidity rewards earned for resting orders, one row per market per UTC day, newest first. Scored daily at 01:00 UTC for the previous day and paid by the daily sweep — `status` moves pending → paying → paid. Filter with `status`; paginate with `page` and `limit` (totals in the `Page` / `Per-Page` / `Total` headers).'
+      description: 'Liquidity rewards earned for resting orders, one row per market per UTC day, newest first. Scored once a day for the previous UTC day and paid by the daily sweep — `status` moves pending → paying → paid. Filter with `status`; paginate with `page` and `limit` (totals in the `Page` / `Per-Page` / `Total` headers).'
       parameters: []
       responses:
         "200":
@@ -3553,7 +3553,7 @@ paths:
         - 'Rewards'
   /api/v2/atlas/account/rewards/pending:
     get:
-      description: 'Maker rebates and referral rewards accrued but not yet swept. Rewards accrue the moment a trade fills and are paid on a daily sweep, so this ticks up between payouts. Reaching 0 after a sweep is expected, not an error.'
+      description: 'Maker rebates, referral rewards and liquidity rewards accrued but not yet swept. Rebates and referral rewards accrue the moment a trade fills, liquidity rewards once a day; all are paid on a daily sweep, so this ticks up between payouts. Reaching 0 after a sweep is expected, not an error.'
       parameters: []
       responses:
         "200":
