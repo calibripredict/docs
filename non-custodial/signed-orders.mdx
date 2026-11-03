@@ -236,8 +236,9 @@ can't fill when the order arrives is refunded instead of resting at the ceiling.
 It is recorded on the order, so a wallet's market orders can be told apart from its
 limit orders (both are `ord_type: "limit"`). Ignored if `post_only` is set.
 
-If attaching the signature fails, the order is cancelled so no unsignable orphan
-is left behind.
+If Calibri cannot record the order with its signature, the request fails with a
+`500` (`Failed to record signed order; the order was cancelled`) and the order is
+cancelled.
 
 ### Selling a position
 
@@ -366,8 +367,10 @@ with `400 signed_order with signature is required for non-custodial orders`.
 Common `422` errors: `market_id must be a market id (a number or a numeric string)`
 (often a slug sent as `market_id`), `Market is not CTF-registered`, `signed_order side must be SELL for a sell order`, `Member safe is not
 settlement-ready`, `signed_order signature does not match the signer`. Other
-errors include `409 order.duplicate_client_order_id`; a temporary failure returns
-`502`.
+errors include `409 order.duplicate_client_order_id`. Two `422`s are temporary and
+worth retrying: `Unable to verify member safe readiness` and `Unable to verify
+signed_order signature` mean a check against the chain could not be completed. A
+failure inside the matching engine returns `502`.
 
 ## If a match fails to settle
 
@@ -382,12 +385,12 @@ back as if it never happened:
 - Nobody is debited.
 - If the other side was the **maker** (its order was resting), the order gets the
   voided volume back and keeps its place on the book.
-- If the other side was the **taker**, its order is cancelled and its stake
-  refunded. It does not get the fill back; send the order again.
+- If the other side was the **taker**, its stake is refunded to its balance. Its
+  order is left as it is and does not get the fill back; send the order again.
+- The resting orders of the side whose settlement failed are cancelled.
 
 Both members receive a `contract` frame with `state: "voided"` and a balance
-update on the private WebSocket, and the affected orders show `cancel` or are
-restored as above.
+update on the private WebSocket.
 
 ## Related
 

@@ -261,7 +261,7 @@ Calibri is never an owner, on any network, and holds no key that could sign for 
 |---|---|---|
 | **Anyone** | Bridge your Safe's USDC with no fee; create your Safe on another network | Send it anywhere but your Safe on Polygon; take a fee; touch other tokens or ETH |
 | **Calibri's relayer** | The above, plus **one** fee per bridge of the whole balance, capped at 10 USDC and 20%; and send a higher fee you accepted, once it is countersigned | Take a fee on part of the balance; exceed the caps without a countersigned acceptance; redirect the USDC or the fee |
-| **Calibri's consent key** | Countersign a fee above the cap for one deposit, once; with the relayer, that fee can be up to the deposit's full amount | Send a bridge itself; redirect the USDC or the fee |
+| **Calibri's consent key** | Countersign a fee above the cap for one deposit, once; with the relayer, that fee can be anything below the deposit's full amount | Send a bridge itself; redirect the USDC or the fee |
 | **Fee-configuration admin** | Change the relayer, the treasury and the consent key | Change the caps, the destination, the token or Circle's contract |
 | **You** (your wallet) | Anything a Safe owner can do, on every network — including switching the module off | — |
 | **You** (a passkey) | Everything on Polygon | Sign anything on another network — see below |

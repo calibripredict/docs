@@ -44,10 +44,12 @@ transaction yourself:
 - **Settlement** of a matched order — operator relays
 - **Redeeming** a winning position — operator relays
 
-What the operator *cannot* do is move your funds without a signature from you. The one
-exception is the bridge module, which can only carry USDC sent to your address on another
-supported network to your own Safe on Polygon — see
-[Deposits from other networks](/non-custodial/deposits-from-other-networks).
+What the operator *cannot* do is move your funds without a signature from you. Two
+things move without a signature for that move: the taker fee the CalibriMatcher takes when
+an order you signed matches, under the USDC approval you gave at setup and within a cap
+fixed on-chain (see [The Safe](/non-custodial/the-safe)); and the bridge module, which can
+only carry USDC sent to your address on another supported network to your own Safe on
+Polygon — see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 ## No fee at settlement
 

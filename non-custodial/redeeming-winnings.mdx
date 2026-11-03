@@ -180,7 +180,8 @@ on-chain USDC transfer out of the Safe** — a Safe `SafeTx` executing
 `POST /api/v2/atlas/account/wallet/relay` endpoint used for redemption.
 
 When funds leave the Safe on-chain, Calibri reconciles the off-chain mirror: it
-debits `balance_safe` and cancels any resting orders those funds collateralised.
+debits `balance_safe`, and if more left than `balance_safe` held, it cancels all
+your resting orders.
 
 A withdrawal on Polygon has no fee. To withdraw to an address on Ethereum
 instead, see

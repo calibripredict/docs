@@ -209,7 +209,8 @@ cannot diverge.
 | `bucket_open` | The first price of the forming candle. It is not the level a candle-direction window settles against — that is the previous window's close |
 | `bucket_seconds` | Width of the forming candle |
 
-Throttled to roughly one message per second, newest-wins.
+At most one message per second of the source's own clock: the first price of that
+second. Later prices in the same second are not sent.
 
 <Note>
   `bucket_open` is for **drawing**. Settlement reads the market's settlement source — see [How markets are resolved](/concepts/resolution-sources).

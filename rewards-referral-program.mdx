@@ -35,7 +35,7 @@ Referral rewards follow the same flow as every other reward (full detail in [Rew
 
 ## Voided markets
 
-If a referred trade's market is **voided**, each share pays 0.50 and the taker fee is kept (see [Voids and postponements](/non-custodial/resolution#voids-and-postponements)). Your referral reward is unaffected: it is paid as normal, because the fee that funds it is kept.
+If a referred trade's market is **voided**, each share pays 0.50 and the taker fee on a settled trade is kept (see [Voids and postponements](/non-custodial/resolution#voids-and-postponements)), so your referral reward on it is paid as normal. A trade not yet settled on-chain is unwound instead: its fee is refunded and its referral reward cancelled, unless already paid.
 
 ## Track your referrals
 

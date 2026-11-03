@@ -40,9 +40,9 @@ rather than hard-coding it.
 The CalibriMatcher was deployed on **2 November 2026**. It is an operator of the CTF
 Exchange — `isOperator(0x974533370a52DDfBeBAFf98e6C12f232485A0293)` on the exchange
 returns `true` — and its `exchange()` and `collateral()` views return the CTF Exchange and
-USDC addresses above. `maxFeeRateBps()` is the highest fee it can take from an order,
-in basis points of that order's fill; `FEE_RATE_CEILING_BPS()` is the most that limit can
-ever be set to.
+USDC addresses above. `maxFeeRateBps()` caps the fee it can take from an order, in basis
+points of that order's fill — of the USDC a buy spends, and a quarter of it on the tokens a
+sell gives; `FEE_RATE_CEILING_BPS()` is the most that limit can ever be set to.
 
 <Note>
   **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified — its bytecode is identical to that build, which you can compare on Polygonscan. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.

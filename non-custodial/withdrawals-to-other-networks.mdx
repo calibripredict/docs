@@ -49,8 +49,8 @@ network you pick, **before you sign**. If it and this page ever disagree, the fo
   <Step title="It leaves your Safe on Polygon">
     Calibri relays the transaction and pays the Polygon gas. The fee is taken **before**
     the burn, in **USDC on Polygon**; Circle burns the rest. Your balance is reduced by the
-    full amount — fee plus what is sent — once it confirms, and resting orders that relied
-    on those funds are cancelled, as with any withdrawal.
+    full amount — fee plus what is sent — once it confirms. As with any withdrawal, if it
+    takes more than `balance_safe`, all your resting orders are cancelled.
   </Step>
   <Step title="Circle attests the burn">
     Circle waits for the burn to be final and signs an attestation. This is most of the

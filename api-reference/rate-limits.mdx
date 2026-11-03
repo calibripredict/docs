@@ -34,7 +34,7 @@ fixed, starting at your first counted request, and have no extra block period �
 the allowance is back as soon as the window ends.
 
 <Warning>
-  Several identity limits **block for longer than the window they measure**. Ten failed sign-in attempts in a minute does not free up after that minute — it blocks for five. Retrying at the window boundary re-arms the block; see [Backing off](#backing-off).
+  Several identity limits **block for longer than the window they measure**. Ten sign-in requests in a minute do not free up after that minute: the eleventh starts a five-minute block. Requests made during a block are refused and do not extend it; see [Backing off](#backing-off).
 </Warning>
 
 ## Sign-in and account creation
@@ -135,8 +135,8 @@ attempt 4 fails  ->  wait  8s   ... capped at 60s
 Three rules that matter more than the curve:
 
 - **Add jitter.** Without it, every client that failed together retries together, and the retry storm is worse than the original burst.
-- **Never retry a 429 immediately**, even once. On the endpoints with a block, an immediate retry lands inside the block and can extend it.
-- **Do not retry a `422`**, with one exception. It is a validation failure, and the same body will fail every time — except `market.order.tokens_settling`, a sell of shares still settling on-chain, which succeeds once the match confirms. Otherwise only `429`, `5xx` and network errors are worth retrying.
+- **Never retry a 429 immediately**, even once. On the endpoints with a block, an immediate retry lands inside the block and is refused.
+- **Do not retry a `422`**, with three exceptions. It is a validation failure, and the same body will fail every time — except `market.order.tokens_settling`, a sell of shares still settling on-chain, which succeeds once the match confirms, and `Unable to verify member safe readiness` and `Unable to verify signed_order signature`, which mean a check against the chain could not be completed. Otherwise only `429`, `5xx` and network errors are worth retrying.
 
 ## If you need more
 

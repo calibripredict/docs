@@ -62,8 +62,9 @@ Three separate things end a session, and they are not the same:
 | **Expiry** | Grants are issued for **30 days** | Authorise a new key |
 | **Revocation** | You revoke it deliberately | Authorise a new key |
 
-You can revoke **one** key or **all** of them at once. Revoke-all is the
-emergency path and works no matter how many keys exist.
+The app revokes **all** your keys at once — the emergency path, which works no
+matter how many keys exist. Through the API you can also revoke **one** key, by
+passing its `key_id`.
 
 <Warning>
   Revoking is immediate on-chain, but it does **not** cancel orders that key already placed. They stay resting, and a fill will then fail to settle, because settlement checks the grant. **Cancel resting orders yourself before revoking** if you want the exposure closed.

@@ -16,8 +16,10 @@ its address:
   signer contract derived from your passkey, plus any
   [signing key](/non-custodial/signing-keys) you add yourself. The operator
   deploys it and relays your signed orders, but **can never move funds without
-  your signature** — except to carry USDC sent to your address on another network
-  to your own Safe on Polygon (see [Choosing a network](#choosing-a-network)).
+  your signature** — except the taker fee taken when an order you signed matches
+  (under the approval you gave at setup, within a cap fixed on-chain), and USDC sent
+  to your address on another network, carried to your own Safe on Polygon (see
+  [Choosing a network](#choosing-a-network)).
 - You fund it by holding **USDC** in the Safe on **Polygon**. USDC you send to the
   same address on Ethereum is moved there for you — see
   [Choosing a network](#choosing-a-network).

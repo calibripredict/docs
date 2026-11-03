@@ -126,7 +126,10 @@ Responses are **plain JSON** — a resource object or an array of them. There is
 Monetary and volume values are **strings** — parse them as decimals, not floats. The
 exception is chart and price-feed series — k-line rows, asset prices, candles and
 windows, and the `kline-*` and `crypto.*` WebSocket streams — which are numbers.
-Ids are **numbers**, except on-chain token ids, which are decimal strings. A field
+Ids of Calibri's own records — orders, markets, events, trades — are **numbers**.
+Ids that name something else are strings: on-chain token ids (decimal strings),
+condition ids, currency ids such as `usdc`, session-key ids, the bridge's `bridge_id`,
+`quote_id` and `consent_id`, and your own `client_order_id`. A field
 that can be empty is present as `null`, unless its description says it is omitted. Timestamps named `*_at` are RFC
 3339 in UTC to the second; `timestamp` fields are Unix seconds.
 

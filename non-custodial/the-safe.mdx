@@ -106,7 +106,7 @@ Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_
 
 | Value | Meaning |
 |---|---|
-| `ready` | Safe exists and is set up — you can trade |
+| `ready` | Safe exists and is set up — you can trade. Without `?setup=1` it is also shown when the setup check could not be completed; placing an order checks again |
 | `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first |
 | `error` | Lookup failed; retryable (the Safe is not presented as absent) |
 | `unavailable` | You have an owner but no Safe factory is available |

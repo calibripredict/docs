@@ -40,7 +40,7 @@ Prices move as opinion moves, so the odds you see change right up until the mark
 
 ## Your money is yours
 
-Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it — with one narrow exception: the bridge module can move USDC you sent to your address on another supported network, and only to your own Safe on Polygon. See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
+Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it — with two narrow exceptions. When an order you signed matches, the CalibriMatcher takes that order's taker fee from your Safe, under the USDC approval you gave at setup and within a cap fixed on-chain. And the bridge module can move USDC you sent to your address on another supported network, only to your own Safe on Polygon. See [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 
 That means:
 

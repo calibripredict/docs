@@ -44,11 +44,12 @@ Every row reflects the live pools at the time of the request.
 - **Redemption** — redeeming (by hand or via auto-redeem) moves the USDC into
   your Safe on-chain; once it confirms, the amount moves from `redeemable_safe`
   to `balance_safe`.
-- **Withdrawal** — moving USDC out of the Safe on-chain debits `balance_safe`
-  and cancels any resting orders those funds collateralised.
+- **Withdrawal** — moving USDC out of the Safe on-chain debits `balance_safe`.
+  If it takes more than `balance_safe` — USDC your resting orders had reserved —
+  **every** resting order you have is cancelled, not only the ones it backed.
 
 <Warning>
-  The mirror follows the chain, not the other way round. Withdrawing from your Safe directly is always allowed — but it will cancel resting orders whose collateral you have just moved.
+  The mirror follows the chain, not the other way round. Withdrawing from your Safe directly is always allowed — but moving more than `balance_safe` cancels all your resting orders.
 </Warning>
 
 ## Related

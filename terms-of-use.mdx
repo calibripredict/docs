@@ -73,8 +73,8 @@ If you do not accept, the deposit remains at your Safe address until the cost fa
 the limits in paragraph (c), you send more USDC so that the fee can be offered again, or
 you bridge it yourself at zero fee. Your acceptance is countersigned by a dedicated
 Calibri key and checked by the bridge module on-chain, which charges exactly the signed
-amount. If that key were misused, Calibri could charge a fee up to the full amount of a
-deposit it countersigns; the remainder would still reach only your Safe on Polygon.
+amount. If that key were misused, Calibri could charge a fee of anything below the full amount
+of a deposit it countersigns; the remainder would still reach only your Safe on Polygon.
 
 (e) **Conditions.** Bridging under paragraph (a) is subject to the published minimums and
 timing. Any party, including you, may trigger it at zero fee. Assets other than USDC, and
@@ -145,7 +145,7 @@ The rules that matter most:
 - **The source named on the market decides it.** For crypto price markets that is the source named in the market's terms: Coinbase's own published data for the stated interval, or, for BTC-USD markets that name it, the Chainlink BTC/USD 60-second TWAP.
 - **Settlement is final.** A settled market is terminal. If the source later restates its data, or there was an outage, an unusual print, or any other issue at or around the deciding moment, **the settlement stands.** Calibri does not retroactively correct a settled market.
 - **Ties on up/down markets resolve up.** An interval closing exactly at the previous interval's close resolves YES.
-- **A market that cannot be resolved fairly is voided.** A voided market pays 0.50 per share on both outcomes. The taker fee is kept. It is not a refund of the price paid.
+- **A market that cannot be resolved fairly is voided.** A voided market pays 0.50 per share on both outcomes. The taker fee on a settled trade is kept; a trade not yet settled on-chain is unwound and its taker fee refunded. A void is not a refund of the price paid.
 
 Resolution is reported **on-chain**, and the escalation ladder that follows it is
 permissionless: if Calibri fails to report, anyone can escalate the question, and

@@ -46,7 +46,8 @@ placed.
 
 <Steps>
   <Step title="Operator report — the normal path">
-    At or after `resolveBy`, Calibri reports the outcome on-chain. Your winning
+    Once the outcome is known, Calibri reports it on-chain — whether that is before or
+    after `resolveBy`, as long as nobody has escalated the market. Your winning
     outcome token becomes redeemable for the full **1.00 USDC/share** (see
     [Redeeming winnings](/non-custodial/redeeming-winnings)); the losing token for
     `0`. One call per market — this is what happens in virtually all cases.
@@ -72,7 +73,7 @@ placed.
 
 | Stage | Trigger | Who can act | Result |
 | --- | --- | --- | --- |
-| Report | `resolveBy` | Calibri (operator) | Winners redeem 1.00/share |
+| Report | The outcome is known; any time until escalation | Calibri (operator) | Winners redeem 1.00/share |
 | UMA escalation | `resolveBy` + **~7 days** (grace window) | Anyone | UMA settles the true outcome |
 | Deadman void | `resolveBy` + **~30 days** (hard cap) | Anyone | Market voids 50/50, 0.50 per share redeemable — unless UMA has already answered |
 
@@ -98,12 +99,14 @@ abandoned, the event is cancelled, or nobody reported an outcome before the dead
 cap elapsed. A void is the same whichever way it happens.
 
 - **Every share pays 0.50 USDC, YES and NO alike.** The on-chain payout vector is
-  `[1,1]`; the off-chain ledger pays the same figure from the market's escrow.
-- **The taker fee on every matched trade is kept.** The trade happened and was
+  `[1,1]`.
+- **The taker fee on every settled trade is kept.** The trade happened and was
   charged when it matched; a void only sets what each share pays.
 - **A trade not yet settled on-chain is unwound instead.** If a match had not
   settled on-chain when the market was voided, it is rolled back: each side gets
-  back what the match moved, at its exact stake, and the taker fee is refunded.
+  back what the match moved, at its exact stake, and the taker fee is refunded. The
+  maker rebate and referral reward that fee would have funded are cancelled, unless
+  already paid.
 - **Resting (unmatched) orders are cancelled** and their locked collateral released
   in full. They never became positions.
 - **You redeem the 0.50 per share yourself**, exactly like a win. See
