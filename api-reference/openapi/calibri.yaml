@@ -4472,9 +4472,10 @@ components:
             `determined` (the outcome is known; payout may still be in
             progress),
 
-            `settled` (paid out), `cancelled` or `voided`. Only `active` accepts
+            `settled` (positions settled; winnings are redeemable and reach your
+            Safe when
 
-            orders.
+            redeemed), `cancelled` or `voided`. Only `active` accepts orders.
           enum:
             - active
             - closed
