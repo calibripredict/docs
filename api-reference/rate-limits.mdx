@@ -118,8 +118,8 @@ client repeats in a loop.
 ## Market data
 
 Public market-data reads are **not currently rate-limited**, but they are cached —
-see [Caching](/api-reference/introduction#caching) in the API overview. Polling
-faster than the `Cache-Control` lifetime returns the same bytes and gains you nothing.
+see [Caching](/api-reference/introduction#caching) in the API overview. Polling them
+rapidly returns the same bytes and gains you nothing.
 
 <Warning>
   Do not treat "no limit today" as a guarantee. Use the [WebSocket](/api-reference/websockets) for anything live; it is both cheaper for you and the reason this endpoint class has not needed a limit.
