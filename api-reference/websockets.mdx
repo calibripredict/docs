@@ -153,13 +153,13 @@ except weeks, which start Monday 00:00 UTC.
 { "12.kline-1h": [1795000000, 0.60, 0.70, 0.58, 0.65, 240] }
 ```
 
-A frame is sent within a second of a fill moving the candle, and again on each
-later fill in the same bucket, with the whole candle so far. A frame with a new
-`timestamp` starts the next candle; the last frame for the previous one is its
-final value. A bucket with no fills sends nothing. Load history with the REST
-route, then replace its last row with each frame of the same `timestamp`, or
-append a frame with a later one. The REST route's last row is the candle as it
-stands, the same as the latest frame.
+A frame is sent after fills move the candle, with the whole candle so far; fills
+that land close together arrive as one frame. A frame with a new `timestamp` starts
+the next candle; the last frame for the previous one is its final value. A bucket
+with no fills sends nothing. Load history with the REST route, then replace its last
+row with each frame of the same `timestamp`, or append a frame with a later one. The
+REST route's last row is the candle as it stands, which can be newer than the latest
+frame.
 
 ## Authenticating a private connection
 
