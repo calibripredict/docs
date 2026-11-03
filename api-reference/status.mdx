@@ -26,9 +26,7 @@ curl -s https://calibri.io/api/v2/status
 | `updated_at` | string | When this answer was produced (RFC 3339, UTC). |
 
 This endpoint needs no authentication and keeps answering while the API itself
-is down. The
-response carries `Cache-Control: max-age=5`; a change of maintenance state can
-take up to 30 seconds to show.
+is down. The response carries `Cache-Control: max-age=5`.
 
 ## During maintenance
 
