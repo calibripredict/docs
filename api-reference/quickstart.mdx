@@ -57,10 +57,10 @@ Send **USDC on Polygon** to `proxy_address` from any wallet or exchange. There
 is nothing to call — the deposit is an ordinary on-chain transfer, and it is
 credited once it confirms.
 
-**`GET /api/v2/atlas/account/balances`**
+**`GET /api/v2/atlas/account/balances/usdc`**
 
 ```json
-{ "currency": "usdc", "balance_safe": "150.00", "locked_safe": "0" }
+{ "currency": "usdc", "balance_safe": "150", "locked_safe": "0", … }
 ```
 
 `balance_safe` is your tradeable USDC — the mirror of what your Safe holds
@@ -92,9 +92,10 @@ as a Safe `SafeTx` (EIP-712) with the Safe's owner, then relay it.
 
 `nonce` is the call's own `nonce`, the one you signed. The operator executes it and
 pays the gas; you get back `{ "tx": "0x…", "status": "mined", "state": "pending", … }`
-— the change applies once its block is final. Calls may arrive batched as one
+— `status` can also be `unconfirmed` (sent, not mined yet) or `reverted` — and the
+change applies once its block is final. Calls may arrive batched as one
 MultiSend call (`operation: 1`) or as several at sequential nonces — relay those
-**in order**. Re-read the config until `safe_status` is `ready`.
+**in order**. Re-read the config (without `?setup=1`, which answers `409 wallet.state_pending` until the relay is final) until `safe_status` is `ready`.
 
 <Warning>
   Do not place orders on `setup_required`. The order is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Full detail in [The Safe](/non-custodial/the-safe).
@@ -164,7 +165,7 @@ people out:
 - **Sign the served `domain_name`**, never a copied constant.
 - **On a passkey Safe (`signature_type: 3`), sign the SafeMessage — not the
   order hash.** Safe re-wraps the hash before checking it, so signing
-  `orderHash` directly is rejected as *That order was signed by a key that cannot sign for your wallet…*, even though the signature recovers to your key when you
+  `orderHash` directly is rejected as *Invalid signed_order signature*, even though the signature recovers to your key when you
   check it yourself. Recipe under **type 3** in
   [Authentication](/api-reference/authentication).
 - **Placing a buy locks stake *plus* the maximum taker fee** the fill could incur

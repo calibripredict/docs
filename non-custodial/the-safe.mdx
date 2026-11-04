@@ -73,15 +73,16 @@ either.
 You do not deploy the Safe yourself. Reading your wallet config returns the
 derived Safe address and registers it, so on-chain transfers to it are credited
 back to your account. The address receives funds before the contract exists, and
-the operator deploys the Safe gaslessly **after your first deposit** to it —
-`safe_status` reads `deposit_required` until that deposit, then `deploying`.
+the operator deploys the Safe gaslessly **after your first deposit** to it (or
+earlier, if you first relay a change to its signing keys) — `safe_status` reads
+`deposit_required` until that deposit, then `deploying`.
 Setup (step 3) is offered once the Safe exists.
 
 Read your member-level wallet config:
 
 **`GET /api/v2/atlas/account/wallet?setup=1`**
 
-Without `?setup=1`, `safe_setup` is `null`. Before your first deposit `?setup=1` is refused with `409 wallet.deposit_required`, and with `409 wallet.deploying` until the Safe exists. Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `funded` and `deployed`, `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
+Without `?setup=1`, `safe_setup` is `null`. Before your first deposit `?setup=1` is refused with `409 wallet.deposit_required`, with `409 wallet.deploying` until the Safe exists, and with `409 wallet.state_pending` while a transaction you relayed is not final yet. Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `funded` and `deployed`, `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `session_keys_enabled`, `safe_setup`, and `safe_status`.
 
 ```json
 {
@@ -94,6 +95,8 @@ Without `?setup=1`, `safe_setup` is `null`. Before your first deposit `?setup=1`
   "proxy_address": "0x… (your Safe — deposit destination + order maker)",
   "owner_address": "0x… (your EOA, or your passkey signer contract)",
   "signature_type": 2,
+  "funded": true,
+  "deployed": true,
   "safe_setup": { "ready": true, "calls": [] },
   "safe_status": "ready"
 }
@@ -108,9 +111,9 @@ Without `?setup=1`, `safe_setup` is `null`. Before your first deposit `?setup=1`
 | Value | Meaning |
 |---|---|
 | `ready` | Safe exists and is set up — you can trade |
-| `deposit_required` | Your Safe address has had no deposit yet. Send USDC to it; the Safe is created after that first deposit |
+| `deposit_required` | Your Safe address has had no deposit yet. Send USDC to it; the Safe is created after that first deposit. `deployed` can already be `true` if you changed its signing keys first |
 | `deploying` | Funded, and Calibri is creating the Safe. Read the config again shortly |
-| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first (ask with `?setup=1`; it returns no calls when nothing is outstanding) |
+| `setup_required` | Safe exists but setup is still outstanding (its approvals, and on a passkey wallet the quick-trading handler) — sign and relay `safe_setup.calls` first (ask with `?setup=1`; it returns no calls when nothing is outstanding) |
 | `error` | Lookup failed; retryable (the Safe is not presented as absent) |
 | `unavailable` | You have an owner but no Safe factory is available |
 | `unlinked` | No wallet linked and no passkey enrolled yet |
@@ -180,7 +183,7 @@ Request body:
 ```json
 {
   "safe": "0x… (must be your own Safe)",
-  "to": "0x… (the exchange, for approvals)",
+  "to": "0x… (the call's own `to`, e.g. from safe_setup.calls)",
   "value": "0",
   "data": "0x… (encoded approve / setApprovalForAll)",
   "operation": 0,
@@ -194,8 +197,8 @@ and `operation` to `0`. Send `nonce` as well — the nonce your signature was ma
 at; a signature over a different nonce is refused with `422 relay.nonce_mismatch`.
 Calibri rejects with `400 safe does not belong to this member` unless `safe`
 equals your own derived Safe address, then forwards to the operator relayer.
-Before your first deposit only adding or removing a
-[signing key](/non-custodial/signing-keys) is relayed; anything else is refused with
+Before your first deposit only changes to your Safe's
+[signing keys](/non-custodial/signing-keys) are relayed; anything else is refused with
 `409 wallet.deposit_required`, and with `409 wallet.deploying` until the Safe exists.
 
 Response:
@@ -204,11 +207,13 @@ Response:
 { "tx": "0x…", "status": "mined", "state": "pending", "relay_id": "1842" }
 ```
 
-`status` is `mined`, or `reverted` when the transaction was mined but the Safe call
-failed — nothing changed, and you can sign again. `state` is always `pending`: the
-change shows on `GET /account/wallet` once the block it landed in is final, so read
-the wallet for the result. A `202` with `"tx": null` means the transaction was sent but
-its outcome is not known yet; read the wallet the same way.
+`status` is `mined`; `unconfirmed` when the transaction was sent but not mined yet
+(`tx` is set); or `reverted` when it was mined but the Safe call failed — nothing
+changed, and you can sign again. `state` is always `pending`: the change shows on
+`GET /account/wallet` once the block it landed in is final, so read the wallet for
+the result. A `202` answers `{ "data": { "relay_id": "…", "state": "pending", "tx": null } }`:
+the transaction may have been sent and its outcome is not known yet; read the wallet
+the same way.
 
 ### The SafeTx typed data
 

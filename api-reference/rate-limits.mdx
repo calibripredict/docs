@@ -141,7 +141,7 @@ Three rules that matter more than the curve:
 
 - **Add jitter.** Without it, every client that failed together retries together, and the retry storm is worse than the original burst.
 - **Never retry a 429 immediately**, even once. On the endpoints with a block, an immediate retry lands inside the block and is refused.
-- **Do not retry a `422`**, with three exceptions. It is a validation failure, and the same body will fail every time — except `market.order.tokens_settling`, a sell of shares still settling on-chain, which succeeds once the match confirms, and `Unable to verify member safe readiness` and `Unable to verify signed_order signature`, which mean a check against the chain could not be completed. Otherwise only `429`, `5xx` and network errors are worth retrying.
+- **Do not retry a `422`**, with three exceptions. It is a validation failure, and the same body will fail every time — except `market.order.tokens_settling`, a sell of shares still settling on-chain, which succeeds once the match confirms, and `Unable to verify member safe readiness` and `Unable to verify signed_order signature`, which mean Calibri could not complete the check. Otherwise only `429`, `5xx` and network errors are worth retrying.
 
 ## If you need more
 

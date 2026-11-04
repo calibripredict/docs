@@ -28,7 +28,7 @@ maker), `owner_address` (what owns the Safe), `signature_type`,
 </Note>
 
 <Warning>
-  Check `safe_status` before signing. `deposit_required`, `deploying` and `setup_required` mean the Safe is not funded, not created yet, or still owes its approvals, and an order placed then is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Right after setup or a new trading key, an order can be refused with `409 wallet.state_pending` or `409 session.pending` until the change is final — retry it.
+  Check `safe_status` before signing. `deposit_required`, `deploying` and `setup_required` mean the Safe is not funded, not created yet, or still owes its approvals, and an order placed then is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Right after you relay setup, `safe_status` stays `setup_required` until setup is final: wait for `ready`. Right after a new trading key, a session-signed order can be refused with `409 session.pending` until the key is final, and `409 wallet.state_pending` means Calibri has not recorded your Safe's current state yet — retry both.
 </Warning>
 
 <Warning>
@@ -120,8 +120,7 @@ owner of the Safe.
 
 It signs the **SafeMessage**, not the order hash. Safe re-wraps the hash before
 checking it, so signing `orderHash` directly recovers to a different address and
-the Safe rejects it — reported as `422 That order was signed by a key that
-cannot sign for your wallet…`, on a signature that verifies perfectly if you check it
+the Safe rejects it — reported as `422 Invalid signed_order signature`, on a signature that verifies perfectly if you check it
 yourself. The full recipe, computable without a node, is under **type 3** in
 [Authentication](/api-reference/authentication).
 
@@ -129,9 +128,8 @@ The grant id is read out of the envelope's first word, so a client cannot name a
 live grant while signing with an expired key. A session-signed order is
 additionally checked against its grant's expiry at intake; an expired grant is
 rejected with `422 Your trading key has expired or been revoked — approve with
-your passkey`. A revoked grant gets the same answer if the key had not placed an
-order before it was revoked; otherwise it fails the wallet's signature check and is
-rejected with `422` and a signature error.
+your passkey`. A revoked grant gets the same answer, from the moment the
+revocation is relayed.
 
 See [Trading without a prompt per order](/non-custodial/session-keys).
 
@@ -340,9 +338,9 @@ Calibri fully validates the signed order before anything is placed, rejecting wi
 - the maker is a Safe **registered to you** and settlement-ready;
 - for type `2`, `signer` equals your member EOA and the **signature
   ECDSA-recovers to `signer`**;
-- for type `3`, `signer == maker` and the **Safe itself verifies the signature**
-  (EIP-1271) — plus, for a session-key envelope, the grant is still within its
-  expiry.
+- for type `3`, `signer == maker` and the signature is one your Safe accepts —
+  your passkey, a session key whose grant is live, or an owner's signature over
+  the SafeMessage. The Safe checks it again (EIP-1271) at settlement.
 
 ### Expiry is enforced
 
@@ -370,7 +368,7 @@ Common `422` errors: `market_id must be a market id (a number or a numeric strin
 settlement-ready`, `signed_order signature does not match the signer`. Other
 errors include `409 order.duplicate_client_order_id`. Two `422`s are temporary and
 worth retrying: `Unable to verify member safe readiness` and `Unable to verify
-signed_order signature` mean a check against the chain could not be completed. A
+signed_order signature` mean Calibri could not complete the check; nothing was placed. A
 failure inside the matching engine returns `502`.
 
 ## If a match fails to settle

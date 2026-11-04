@@ -9,7 +9,7 @@ error string in the body.
 ## Error body
 
 ```json
-{ "errors": ["market.order.insufficient_balance"] }
+{ "errors": ["market.order.create_failed"] }
 ```
 
 Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
@@ -43,7 +43,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.order.tokens_settling` | 422 | A sell of shares that are still settling on-chain; they can be sold once the match confirms |
 | `market.order.expired` | 400 | The order's signature expires in under 30 seconds, so a fill could not settle in time. A signature that has already expired is refused before this, with `422` `signed_order expiration is out of range` |
 | `market.order.account_not_active` | 403 | Account is not in an active state |
-| `market.order.kyc_required` | 403 | KYC level below the market's minimum |
+| `market.order.kyc_required` | 403 | Your KYC level is below the minimum required to trade |
 | `market.order.invalid_state` | 422 | Cancel refused: the order is already terminal or fully matched |
 | `market.order.not_found` | 404 | Order does not exist or is not yours |
 | `public.market.doesnt_exist` | 404 | Unknown market |
@@ -51,7 +51,7 @@ Codes are namespaced by domain (`market.order.*`, `public.*`, `account.*`,
 | `market.engine.not_found` | 404 | Market data is unavailable for this market |
 | `public.k_line.invalid_period` / `non_integer_period` | 400 | Bad k-line `period` |
 | `prediction.event.not_found` | 404 | Unknown event slug or id |
-| `authz.invalid_signature` / `authz.nonce_expired` / `authz.nonce_reused` / `authz.unexistent_apikey` / `authz.apikey_not_active` / `authz.invalid_api_key_headers` / `authz.invalid_session` | 401 | Missing or invalid credentials — see [Authentication](/api-reference/authentication) |
+| `authz.invalid_signature` / `authz.nonce_expired` / `authz.nonce_reused` / `authz.nonce_not_valid_timestamp` / `authz.unexistent_apikey` / `authz.apikey_not_active` / `authz.invalid_api_key_headers` / `authz.invalid_session` | 401 | Missing or invalid credentials — see [Authentication](/api-reference/authentication) |
 | `authz.invalid_permission_scope` | 403 | The API key's scope does not allow this request |
 | `server.error` (`/pythia`) / `Internal server error` (`/atlas`) | 500 | Unexpected server error. On `POST /atlas/account/orders`, `/batch` and `/replace` it comes back as `502`: the matching engine failed |
 | `maintenance` | 503 | Scheduled maintenance; the body carries `eta` and `message` ([Status and Maintenance](/api-reference/status)) |
@@ -64,22 +64,27 @@ A `post_only` order that would take liquidity is not refused with an error: it i
 |---|---|---|
 | `Market is not CTF-registered` | 422 | No on-chain condition exists for this market yet (`404` on `GET /account/wallet/markets/{id}`) |
 | `signed_order with signature is required for non-custodial orders` | 400 | The order was posted without a `signed_order`, or without its `signature` |
-| `Member safe is not settlement-ready` | 422 | The Safe is not funded, not created yet, or owes its approvals — check `safe_status` |
-| `wallet.state_pending` | 409 | A change to your wallet (setup, a relayed transaction) is not final yet. Retry shortly. Also answered by `?setup=1` while an earlier relay is pending |
+| `Member safe is not settlement-ready` | 422 | The Safe has had no deposit yet, is still being created, or its setup is not signed or not final yet — check `safe_status`; only `ready` can trade |
+| `Non-custodial orders must be limit orders` | 422 | `ord_type` is not `limit` |
+| `wallet.state_pending` | 409 | On an order: Calibri has not recorded your Safe's current state yet. On `?setup=1` or preparing a trading key: a transaction you relayed is not final yet. Retry shortly |
 | `session.pending` | 409 | A new trading key is not final yet. Retry shortly |
-| `wallet.deposit_required` | 409 | `?setup=1` or a relay before your Safe's first deposit. Fund it first |
-| `wallet.deploying` | 409 | Funded, but the Safe is still being created. Retry shortly |
-| `relay.nonce_mismatch` | 422 | The relayed signature does not sign the `nonce` sent (or the Safe's current nonce, when `nonce` is omitted) |
+| `wallet.deposit_required` | 409 | `?setup=1`, preparing a trading key, or a relay before your Safe's first deposit (a change to its signing keys is still relayed). Fund it first |
+| `wallet.deploying` | 409 | Funded, but the Safe is still being created; same calls. Retry shortly |
+| `relay.nonce_mismatch` | 422 | The relayed signature does not sign this transaction at the `nonce` sent (or the Safe's current nonce, when `nonce` is omitted) — including a signature from a key that is not an owner of your Safe |
 | `This wallet needs more than one signature, which Calibri does not support.` | 422 | The Safe's threshold was raised above 1 |
 | `signed_order maker is not a Safe registered to this member` / `signed_order maker must be the member safe wallet` | 422 | The `maker` is not your Safe (type `3` / type `2`) |
-| `signed_order signature does not match the signer` | 422 | The signature does not verify |
+| `This wallet is not registered to your account yet. Open your wallet, then try again.` | 422 | Type `2`: your Safe is not registered yet — read `GET /account/wallet`, which registers it |
+| `signed_order signature does not match the signer` / `signed_order signature is malformed` | 422 | Type `2`: the signature does not recover to `signer`, or cannot be parsed |
+| `Invalid signed_order signature` | 422 | Type `3`: the signature is not one your Safe accepts — including an order hash signed directly instead of the SafeMessage |
+| `Quick trading is not set up on this wallet` | 422 | A session-key order on a Safe without the quick-trading handler — relay `safe_setup.calls` |
+| `This wallet is not set up for trading` | 422 | The Safe's fallback handler is not one Calibri supports |
 | `Your trading key has expired or been revoked — approve with your passkey` | 422 | The [session key](/non-custodial/session-keys) grant has expired or was revoked — from the moment the revocation is relayed |
-| `That order was signed by a key that cannot sign for your wallet…` | 422 | The signature is from a key that is not an owner of the Safe — including an order hash signed directly instead of the SafeMessage |
 | `safe does not belong to this member` | 400 | The relayed Safe is not yours |
 | `Session keys are not enabled` | 400 | Session-key trading is not available |
 | `Session keys require a passkey wallet` | 400 | The member has no passkey wallet |
 | `This account's wallet is a passkey wallet, so orders must be signed by it…` | 422 | A type `2` order from an account whose wallet is passkey-owned. A linked wallet is a sign-in credential; to sign orders it must be added as a [signing key](/non-custodial/signing-keys) and sign as type `3` |
-| `Your passkey is no longer able to sign for this wallet…` | 422 | A signing key you added removed your passkey as an owner. Raised on the first order, withdrawal, or redemption the passkey is refused for — see [Signing keys](/non-custodial/signing-keys) |
+| `Your passkey no longer signs for this wallet…` | 422 | An order signed by your passkey after a signing key you added removed it as an owner — from the moment the removal is relayed. See [Signing keys](/non-custodial/signing-keys) |
+| `Your passkey is no longer able to sign for this wallet…` | 422 | The same, on a withdrawal or redemption relay |
 | `A two-factor code is required to add a signing key` | 422 | `POST /account/wallet/owners` without `otp`. Only adding needs it; removing does not |
 | `That two-factor code is not valid` | 422 | Wrong code, or 2FA is not enabled on the account |
 | `This is your passkey. Removing it would leave your wallet signable only by the other key.` | 400 | Refused: the owner-removal endpoint will not remove your passkey. A [signing key](/non-custodial/signing-keys) can still remove it with a Safe transaction it signs |

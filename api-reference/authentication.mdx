@@ -243,7 +243,7 @@ Open your type below.
 
     Sign the SafeMessage, not the order hash — the Safe hashes it again itself, so
     signing the order hash directly always fails validation. The symptom is a
-    `422` reading *That order was signed by a key that cannot sign for your wallet…*,
+    `422` reading *Invalid signed_order signature*,
     on a signature that recovers to your key perfectly when you check it
     yourself — the Safe is recovering against a different digest.
 
