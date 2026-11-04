@@ -28,7 +28,7 @@ values and how to verify them.
 
 ## What "non-custodial" actually guarantees
 
-- **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature. Two things move without a signature for that move: the taker fee the **CalibriMatcher** takes when an order you signed matches — under the USDC approval you gave at setup, and within the cap below — and the [bridge module](#cross-network-deposits), which can only carry USDC sent to your address on another network to **your own Safe on Polygon**. If you turn on auto-redeem, the **AutoRedeemer** can also redeem your resolved positions, returning the whole payout to your Safe.
+- **You hold the funds** — Your USDC sits in **your own Safe**. Only a key you own can authorize a move. The operator is never an owner and can never move funds without your signature. Two things move without a signature for that move: the taker fee the **CalibriMatcher** takes when an order you signed matches — under the USDC approval you gave at setup, and within the cap above — and the [bridge module](#cross-network-deposits), which can only carry USDC sent to your address on another network to **your own Safe on Polygon**. If you turn on auto-redeem, the **AutoRedeemer** can also redeem your resolved positions, returning the whole payout to your Safe.
 - **The operator can only report** — CalibriResolver reports outcomes; it can't seize collateral. Redemption of winnings happens **directly from the CTF**, so your winnings are never custodied by the operator between resolution and redeem.
 - **You sign, the operator pays gas** — Deploying your Safe, approvals, order settlement, and redemption are all **relayed** by the operator. You sign; apart from funding your Safe from your own wallet, you never need to hold gas. The one exception you can opt in to is auto-redeem, where a single approval lets winnings be redeemed back into your Safe without signing each one.
 - **Funds are always recoverable** — A permissionless escalation ladder (operator → UMA → deadman void) guarantees every market settles or is voided (0.50 per share). See [Market resolution](/non-custodial/resolution).
@@ -90,8 +90,8 @@ factory and different Safe addresses.
 
 The outbound direction uses **none of the contracts above**. A withdrawal from your Safe on
 Polygon to Ethereum is a Safe transaction you sign, which calls
-**Circle's messenger directly from the Safe** — no module. It is batched through Safe's own
-**MultiSendCallOnly** contract, which can make only plain calls, and the batch is exactly
+**Circle's messenger directly from the Safe** — no module. It is batched through **MultiSendCallOnly**,
+Safe's published contract deployed unmodified, which can make only plain calls, and the batch is exactly
 three of them: USDC to Calibri's treasury for the fee, a USDC approval to Circle's
 TokenMessengerV2, and `depositForBurn` naming the destination network and **your address**
 as the mint recipient. Circle mints only to that address; delivery on the destination

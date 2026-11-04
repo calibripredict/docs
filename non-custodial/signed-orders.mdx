@@ -381,21 +381,28 @@ back as if it never happened:
 
 - Both sides get back what the match moved: each buyer's stake, a seller's
   tokens, or both sellers' tokens on a merge. The **taker fee is refunded**.
-- Nobody is debited.
+- A seller's proceeds from the match, still pending, are withdrawn. Nothing is
+  taken from a spendable balance.
 - When the failure is traced to one side's Safe — USDC moved out, or an approval
   revoked:
   - If the other side was the **maker** (its order was resting), the order gets the
     voided volume back and goes back on the book at its price, behind the orders
-    already resting there.
-  - If the other side was the **taker**, its stake is refunded to its balance. Its
-    order is left as it is and does not get the fill back; send the order again.
+    already resting there — if the market is still trading and the order is still
+    open or filled. Otherwise its stake, or its tokens, come back to its balance or
+    position.
+  - If the other side was the **taker**, its stake — or its tokens, if it sold —
+    comes back to its balance or position. Its order does not get the fill back: an
+    order still open stays as it is, and an order that fill had completed reads
+    `cancel`. Send the order again.
   - The resting orders of the side whose Safe could not settle are cancelled.
 - When it is not — for example a signature that stopped being valid because its key
   was revoked — no order gets the fill back or goes back on the book, and no other
   orders are cancelled.
 
-Both members receive a `contract` frame with `state: "voided"` and a balance
-update on the private WebSocket.
+Both members receive a `contract` frame with `state: "voided"`, a `balance` frame
+and a `position` frame on the private WebSocket. An order put back on the book also
+sends an `order` frame with `state: "wait"`, and each cancelled order its `cancel`
+frame.
 
 ## Related
 

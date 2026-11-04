@@ -57,7 +57,7 @@ switch on the key:
 | Public (`/websocket/public`, signed out) | **2 minutes** from open | Closed with `4001` `sign_in_required`. The lifetime is fixed from the moment the connection opens; pings and traffic do not extend it |
 | Public, per IP | **20** open at once | The **new** connection is refused with `4029` `too_many_public_connections`; the existing ones are untouched |
 | Authenticated, per member | **10** open at once | The member's **oldest** connection is closed with `4008` `too_many_connections`, so a reconnect always succeeds |
-| Any | Client not reading fast enough | Closed with `1013` `backlog` once too much is queued for it. Reconnect and resync from REST |
+| Any | Client not reading fast enough | Some private frames are skipped, and once too much is queued the connection is closed with `1013` `backlog`. On either, resync from REST — reconnecting after a close |
 | Authenticated upgrade | Signature or credentials rejected | The upgrade is refused with HTTP `401` and an `authz.*` code, as for any request ([Errors](/api-reference/errors)); no connection opens |
 
 An authenticated connection — the API-key-signed upgrade on
@@ -109,7 +109,7 @@ happens. Levels are `[price, volume]` string tuples:
   carries the sequence it is current to.
 
 <Warning>
-  **If `sequence` skips, re-subscribe** (unsubscribe and subscribe to `{market}.ob-inc` again) to get a fresh snapshot and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
+  **If `sequence` is anything other than one more — a skip, or a drop to a lower number — re-subscribe** (unsubscribe and subscribe to `{market}.ob-inc` again; subscribing again without unsubscribing sends nothing) to get a fresh snapshot and resume from there — a client that ignores the gap will drift out of sync with the book and quote prices that no longer exist.
 </Warning>
 
 ## Ticker format
@@ -340,8 +340,13 @@ other keys depend on the event that sent it — a deposit's frame, for example,
 has `total` and `timestamp` instead of `redeemable` and `updated_at` — so read
 the keys you need and ignore the rest. `balance` is what is spendable now, not
 the total — the total is `balance + locked`. `redeemable` is the winnings still to redeem from the chain; it is set
-on frames sent by a settlement, a void or a redemption, and `null`
-otherwise.
+on frames sent by a settlement (including a market that resolves void) or a
+redemption, and `null` otherwise — including a voided match.
+
+A frame with `custody: "eoa"` is different: it is the on-chain balance of an external
+wallet linked to your account, sent while you are signed in to the web app, with
+`address`, `balance_raw`, `decimals` and `block_number`. It is not trading balance —
+filter on `custody: "self"` for that.
 
 <Warning>
   **Settlement does not credit a winner automatically.** On-chain resolution only makes the winning outcome token redeemable; the balance moves when the position is **redeemed** — by you, or by auto-redeem if you turned it on. Settlement sends a balance frame with `redeemable` set, but `balance` does not change until redemption — see [Redeeming winnings](/non-custodial/redeeming-winnings).

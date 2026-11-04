@@ -54,7 +54,7 @@ itself.
 
 **Withdrawals to other networks do not use the module.** They leave your Safe on Polygon as
 an ordinary Safe transaction you sign, which calls **Circle's messenger directly from the
-Safe** — no module and no Calibri contract is involved, and the destination address is
+Safe** — no module and no contract written by Calibri is involved, and the destination address is
 part of what you sign. See
 [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
@@ -154,9 +154,11 @@ A passkey wallet's setup also switches the Safe's fallback handler to the
 **SessionAwareFallbackHandler** ([deployed addresses](/smart-contracts/deployed-addresses)),
 so [session keys](/non-custodial/session-keys) can sign orders.
 
-The operator holds no allowance on your Safe. The matcher can take a fee only as
-part of a match your signed order allows, at no more than the contract's maximum
-fee rate.
+The operator holds no allowance on your Safe. The matcher can take a fee from your
+Safe only in the same transaction as a match of an order you signed, capped against
+that order's fill: at most `maxFeeRateBps` of the USDC a buy spends, or a quarter of
+that rate on the tokens a sell gives. The matcher's admin sets `maxFeeRateBps`, and
+the contract never lets it rise above `FEE_RATE_CEILING_BPS` (10%).
 
 These come back in `GET /api/v2/atlas/account/wallet?setup=1` as `safe_setup.calls` — a list of
 `{ to, data, operation, nonce, hash }`. Sign each as a Safe `SafeTx` (EIP-712)
@@ -238,8 +240,10 @@ relay body.
 A withdrawal to another network is the exception: Calibri builds it for you as one
 **MultiSendCallOnly** batch (`operation = 1`) returned with its quote — the fee transfer,
 the USDC approval to Circle's messenger, and Circle's `depositForBurn`. Sign it exactly as
-returned and relay it with the quote's `quote_id`; Calibri relays such a batch only when it
-matches that quote byte for byte, once. See
+returned and relay it with the quote's `quote_id`; Calibri relays such a batch only for your
+own unexpired quote, from the Safe it was quoted for, when it matches that quote byte
+for byte. A quote is used by one withdrawal; a relay your Safe refuses, or that
+reverts, does not use it up. See
 [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks).
 
 ## Next steps

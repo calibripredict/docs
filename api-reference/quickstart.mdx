@@ -241,10 +241,10 @@ Each message is keyed by the stream name, so one handler switches on the key:
 { "order": { "id": 1420, "state": "done", "remaining_volume": "0" } }
 ```
 
-`order`, `contract`, `balance` and `position` replace every poll in step 6.
+`order`, `contract`, `balance` and `position` replace the order, fill, balance and position polls in step 6. Pending rewards have no stream.
 
 <Warning>
-  Order-book increments carry a `sequence`. **If it skips, re-subscribe** — a client that ignores the gap quotes against a book that no longer exists.
+  Order-book increments carry a `sequence`, one more than the last. **If it is anything else — a skip, or a drop to a lower number — unsubscribe and subscribe to `{market}.ob-inc` again** to get a fresh snapshot. A client that ignores it quotes against a book that no longer exists.
 </Warning>
 
 Full channel list and payloads: [WebSocket streams](/api-reference/websockets).

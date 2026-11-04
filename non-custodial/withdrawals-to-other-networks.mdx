@@ -163,11 +163,12 @@ Polygon. Here is what that means in practice.
   and not after, because the burn and Circle's attestation fix the recipient.
 - **No module, no Calibri contract.** Unlike [deposits from other networks](/non-custodial/deposits-from-other-networks),
   a withdrawal does not use the bridge module. Your Safe calls **Circle's messenger
-  directly**, batched through Safe's own **MultiSendCallOnly** contract, which can make
-  only plain calls. The batch is exactly three calls: the fee to Calibri's treasury, the
+  directly**, batched through **MultiSendCallOnly** — Safe's published contract, deployed unmodified
+  at `0xd09223ccc54f27ed170144702eEcba0323368253` — which can make only plain calls. The batch is exactly three calls: the fee to Calibri's treasury, the
   approval to Circle, and Circle's burn.
 - **Calibri relays only what it quoted you.** The batch is built with your quote, and
-  Calibri relays it only if what you signed matches that quote exactly, once. It pays the
+  Calibri relays it only if what you signed matches that quote exactly. A quote is used by
+  one withdrawal; a relay your Safe refuses, or that reverts, does not use it up. It pays the
   gas on Polygon and on the destination network.
 
 | Who | Can | Cannot |
