@@ -30,7 +30,7 @@ USDC**.
 | **SessionKeyRegistry** (quick trading) | `0x6B22D8D814E08A29eAa8bA4750526a05f3B49416` | [View on Polygonscan](https://polygonscan.com/address/0x6B22D8D814E08A29eAa8bA4750526a05f3B49416) |
 | **Your Safe** | read from `GET /account/wallet` → `proxy_address` | `https://polygonscan.com/address/{address}` |
 
-The CTF Exchange was deployed on **7 October 2026** and carries Calibri's own
+The CTF Exchange was deployed on **6 October 2026** and carries Calibri's own
 EIP-712 domain name, **Calibri CTF Prediction Markets** — it is not a shared or
 third-party exchange. The domain name, this exchange's address and the chain id are
 hashed into every order signature. The address and chain id are why a signature made
@@ -45,7 +45,7 @@ points of that order's fill — of the USDC a buy spends, and a quarter of it on
 sell gives; `FEE_RATE_CEILING_BPS()` is the most that limit can ever be set to.
 
 <Note>
-  **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified — its bytecode is identical to that build, which you can compare on Polygonscan. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.
+  **ConditionalTokens is Gnosis' code, not ours.** The instance above is deployed from Gnosis' published, audited Conditional Token Framework build, unmodified: its runtime bytecode is byte-for-byte the `ConditionalTokens` build in Gnosis' npm package `@gnosis.pm/conditional-tokens-contracts` 1.0.3, and differs from Gnosis' own Ethereum deployment (`0xC59b0e4De5F1248C1140964E0fF287B192407E0C`) only in the 32-byte compiler metadata hash at the end. Its source is not verified on Polygonscan; compare the bytecode yourself with `eth_getCode`. The contract has no owner and no admin function: nobody, Calibri included, can move or freeze the collateral it holds; only the holder of an outcome token can redeem it.
 </Note>
 
 <Note>

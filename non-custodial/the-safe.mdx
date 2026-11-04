@@ -152,7 +152,10 @@ Before its first trade, the Safe must set four on-chain approvals:
 
 A passkey wallet's setup also switches the Safe's fallback handler to the
 **SessionAwareFallbackHandler** ([deployed addresses](/smart-contracts/deployed-addresses)),
-so [session keys](/non-custodial/session-keys) can sign orders.
+so [session keys](/non-custodial/session-keys) can sign orders. On a passkey wallet
+not set up yet, `POST /api/v2/atlas/account/wallet/session-key` returns these setup
+calls and the session key's authorisation in one batch, with `setup: true`: one
+signature sets up the wallet and authorises the key.
 
 The operator holds no allowance on your Safe. The matcher can take a fee from your
 Safe only in the same transaction as a match of an order you signed, capped against

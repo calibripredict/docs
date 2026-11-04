@@ -39,17 +39,23 @@ the session key.
   <Step title="Unlock trading">
     When you place an order, or set up your wallet on the Wallet page, the approval
     step offers **Turn on quick trading** (**Unlock trading** once this device holds a
-    key) — once your first deposit has arrived and your Safe has been created. Your
-    browser generates the keypair and never releases the private half.
+    key) — once your first deposit has arrived and your Safe has been created. If your
+    wallet is not set up yet, quick trading is part of **Set up your wallet** instead:
+    one step sets up the wallet and turns on quick trading, and **Set up without quick
+    trading** leaves it off. Your browser generates the keypair and never releases the
+    private half.
   </Step>
   <Step title="Approve with your passkey">
-    One Face ID / Touch ID / PIN prompt authorises the key on your Safe. This is
-    an on-chain authorisation; Calibri relays it and pays the gas.
+    One Face ID / Touch ID / PIN prompt authorises the key on your Safe — and, on a
+    wallet not set up yet, sets it up in the same transaction. This is an on-chain
+    authorisation; Calibri relays it and pays the gas.
   </Step>
   <Step title="Trade">
     Orders now sign silently until the key expires, locks, or you revoke it. Right
     after you approve, an order can be refused with `409 session.pending` until the
-    authorisation is final; the app retries it for you.
+    authorisation is final — or, when setup was in the same transaction, with
+    `422 Member safe is not settlement-ready` until setup is final. The app waits for
+    you.
   </Step>
 </Steps>
 
