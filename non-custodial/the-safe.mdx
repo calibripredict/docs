@@ -72,15 +72,16 @@ either.
 
 You do not deploy the Safe yourself. Reading your wallet config returns the
 derived Safe address and registers it, so on-chain transfers to it are credited
-back to your account. The operator deploys the Safe gaslessly — for a passkey
-wallet right after you enrol, for your own wallet when you first sign a wallet
-transaction such as setup.
+back to your account. The address receives funds before the contract exists, and
+the operator deploys the Safe gaslessly **after your first deposit** to it —
+`safe_status` reads `deposit_required` until that deposit, then `deploying`.
+Setup (step 3) is offered once the Safe exists.
 
 Read your member-level wallet config:
 
 **`GET /api/v2/atlas/account/wallet?setup=1`**
 
-Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
+Without `?setup=1`, `safe_setup` is `null`. Before your first deposit `?setup=1` is refused with `409 wallet.deposit_required`, and with `409 wallet.deploying` until the Safe exists. Returns your funding config: `proxy_address` (your Safe), `owner_address` (your Safe's owner — your EOA, or your passkey signer contract), `funded` and `deployed`, `usdc_address`, `exchange_address`, `conditional_tokens_address`, `chain_id`, `blockchain_key`, `domain_name`, `signature_type`, `safe_setup`, and `safe_status`.
 
 ```json
 {
@@ -107,7 +108,9 @@ Without `?setup=1`, `safe_setup` is `null`. Returns your funding config: `proxy_
 | Value | Meaning |
 |---|---|
 | `ready` | Safe exists and is set up — you can trade |
-| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first. Without `?setup=1`, `GET /account/wallet` also shows it for a Safe Calibri has not yet seen ready; ask with `?setup=1`, which checks the chain and returns no calls when nothing is outstanding |
+| `deposit_required` | Your Safe address has had no deposit yet. Send USDC to it; the Safe is created after that first deposit |
+| `deploying` | Funded, and Calibri is creating the Safe. Read the config again shortly |
+| `setup_required` | Safe exists but approvals are still outstanding — sign and relay `safe_setup.calls` first (ask with `?setup=1`; it returns no calls when nothing is outstanding) |
 | `error` | Lookup failed; retryable (the Safe is not presented as absent) |
 | `unavailable` | You have an owner but no Safe factory is available |
 | `unlinked` | No wallet linked and no passkey enrolled yet |
@@ -181,20 +184,31 @@ Request body:
   "value": "0",
   "data": "0x… (encoded approve / setApprovalForAll)",
   "operation": 0,
-  "signature": "0x… (your SafeTx signature — EOA ECDSA, or an EIP-1271 contract signature for a passkey)"
+  "signature": "0x… (your SafeTx signature — EOA ECDSA, or an EIP-1271 contract signature for a passkey)",
+  "nonce": "0 (the Safe nonce you signed at)"
 }
 ```
 
 Required fields: `safe`, `to`, `data`, `signature`. `value` defaults to `"0"`
-and `operation` to `0`. Calibri rejects with `400 safe does not belong to this
-member` unless `safe` equals your own derived Safe address, then forwards to the
-operator relayer.
+and `operation` to `0`. Send `nonce` as well — the nonce your signature was made
+at; a signature over a different nonce is refused with `422 relay.nonce_mismatch`.
+Calibri rejects with `400 safe does not belong to this member` unless `safe`
+equals your own derived Safe address, then forwards to the operator relayer.
+Before your first deposit only adding or removing a
+[signing key](/non-custodial/signing-keys) is relayed; anything else is refused with
+`409 wallet.deposit_required`, and with `409 wallet.deploying` until the Safe exists.
 
 Response:
 
 ```json
-{ "tx": "0x… (submitted tx hash, or null)" }
+{ "tx": "0x…", "status": "mined", "state": "pending", "relay_id": "1842" }
 ```
+
+`status` is `mined`, or `reverted` when the transaction was mined but the Safe call
+failed — nothing changed, and you can sign again. `state` is always `pending`: the
+change shows on `GET /account/wallet` once the block it landed in is final, so read
+the wallet for the result. A `202` with `"tx": null` means the transaction was sent but
+its outcome is not known yet; read the wallet the same way.
 
 ### The SafeTx typed data
 
@@ -213,7 +227,8 @@ SafeTx(
 Use `value = safeTxGas = baseGas = gasPrice = 0`, `gasToken = refundReceiver =
 0x0`, the call's own `operation` (`0` for a single CALL, `1` for a MultiSend
 batch such as the setup approvals), and `nonce` = the Safe's current on-chain
-`nonce()`.
+`nonce()` (a setup call carries its own `nonce`). Send that same `nonce` in the
+relay body.
 
 A withdrawal to another network is the exception: Calibri builds it for you as one
 **MultiSendCallOnly** batch (`operation = 1`) returned with its quote — the fee transfer,

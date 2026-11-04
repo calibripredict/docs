@@ -28,7 +28,7 @@ maker), `owner_address` (what owns the Safe), `signature_type`,
 </Note>
 
 <Warning>
-  Check `safe_status` before signing. `setup_required` means approvals are still outstanding, and an order placed then is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade.
+  Check `safe_status` before signing. `deposit_required`, `deploying` and `setup_required` mean the Safe is not funded, not created yet, or still owes its approvals, and an order placed then is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Right after setup or a new trading key, an order can be refused with `409 wallet.state_pending` or `409 session.pending` until the change is final — retry it.
 </Warning>
 
 <Warning>

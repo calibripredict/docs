@@ -74,10 +74,11 @@ are listed under [Wallet infrastructure](/smart-contracts/deployed-addresses#wal
 ## If your Safe was never deployed
 
 Your Safe address is derived before the contract exists. We deploy it, and pay
-for it, right after you enrol a passkey. If that deployment never happened,
-nothing exists at the address yet.
+for it, after your first deposit reaches the address. If that deployment never
+happened, nothing exists at the address yet — the funds are there, but there is no
+Safe contract to sign for.
 
-If funds were sent to an undeployed Safe address, it can still be created: both
+It can still be created without us: both
 the passkey signer factory and the Safe factory are **permissionless**, so anyone
 can deploy them with the published addresses and your credential's coordinates.
 That is a manual job, not something the rescue page does for you — the addresses

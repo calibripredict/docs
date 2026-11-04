@@ -23,9 +23,9 @@ with it (`X-Auth-Apikey`, `X-Auth-Nonce`, `X-Auth-Signature`). See
 
 ## 1. Read your wallet config
 
-**`GET /api/v2/atlas/account/wallet?setup=1`**
+**`GET /api/v2/atlas/account/wallet`**
 
-Without `?setup=1`, `safe_setup` is `null` and `safe_status` reports what Calibri has recorded — a Safe it has not yet seen ready reads `setup_required` (see [The Safe](/non-custodial/the-safe)).
+`safe_status` reports what Calibri has recorded (see [The Safe](/non-custodial/the-safe)). A new account reads `deposit_required`: fund the Safe first (step 2). Without `?setup=1`, `safe_setup` is `null`; ask for it only in step 3 — before your first deposit `?setup=1` is refused with `409 wallet.deposit_required`.
 
 This is the entry point to everything on-chain: it tells you which Safe is
 yours, what owns it, which contracts you are trading against, and whether you
@@ -41,43 +41,17 @@ are ready to trade.
   "usdc_address": "0x…",
   "chain_id": 137,
   "domain_name": "Calibri CTF Prediction Markets",
-  "safe_setup": { "ready": false, "calls": [ /* … */ ] },
-  "safe_status": "setup_required"
+  "funded": false,
+  "deployed": false,
+  "safe_setup": null,
+  "safe_status": "deposit_required"
 }
 ```
 
 Read every address from here rather than hard-coding it — `domain_name` in
 particular is hashed into every order signature.
 
-## 2. Make the Safe trade-ready
-
-If `safe_status` is `setup_required`, the Safe still owes its approvals. Each
-entry in `safe_setup.calls` is `{ to, data, operation, nonce, hash }`: sign it
-as a Safe `SafeTx` (EIP-712) with the Safe's owner, then relay it.
-
-**`POST /api/v2/atlas/account/wallet/relay`**
-
-```json
-{
-  "safe": "0x… (your own Safe)",
-  "to": "0x…",
-  "value": "0",
-  "data": "0x…",
-  "operation": 0,
-  "signature": "0x…"
-}
-```
-
-The operator executes it and pays the gas; you get back `{ "tx": "0x…" }`. Calls
-may arrive batched as one MultiSend call (`operation: 1`) or as several at
-sequential nonces — relay those **in order**. Re-read the config until
-`safe_status` is `ready`.
-
-<Warning>
-  Do not place orders on `setup_required`. The order is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Full detail in [The Safe](/non-custodial/the-safe).
-</Warning>
-
-## 3. Fund the Safe
+## 2. Fund the Safe
 
 Send **USDC on Polygon** to `proxy_address` from any wallet or exchange. There
 is nothing to call — the deposit is an ordinary on-chain transfer, and it is
@@ -92,6 +66,39 @@ credited once it confirms.
 `balance_safe` is your tradeable USDC — the mirror of what your Safe holds
 on-chain. See
 [Balances](/non-custodial/balances).
+
+Calibri creates your Safe after this first deposit: `safe_status` moves from
+`deposit_required` to `deploying`, then to `setup_required` once the Safe exists.
+
+## 3. Make the Safe trade-ready
+
+If `safe_status` is `setup_required`, the Safe still owes its approvals. Read
+**`GET /api/v2/atlas/account/wallet?setup=1`**: each entry in `safe_setup.calls` is `{ to, data, operation, nonce, hash }`: sign it
+as a Safe `SafeTx` (EIP-712) with the Safe's owner, then relay it.
+
+**`POST /api/v2/atlas/account/wallet/relay`**
+
+```json
+{
+  "safe": "0x… (your own Safe)",
+  "to": "0x…",
+  "value": "0",
+  "data": "0x…",
+  "operation": 0,
+  "signature": "0x…",
+  "nonce": "0"
+}
+```
+
+`nonce` is the call's own `nonce`, the one you signed. The operator executes it and
+pays the gas; you get back `{ "tx": "0x…", "status": "mined", "state": "pending", … }`
+— the change applies once its block is final. Calls may arrive batched as one
+MultiSend call (`operation: 1`) or as several at sequential nonces — relay those
+**in order**. Re-read the config until `safe_status` is `ready`.
+
+<Warning>
+  Do not place orders on `setup_required`. The order is rejected with `422 Member safe is not settlement-ready`. Only `ready` can trade. Full detail in [The Safe](/non-custodial/the-safe).
+</Warning>
 
 ## 4. Pick a market
 
@@ -250,11 +257,11 @@ Full channel list and payloads: [WebSocket streams](/api-reference/websockets).
   <Step title="Wallet config">
     `GET /account/wallet` — Safe address, contracts, domain, `safe_status`.
   </Step>
-  <Step title="Approvals">
-    Sign each `safe_setup.calls` entry as a SafeTx; relay until `ready`.
-  </Step>
   <Step title="Fund">
-    Send USDC on Polygon to `proxy_address`; watch `balance_safe`.
+    Send USDC on Polygon to `proxy_address`; watch `balance_safe`. The Safe is created after this first deposit.
+  </Step>
+  <Step title="Approvals">
+    `?setup=1`, sign each `safe_setup.calls` entry as a SafeTx; relay until `ready`.
   </Step>
   <Step title="Place">
     Per-market config → EIP-712 `Order` → `POST /account/orders`.

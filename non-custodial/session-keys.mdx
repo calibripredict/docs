@@ -46,7 +46,9 @@ the session key.
     an on-chain authorisation; Calibri relays it and pays the gas.
   </Step>
   <Step title="Trade">
-    Orders now sign silently until the key expires, locks, or you revoke it.
+    Orders now sign silently until the key expires, locks, or you revoke it. Right
+    after you approve, an order can be refused with `409 session.pending` until the
+    authorisation is final; the app retries it for you.
   </Step>
 </Steps>
 
@@ -68,7 +70,7 @@ matter how many keys exist. Through the API you can also revoke **one** key, by
 passing its `key_id`.
 
 <Warning>
-  Revoking is immediate on-chain, but it does **not** cancel orders that key already placed. They stay resting, and a fill will then fail to settle, because settlement checks the grant. **Cancel resting orders yourself before revoking** if you want the exposure closed.
+  Revoking stops new orders from that key the moment the revocation is relayed, but it does **not** cancel orders that key already placed. They stay resting, and a fill will then fail to settle, because settlement checks the grant. **Cancel resting orders yourself before revoking** if you want the exposure closed.
 
   Expiry behaves differently and deliberately so: an order signed while the key was live still settles normally after the key expires. Expiry limits what can be *placed*, not what can be *settled* — otherwise a 30-day key would strand every longer-dated order it ever signed.
 </Warning>
