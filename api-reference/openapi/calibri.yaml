@@ -2395,8 +2395,10 @@ paths:
       description: >-
         Returns the Safe calls that authorise a browser-held P-256 key to sign
         orders. Nothing is authorised until you sign and relay them.
-        `expires_at` is clamped DOWN to policy. The key is never a Safe owner,
-        so it cannot withdraw or redeem. Refused with 409
+        `expires_at` is clamped DOWN to policy. When your wallet is not set up
+        yet, the same batch also carries the setup approvals (`setup: true`), so
+        one signature sets up the wallet and the key. The key is never a Safe
+        owner, so it cannot withdraw or redeem. Refused with 409
         `wallet.deposit_required` before your first deposit, `wallet.deploying`
         until the Safe has been created, and `wallet.state_pending` while a
         transaction you relayed is not final yet.
@@ -8602,10 +8604,18 @@ components:
         safe:
           example: '0x0DECE7d83f8D47CD8dD8278c0F22c361C58577BD'
           type: string
+        setup:
+          description: >-
+            True when the wallet was not set up yet and `calls` also carry the
+            setup approvals: one signature sets up the wallet and authorises the
+            key.
+          example: false
+          type: boolean
       required:
         - safe
         - handler_installed
         - expires_at
+        - setup
         - calls
       type: object
     SessionKeyPrepareRequest:
