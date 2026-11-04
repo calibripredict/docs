@@ -1610,6 +1610,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/OrderEntity'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: >-
+            `wallet.state_pending` or `session.pending`: a change to your wallet
+            or a new trading key is not confirmed yet — retry shortly.
+            `order.duplicate_client_order_id`: that `client_order_id` was used
+            in the last 7 days.
         '422':
           content:
             application/json:
@@ -2293,9 +2303,14 @@ paths:
         `quote_id` it was priced under (`bridge_quote_required`); a MultiSend
         batch may not contain token transfers or approvals to Circle, so send a
         USDC transfer as a single call (`bridge_quote_required`); DELEGATECALL
-        is accepted only to the MultiSend contract (`delegatecall_not_allowed`).
-        The operator executes and pays the gas; it cannot act without your
-        signature. The Safe must be your own.
+        is accepted only to the MultiSend contract (`delegatecall_not_allowed`);
+        a signature over a different nonce than `nonce`
+        (`relay.nonce_mismatch`). Before your first deposit only adding or
+        removing a signing key is relayed — anything else is refused with 409
+        `wallet.deposit_required`, and with 409 `wallet.deploying` until Calibri
+        has created the Safe. 202 means the transaction was sent but its outcome
+        is not known yet. The operator executes and pays the gas; it cannot act
+        without your signature. The Safe must be your own.
       parameters: []
       requestBody:
         content:
@@ -2309,12 +2324,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/RelayResultEntity'
           description: ''
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RelayResultEntity'
+          description: Sent; outcome not known yet
         '400':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: '`wallet.deposit_required` or `wallet.deploying`'
       summary: Relay a Safe transaction
       tags:
         - Wallet
@@ -2369,7 +2396,10 @@ paths:
         Returns the Safe calls that authorise a browser-held P-256 key to sign
         orders. Nothing is authorised until you sign and relay them.
         `expires_at` is clamped DOWN to policy. The key is never a Safe owner,
-        so it cannot withdraw or redeem.
+        so it cannot withdraw or redeem. Refused with 409
+        `wallet.deposit_required` before your first deposit, `wallet.deploying`
+        until the Safe has been created, and `wallet.state_pending` while a
+        transaction you relayed is not final yet.
       parameters: []
       requestBody:
         content:
@@ -2389,6 +2419,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
           description: ''
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEntity'
+          description: >-
+            `wallet.deposit_required`, `wallet.deploying` or
+            `wallet.state_pending`
       summary: Authorise a session key
       tags:
         - Wallet
@@ -6665,7 +6703,9 @@ components:
             The EIP-712-signed order. Validated before anything is placed — a
             signature the server cannot verify is rejected, never rested.
         volume:
-          description: Number of shares.
+          description: >-
+            Number of contracts, with at most the market's `amount_precision`
+            decimals (2): `8.47` is valid, `8.475` is rejected, not rounded.
           example: '100'
           type: string
       required:
@@ -6700,6 +6740,13 @@ components:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
           example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
+        deployed:
+          description: >-
+            Whether your Safe has been created on-chain. Calibri creates it
+            after the first deposit; until then the address still receives
+            funds. Present whenever there is a Safe address.
+          example: true
+          type: boolean
         domain_name:
           description: >-
             The EIP-712 domain name this exchange was DEPLOYED with. Hashed into
@@ -6716,6 +6763,12 @@ components:
           description: This deployment's CTF Exchange.
           example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
+        funded:
+          description: >-
+            Whether your Safe has received its first deposit. Present whenever
+            there is a Safe address.
+          example: true
+          type: boolean
         owner_address:
           description: >-
             What owns the Safe: your wallet EOA, or for a passkey member the
@@ -6740,16 +6793,28 @@ components:
             The one-time approvals still to sign; `calls` is filled only when
             the request asks for `?setup=1`. Without it, `GET /account/wallet`
             returns null here, and the per-market config returns `{ ready,
-            calls: [] }`, or null when readiness could not be read.
+            calls: [] }`, or null when readiness could not be read. `?setup=1`
+            is refused with 409 `wallet.deposit_required` before your first
+            deposit, `wallet.deploying` until the Safe has been created, and
+            `wallet.state_pending` while a transaction you relayed is not final
+            yet — retry it then.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
-            `setup_required` means the one-time approvals are not signed yet:
-            orders are refused with 422 `Member safe is not settlement-ready`
-            until the `safe_setup.calls` are relayed.
+            `deposit_required`: your Safe address can receive funds but has had
+            no deposit yet — Calibri creates the Safe, at its own cost, after
+            the first deposit. `deploying`: funded, and the Safe is being
+            created. `setup_required`: the one-time approvals are not signed yet
+            — orders are refused with 422 `Member safe is not settlement-ready`
+            until the `safe_setup.calls` are relayed. `ready`: you can trade.
+            `error`: a lookup failed; retry. `unavailable`: there is an owner
+            but no Safe factory on this deployment. `unlinked`: no wallet linked
+            and no passkey enrolled.
           enum:
             - ready
             - setup_required
+            - deposit_required
+            - deploying
             - error
             - unavailable
             - unlinked
@@ -6806,6 +6871,13 @@ components:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
           example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
+        deployed:
+          description: >-
+            Whether your Safe has been created on-chain. Calibri creates it
+            after the first deposit; until then the address still receives
+            funds. Present whenever there is a Safe address.
+          example: true
+          type: boolean
         domain_name:
           description: >-
             The EIP-712 domain name this exchange was DEPLOYED with. Hashed into
@@ -6818,6 +6890,12 @@ components:
           description: This deployment's CTF Exchange.
           example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
+        funded:
+          description: >-
+            Whether your Safe has received its first deposit. Present whenever
+            there is a Safe address.
+          example: true
+          type: boolean
         no_token_id:
           description: The same for the NO leg.
           example: 451…
@@ -6846,16 +6924,28 @@ components:
             The one-time approvals still to sign; `calls` is filled only when
             the request asks for `?setup=1`. Without it, `GET /account/wallet`
             returns null here, and the per-market config returns `{ ready,
-            calls: [] }`, or null when readiness could not be read.
+            calls: [] }`, or null when readiness could not be read. `?setup=1`
+            is refused with 409 `wallet.deposit_required` before your first
+            deposit, `wallet.deploying` until the Safe has been created, and
+            `wallet.state_pending` while a transaction you relayed is not final
+            yet — retry it then.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
-            `setup_required` means the one-time approvals are not signed yet:
-            orders are refused with 422 `Member safe is not settlement-ready`
-            until the `safe_setup.calls` are relayed.
+            `deposit_required`: your Safe address can receive funds but has had
+            no deposit yet — Calibri creates the Safe, at its own cost, after
+            the first deposit. `deploying`: funded, and the Safe is being
+            created. `setup_required`: the one-time approvals are not signed yet
+            — orders are refused with 422 `Member safe is not settlement-ready`
+            until the `safe_setup.calls` are relayed. `ready`: you can trade.
+            `error`: a lookup failed; retry. `unavailable`: there is an owner
+            but no Safe factory on this deployment. `unlinked`: no wallet linked
+            and no passkey enrolled.
           enum:
             - ready
             - setup_required
+            - deposit_required
+            - deploying
             - error
             - unavailable
             - unlinked
@@ -6915,6 +7005,13 @@ components:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
           example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
+        deployed:
+          description: >-
+            Whether your Safe has been created on-chain. Calibri creates it
+            after the first deposit; until then the address still receives
+            funds. Present whenever there is a Safe address.
+          example: true
+          type: boolean
         domain_name:
           description: >-
             The EIP-712 domain name this exchange was DEPLOYED with. Hashed into
@@ -6927,6 +7024,12 @@ components:
           description: This deployment's CTF Exchange.
           example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
+        funded:
+          description: >-
+            Whether your Safe has received its first deposit. Present whenever
+            there is a Safe address.
+          example: true
+          type: boolean
         markets:
           description: >-
             Settled markets whose payout you have not yet redeemed, newest
@@ -6958,16 +7061,28 @@ components:
             The one-time approvals still to sign; `calls` is filled only when
             the request asks for `?setup=1`. Without it, `GET /account/wallet`
             returns null here, and the per-market config returns `{ ready,
-            calls: [] }`, or null when readiness could not be read.
+            calls: [] }`, or null when readiness could not be read. `?setup=1`
+            is refused with 409 `wallet.deposit_required` before your first
+            deposit, `wallet.deploying` until the Safe has been created, and
+            `wallet.state_pending` while a transaction you relayed is not final
+            yet — retry it then.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
-            `setup_required` means the one-time approvals are not signed yet:
-            orders are refused with 422 `Member safe is not settlement-ready`
-            until the `safe_setup.calls` are relayed.
+            `deposit_required`: your Safe address can receive funds but has had
+            no deposit yet — Calibri creates the Safe, at its own cost, after
+            the first deposit. `deploying`: funded, and the Safe is being
+            created. `setup_required`: the one-time approvals are not signed yet
+            — orders are refused with 422 `Member safe is not settlement-ready`
+            until the `safe_setup.calls` are relayed. `ready`: you can trade.
+            `error`: a lookup failed; retry. `unavailable`: there is an owner
+            but no Safe factory on this deployment. `unlinked`: no wallet linked
+            and no passkey enrolled.
           enum:
             - ready
             - setup_required
+            - deposit_required
+            - deploying
             - error
             - unavailable
             - unlinked
@@ -7076,6 +7191,13 @@ components:
           description: Gnosis' Conditional Tokens — where your collateral actually sits.
           example: '0x53aB2e11ea7a7e90a11F002FAa859124729611F4'
           type: string
+        deployed:
+          description: >-
+            Whether your Safe has been created on-chain. Calibri creates it
+            after the first deposit; until then the address still receives
+            funds. Present whenever there is a Safe address.
+          example: true
+          type: boolean
         domain_name:
           description: >-
             The EIP-712 domain name this exchange was DEPLOYED with. Hashed into
@@ -7088,6 +7210,12 @@ components:
           description: This deployment's CTF Exchange.
           example: '0xA06be29A9077DA70c70601156aac9F2cE0E3b595'
           type: string
+        funded:
+          description: >-
+            Whether your Safe has received its first deposit. Present whenever
+            there is a Safe address.
+          example: true
+          type: boolean
         onramp_customer:
           description: >-
             Whether the member is a customer at the fiat on-ramp provider
@@ -7129,16 +7257,28 @@ components:
             The one-time approvals still to sign; `calls` is filled only when
             the request asks for `?setup=1`. Without it, `GET /account/wallet`
             returns null here, and the per-market config returns `{ ready,
-            calls: [] }`, or null when readiness could not be read.
+            calls: [] }`, or null when readiness could not be read. `?setup=1`
+            is refused with 409 `wallet.deposit_required` before your first
+            deposit, `wallet.deploying` until the Safe has been created, and
+            `wallet.state_pending` while a transaction you relayed is not final
+            yet — retry it then.
         safe_status:
           description: >-
             The single field that answers "can this member trade?".
-            `setup_required` means the one-time approvals are not signed yet:
-            orders are refused with 422 `Member safe is not settlement-ready`
-            until the `safe_setup.calls` are relayed.
+            `deposit_required`: your Safe address can receive funds but has had
+            no deposit yet — Calibri creates the Safe, at its own cost, after
+            the first deposit. `deploying`: funded, and the Safe is being
+            created. `setup_required`: the one-time approvals are not signed yet
+            — orders are refused with 422 `Member safe is not settlement-ready`
+            until the `safe_setup.calls` are relayed. `ready`: you can trade.
+            `error`: a lookup failed; retry. `unavailable`: there is an owner
+            but no Safe factory on this deployment. `unlinked`: no wallet linked
+            and no passkey enrolled.
           enum:
             - ready
             - setup_required
+            - deposit_required
+            - deploying
             - error
             - unavailable
             - unlinked
@@ -8046,6 +8186,13 @@ components:
           description: ABI-encoded calldata for the action.
           example: 0x095ea7b3…
           type: string
+        nonce:
+          description: >-
+            The Safe nonce you signed at. Send it: a signature that does not
+            sign this nonce is refused with 422 `relay.nonce_mismatch`. Omitted,
+            the Safe's current nonce is used.
+          example: '3'
+          type: string
         operation:
           description: '`0` CALL (default), `1` DELEGATECALL for a MultiSend batch.'
           example: 0
@@ -8087,16 +8234,40 @@ components:
       type: object
     RelayResultEntity:
       properties:
+        relay_id:
+          description: An id for this relay.
+          example: '1842'
+          type: string
+        state:
+          description: >-
+            Always `pending`: the change shows on `GET /account/wallet` once the
+            block it landed in is final. Read the wallet for the result, not
+            this answer.
+          enum:
+            - pending
+          example: pending
+          type: string
+        status:
+          description: >-
+            `mined`, or `reverted`: the transaction was mined but the Safe call
+            failed, so nothing changed and you can sign again. Absent on a 202.
+          enum:
+            - mined
+            - reverted
+          example: mined
+          type: string
         tx:
           description: >-
-            The submitted transaction hash, or null if nothing needed
-            submitting.
+            The transaction hash. Null on a 202: the transaction was sent but
+            its outcome is not known yet.
           example: 0x7d1e…
           type:
             - string
             - 'null'
       required:
         - tx
+        - state
+        - relay_id
       type: object
     ReplacedOrderEntity:
       properties:
@@ -8331,8 +8502,9 @@ components:
       properties:
         owners:
           description: >-
-            Every address that can sign for this wallet. Empty until the Safe is
-            deployed.
+            Every address that can sign for this wallet: your passkey's signer
+            contract, and any signing key you added. Listed before the Safe is
+            created too.
           example:
             - 0x7790…e855
           items:
@@ -8342,8 +8514,8 @@ components:
           description: >-
             False if your passkey is NO LONGER an owner of this wallet — which
             can only happen if a key you added removed it on-chain. Treat it as
-            urgent: that key is then the only thing that can sign. True when the
-            wallet is not deployed yet, and true if the check could not be made.
+            urgent: that key is then the only thing that can sign. True when no
+            owners are recorded yet.
           example: true
           type: boolean
         passkey_signer:
