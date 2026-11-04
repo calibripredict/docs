@@ -330,6 +330,7 @@ of your Safe:
     "balance": "9938.32",
     "locked": "61.68",
     "redeemable": null,
+    "contract_id": null,
     "updated_at": "2026-08-07T08:46:59Z"
   }
 }
@@ -341,7 +342,11 @@ has `total` and `timestamp` instead of `redeemable` and `updated_at` — so read
 the keys you need and ignore the rest. `balance` is what is spendable now, not
 the total — the total is `balance + locked`. `redeemable` is the winnings still to redeem from the chain; it is set
 on frames sent by a settlement (including a market that resolves void) or a
-redemption, and `null` otherwise — including a voided match.
+redemption, and `null` otherwise — including a voided match. `contract_id` is
+set on the frame sent when the chain confirms a match's settlement — for example a seller's
+proceeds moving from pending to `balance`: the id of that contract (the fill's `id` on
+the `contract` stream), so you can mark that fill confirmed on-chain without reading
+it again. It is `null` on every other frame.
 
 A frame with `custody: "eoa"` is different: it is the on-chain balance of an external
 wallet linked to your account, sent while you are signed in to the web app, with
@@ -374,6 +379,7 @@ exit, settlement, or a void. Its own field set — not the same as a
     "realized_pnl": "0",
     "settled_payout": null,
     "source": null,
+    "contract_id": null,
     "updated_at": "2026-08-07T08:46:59Z"
   }
 }
@@ -381,7 +387,9 @@ exit, settlement, or a void. Its own field set — not the same as a
 
 `sellable_volume` is what you can offer right now — `volume` less anything
 already committed to a resting sell and less `pending_volume` (bought shares
-whose match has not settled on-chain yet). `realized_pnl` banks at the moment you
+whose match has not settled on-chain yet). `contract_id` is set on the frame sent
+when the chain confirms a match's settlement and releases those shares: the id of
+that contract. It is `null` on every other frame. `realized_pnl` banks at the moment you
 exit, so it moves on a sale rather than waiting for the market to resolve.
 `avg_price`, `realized_pnl`, `settled_payout` and `source` are `null` when the
 event that sent the frame did not produce them: a settlement sends
