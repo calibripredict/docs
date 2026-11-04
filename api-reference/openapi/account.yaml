@@ -2096,7 +2096,7 @@ components:
           example: '0x7b21…'
           type: 'string'
         to:
-          description: 'Target contract — the exchange for approvals, ConditionalTokens for a redeem, USDC for a transfer out.'
+          description: 'Target contract — each call''s own `to` (USDC or ConditionalTokens for the setup approvals, the MultiSend contract for a batch), ConditionalTokens for a redeem, USDC for a transfer out.'
           example: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359'
           type: 'string'
         value:
@@ -2122,14 +2122,15 @@ components:
           example: 'pending'
           type: 'string'
         status:
-          description: '`mined`, or `reverted`: the transaction was mined but the Safe call failed, so nothing changed and you can sign again. Absent on a 202.'
+          description: '`mined`; `unconfirmed`: sent but not mined yet; or `reverted`: the transaction was mined but the Safe call failed, so nothing changed and you can sign again. Absent on a 202.'
           enum:
             - 'mined'
+            - 'unconfirmed'
             - 'reverted'
           example: 'mined'
           type: 'string'
         tx:
-          description: 'The transaction hash. Null on a 202: the transaction was sent but its outcome is not known yet.'
+          description: 'The transaction hash. Null on a 202, whose body is wrapped in `data`: the transaction may have been sent and its outcome is not known yet.'
           example: '0x7d1e…'
           type:
             - 'string'
@@ -3336,7 +3337,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorEntity'
-          description: '`wallet.state_pending` or `session.pending`: a change to your wallet or a new trading key is not confirmed yet — retry shortly. `order.duplicate_client_order_id`: that `client_order_id` was used in the last 7 days.'
+          description: '`wallet.state_pending`: your Safe''s current state is not recorded yet; `session.pending`: a new trading key is not confirmed yet — retry shortly. `order.duplicate_client_order_id`: that `client_order_id` was used in the last 7 days.'
         "422":
           content:
             application/json:
@@ -3856,7 +3857,7 @@ paths:
         - 'Wallet'
   /api/v2/atlas/account/wallet/relay:
     post:
-      description: 'Gasless relay for a Safe transaction you have signed — setup approvals, redeeming winnings, or moving USDC out. Refused with 422 and a `code`: a withdrawal to another network (a Circle burn) is relayed only with the `quote_id` it was priced under (`bridge_quote_required`); a MultiSend batch may not contain token transfers or approvals to Circle, so send a USDC transfer as a single call (`bridge_quote_required`); DELEGATECALL is accepted only to the MultiSend contract (`delegatecall_not_allowed`); a signature over a different nonce than `nonce` (`relay.nonce_mismatch`). Before your first deposit only adding or removing a signing key is relayed — anything else is refused with 409 `wallet.deposit_required`, and with 409 `wallet.deploying` until Calibri has created the Safe. 202 means the transaction was sent but its outcome is not known yet. The operator executes and pays the gas; it cannot act without your signature. The Safe must be your own.'
+      description: 'Gasless relay for a Safe transaction you have signed — setup approvals, redeeming winnings, or moving USDC out. Refused with 422 and a `code`: a withdrawal to another network (a Circle burn) is relayed only with the `quote_id` it was priced under (`bridge_quote_required`); a MultiSend batch may not contain token transfers or approvals to Circle, so send a USDC transfer as a single call (`bridge_quote_required`); DELEGATECALL is accepted only to the MultiSend contract (`delegatecall_not_allowed`); a signature over a different nonce than `nonce` (`relay.nonce_mismatch`). Before your first deposit only changes to your Safe''s signing keys are relayed — anything else is refused with 409 `wallet.deposit_required`, and with 409 `wallet.deploying` until Calibri has created the Safe. 202 means the transaction was sent but its outcome is not known yet. The operator executes and pays the gas; it cannot act without your signature. The Safe must be your own.'
       parameters: []
       requestBody:
         content:
@@ -3875,7 +3876,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RelayResultEntity'
-          description: 'Sent; outcome not known yet'
+          description: 'Sent; outcome not known yet. The body is wrapped in `data`.'
         "400":
           content:
             application/json:
