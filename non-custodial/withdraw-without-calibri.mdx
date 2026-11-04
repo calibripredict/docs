@@ -60,13 +60,13 @@ Three things, none of them secret:
 | Keep | Why |
 |---|---|
 | **Your Safe address** | The rescue page remembers it per device, and a device can be lost. It is on your Wallet page — write it down |
-| **Your Safe owner (signer contract)** | Goes into the signature. In Settings → Trading → Your wallet, beside **Passkey**, and `owner_address` on `GET /account/wallet` |
+| **Your Safe owner (signer contract)** | Goes into the signature. In Settings → Trading → Wallet → Signing keys, the key marked **Passkey**, and `owner_address` on `GET /account/wallet` |
 | **A working passkey** | Enrol on a platform that syncs (iCloud Keychain, Google Password Manager), and add a second device |
 | **Or a signing wallet** | Added in advance, it works with no passkey and no dependency on this domain |
 
 The exchange and collateral addresses are on
 [Deployed Addresses](/smart-contracts/deployed-addresses); your own Safe is on your
-Wallet page, and its owner in Settings → Trading → Your wallet.
+Wallet page, and its owner in Settings → Trading → Wallet.
 
 The **factory** addresses — the ones needed to create a Safe that was never deployed —
 are listed under [Wallet infrastructure](/smart-contracts/deployed-addresses#wallet-infrastructure).
@@ -104,7 +104,7 @@ fee, and it can only send the USDC to your own Safe on Polygon.
     Calibri creates it there on the first bridge. If it was never created, call
     `createProxyFor(owner)` on **CalibriSafeFactoryV2** on that network, with `owner` set
     to your Safe owner (your wallet address, or your passkey's signer contract, shown in
-    Settings → Trading → Your wallet). Anyone can call it; the Safe it creates is at your address and owned only
+    Settings → Trading → Wallet). Anyone can call it; the Safe it creates is at your address and owned only
     by that owner.
   </Step>
   <Step title="Bridge the balance">
