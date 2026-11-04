@@ -133,7 +133,8 @@ What a fill does depends on the two orders' directions:
 
 On a new market nobody holds contracts yet, so the only way to fill a buy is a
 buy of the other outcome. When the app says **"No YES sellers or NO buyers
-yet"**, the ask side is empty: nobody is selling YES and nobody is buying NO. A
+yet"** (or, on a market nobody has traded, **"Be the first to predict"**), the ask
+side is empty: nobody is selling YES and nobody is buying NO. A
 limit order is how you go first — it rests on the board until one of them
 arrives.
 
@@ -176,7 +177,7 @@ Once an order fills:
   releasing any. Sell the contracts you hold instead. (Calibri does not merge YES
   and NO pairs back into USDC for you; your Safe can, by calling `mergePositions`
   on ConditionalTokens.)
-- Open (unfilled) limit orders can be **cancelled** while the market is open; the
+- Open (unfilled) limit orders can be **cancelled** until the market's resolution begins; the
   collateral they locked is released back to you.
 
 At resolution, winning contracts pay **1.00 USDC** per share and losing contracts

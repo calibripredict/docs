@@ -17,7 +17,7 @@ its address:
   [signing key](/non-custodial/signing-keys) you add yourself. The operator
   deploys it and relays your signed orders, but **can never move funds without
   your signature** — except the taker fee taken when an order you signed matches
-  (under the approval you gave at setup, within a cap fixed on-chain), USDC sent
+  (under the approval you gave at setup, within a cap the matcher contract enforces — set by its admin, never above 10%), USDC sent
   to your address on another network, carried to your own Safe on Polygon (see
   [Choosing a network](#choosing-a-network)), and, if you turn on auto-redeem,
   resolved positions redeemed with the whole payout back to your Safe.
@@ -76,7 +76,7 @@ works and why it stays non-custodial.
 
 ## After funding
 
-Once your Safe is funded you're ready to trade. Winning contracts pay **1.00 USDC per share** at
+Once your first deposit is credited, Calibri creates your Safe. You then approve wallet setup once — a signature; Calibri pays the gas — and you're ready to trade. Winning contracts pay **1.00 USDC per share** at
 resolution, with **no fee at settlement** — your only trading cost is the taker
 fee at the moment your order fills.
 

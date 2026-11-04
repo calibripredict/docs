@@ -28,7 +28,7 @@ Referral rewards follow the same flow as every other reward (full detail in [Rew
 - **Accrue live.** Each qualifying referred trade records a **pending** referral reward. Nothing moves for the reward at trade time — only the taker fee moves.
 - **Watch it grow.** Your pending total is readable in near-real-time; the rewards response separates `maker`, `referral` and `liquidity` amounts:
   ```json
-  { "currency": "usdc", "total": "13.10", "maker": "10.00", "referral": "2.35", "liquidity": "0.75" }
+  { "currency": "usdc", "total": "13.1", "maker": "10", "referral": "2.35", "liquidity": "0.75" }
   ```
 - **Daily payout.** A **daily sweep** pays out pending rewards, independent of whether any market has resolved.
 - **Paid to your Safe.** Referral rewards are paid **on-chain to your Safe**. A referrer with no registered Safe stays accrued until one exists.

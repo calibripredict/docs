@@ -40,7 +40,7 @@ Prices move as opinion moves, so the odds you see change right up until the mark
 
 ## Your money is yours
 
-Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it — with two narrow exceptions. When an order you signed matches, the CalibriMatcher takes that order's taker fee from your Safe, under the USDC approval you gave at setup and within a cap fixed on-chain. And the bridge module can move USDC you sent to your address on another supported network, only to your own Safe on Polygon. See [Deposits from other networks](/non-custodial/deposits-from-other-networks). If you turn on [auto-redeem](/non-custodial/redeeming-winnings#auto-redeem), your resolved positions can also be redeemed without a signature each time, with the whole payout going back to your Safe.
+Your USDC lives in a **Gnosis Safe** — a smart-contract wallet on the blockchain that only your own keys can authorise. Calibri deploys it for you and pays the gas, but the operator is never an owner and has no ability to move anything out of it — with two narrow exceptions. When an order you signed matches, the CalibriMatcher takes that order's taker fee from your Safe, under the USDC approval you gave at setup and within a cap the matcher contract enforces — set by its admin, never above 10%. And the bridge module can carry USDC you sent to your address on another supported network to your own Safe on Polygon, less a bridge fee: within an on-chain cap, or higher only if you accept it in the app. See [Deposits from other networks](/non-custodial/deposits-from-other-networks). If you turn on [auto-redeem](/non-custodial/redeeming-winnings#auto-redeem), your resolved positions can also be redeemed without a signature each time, with the whole payout going back to your Safe.
 
 That means:
 
@@ -110,7 +110,7 @@ Everything above is enforced by contracts you can read yourself. Nothing about c
 
 | Contract | What it does |
 | --- | --- |
-| **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds — except the taker fee the matcher takes when an order you signed matches, and the bridge module carrying USDC sent on another supported network to your own Safe on Polygon |
+| **Your Gnosis Safe** | Holds your USDC. Owned by you alone; the operator relays and pays gas but cannot move funds — except the taker fee the matcher takes when an order you signed matches, and the bridge module carrying USDC sent on another supported network to your own Safe on Polygon, less its capped fee (higher only if you accept it) |
 | **ConditionalTokens** | Gnosis' audited framework. Holds the collateral and mints the YES / NO outcome tokens. Winnings redeem straight from it |
 | **CTF Exchange** | Settles matched signed orders on-chain |
 | **CalibriResolver** | Reports each market's outcome. It can **only report** — it cannot take or freeze funds |

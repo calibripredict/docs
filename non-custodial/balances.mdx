@@ -21,6 +21,7 @@ Every row reflects the live pools at the time of the request.
 |---|---|
 | `balance_safe` | Available funds mirrored from your on-chain Safe |
 | `locked_safe` | Safe funds locked by your resting orders |
+| `pending_safe` | Proceeds of a sale (or merge) from your Safe that the chain has not paid into your Safe yet. Not spendable; moves to `balance_safe` once the sale settles on-chain, and disappears if the trade is voided |
 | `redeemable_safe` | Winnings from settled markets that have **not been redeemed yet**. The USDC is still in the ConditionalTokens contract, so this is **not spendable** until it is redeemed into your Safe — see [Redeeming winnings](/non-custodial/redeeming-winnings) |
 
 ## Example row
@@ -28,9 +29,10 @@ Every row reflects the live pools at the time of the request.
 ```json
 {
   "currency": "usdc",
-  "balance_safe": "150.00",
-  "locked_safe": "40.00",
-  "redeemable_safe": "10.00"
+  "balance_safe": "150",
+  "locked_safe": "40",
+  "pending_safe": "0",
+  "redeemable_safe": "10"
 }
 ```
 
@@ -39,6 +41,8 @@ Every row reflects the live pools at the time of the request.
 - **Funding** — USDC sent to your Safe address on-chain is credited to
   `balance_safe` once the transfer confirms.
 - **Resting order** — placing an order locks collateral against `locked_safe`.
+- **Sale** — selling from your Safe credits the proceeds to `pending_safe`; once the
+  sale settles on-chain they move to `balance_safe`.
 - **Settlement** — a winning position is credited to `redeemable_safe`, not
   `balance_safe`: the payout is still held by the ConditionalTokens contract.
 - **Redemption** — redeeming (by hand or via auto-redeem) moves the USDC into

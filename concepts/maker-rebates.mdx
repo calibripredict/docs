@@ -15,8 +15,8 @@ uncertain — and smallest at lopsided prices where a quote carries little risk.
 ## What qualifies
 
 You earn a rebate when **your order was already resting on the book and an
-incoming order crossed into it** and paid a taker fee on that fill. That is the only
-condition — it holds even when the incoming order is also yours, in which case you also
+incoming order crossed into it** and paid a taker fee on that fill. It holds even
+when the incoming order is also yours, in which case you also
 pay its taker fee. (A limit buy can fill without a fee once its fee reserve is used up —
 see [Fees](/concepts/fees) — and that fill earns no rebate.)
 
@@ -81,12 +81,12 @@ back to **25%**.
 | Category | Taker rate | Maker rebate | Maker earns per 100 contracts filled at `0.50` |
 |---|---|---|---|
 | Crypto | 7.00% | **20%** | 0.350 USDC |
-| Economics | 5.00% | **25%** | 0.313 USDC |
-| Culture | 5.00% | **25%** | 0.313 USDC |
-| Science | 5.00% | **25%** | 0.313 USDC |
-| Weather | 5.00% | **25%** | 0.313 USDC |
-| Other | 5.00% | **25%** | 0.313 USDC |
-| Sports | 5.00% | **15%** | 0.188 USDC |
+| Economics | 5.00% | **25%** | 0.3125 USDC |
+| Culture | 5.00% | **25%** | 0.3125 USDC |
+| Science | 5.00% | **25%** | 0.3125 USDC |
+| Weather | 5.00% | **25%** | 0.3125 USDC |
+| Other | 5.00% | **25%** | 0.3125 USDC |
+| Sports | 5.00% | **15%** | 0.1875 USDC |
 | Finance | 4.00% | **25%** | 0.250 USDC |
 | Mentions | 4.00% | **25%** | 0.250 USDC |
 | Politics | 4.00% | **25%** | 0.250 USDC |
@@ -135,7 +135,7 @@ position.
     liquidity rewards:
 
     ```json
-    { "currency": "usdc", "total": "13.10", "maker": "10.00", "referral": "2.35", "liquidity": "0.75" }
+    { "currency": "usdc", "total": "13.1", "maker": "10", "referral": "2.35", "liquidity": "0.75" }
     ```
   </Step>
   <Step title="Paid daily, to your Safe">

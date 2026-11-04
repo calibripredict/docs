@@ -39,6 +39,7 @@ a market where you hold only losing tokens pays nothing and does not appear.
       "result": "no",
       "condition_id": "0x…",
       "redeemable": "10",
+      "auto_redeem_failed": false,
       "settled_at": "2026-09-16T17:35:10Z"
     }
   ]
@@ -76,7 +77,8 @@ the redemption is authorised by you and relayed on your behalf.
   </Step>
   <Step title="Sign it as a Safe SafeTx">
     Wrap the calldata in a Safe `SafeTx` EIP-712 (the same structure as setup
-    approvals) with `to` = `conditional_tokens_address`, and sign with your EOA.
+    approvals) with `to` = `conditional_tokens_address`, and sign with your Safe's
+    owner — your wallet (ECDSA), or your passkey (an EIP-1271 contract signature).
   </Step>
   <Step title="Relay it (gasless)">
     POST it to the relay endpoint. The operator executes
@@ -105,7 +107,8 @@ Submits a signed Safe transaction; the operator executes it and pays gas.
   "value": "0",
   "data": "0x… (encoded redeemPositions call)",
   "operation": 0,
-  "signature": "0x… (your EOA SafeTx signature)"
+  "signature": "0x… (your SafeTx signature)",
+  "nonce": "0 (the Safe nonce you signed at)"
 }
 ```
 
@@ -113,12 +116,16 @@ Calibri rejects with `400 safe does not belong to this member` unless `safe` is
 your own derived Safe. Response:
 
 ```json
-{ "tx": "0x… (submitted tx hash, or null)" }
+{ "tx": "0x…", "status": "mined", "state": "pending", "relay_id": "1842" }
 ```
+
+The `nonce`, the refusals and every response — including `unconfirmed`, `reverted`
+and `202` — are the same as for any relay; see
+[Relaying a setup call](/non-custodial/the-safe#relaying-a-setup-call).
 
 ## Auto-redeem
 
-Turn on auto-redeem and you never have to redeem by hand: after a market
+Turn on auto-redeem and you normally never have to redeem by hand: after a market
 resolves, Calibri redeems your winnings **into your own Safe** and they are
 credited to `balance_safe` like a manual redeem.
 
@@ -152,8 +159,9 @@ first is paid and the other pays nothing — you cannot be paid twice.
 }
 ```
 
-`available` is `false` when auto-redeem is not offered on your account (for
-example, before your Safe exists — it is created after your first deposit). The response also carries the usual wallet
+`available` is `false` when auto-redeem is not offered on your account — for
+example, before you have a wallet. Before your first deposit the approval cannot be
+relayed yet (`409 wallet.deposit_required`). The response also carries the usual wallet
 config for signing.
 
 ### Turn it on or off

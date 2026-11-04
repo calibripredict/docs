@@ -81,7 +81,8 @@ cancelled.
 ## Taker rates by category
 
 The rate is resolved per market: an event-specific override if one is set,
-otherwise the market category's rate.
+otherwise the market category's rate. If neither is set, the market is charged the
+default rate of 7.00%, and `effective_taker_fee_rate_bps` is `null`.
 
 | Category | Taker rate |
 |---|---|

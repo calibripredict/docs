@@ -6,7 +6,7 @@ description: "How trading on Calibri works when the money never leaves your own 
 Calibri is **fully non-custodial**. Your USDC sits in **your own Gnosis Safe**
 on-chain — owned by your keys, never ours — and Calibri has no ability to move it, with
 two narrow exceptions: when an order you signed matches, the CalibriMatcher takes that
-order's taker fee under the USDC approval you gave at setup, within a cap fixed on-chain;
+order's taker fee under the USDC approval you gave at setup, within a cap the matcher contract enforces — set by its admin, never above 10%;
 and the bridge module can move USDC you sent to your address on another supported network,
 only to your own Safe on Polygon. See
 [Deposits from other networks](/non-custodial/deposits-from-other-networks). If you turn on
@@ -44,15 +44,15 @@ funding your Safe from your own wallet (a USDC transfer that wallet pays gas
 for), you never need to hold a gas token, approve a network fee, or send a
 transaction yourself:
 
-- **Deploying** your Safe and signer contracts — operator pays, when you set up a passkey wallet or first sign a wallet transaction
+- **Deploying** your Safe (and a passkey's signer contract) — operator pays, after your first deposit reaches your address, or earlier if you add a signing key first
 - **Approvals** that let the exchange settle your trades — operator relays
 - **Settlement** of a matched order — operator relays
 - **Redeeming** a winning position — operator relays
 
 What the operator *cannot* do is move your funds without a signature from you. Two
 things move without a signature for that move: the taker fee the CalibriMatcher takes when
-an order you signed matches, under the USDC approval you gave at setup and within a cap
-fixed on-chain (see [The Safe](/non-custodial/the-safe)); and the bridge module, which can
+an order you signed matches, under the USDC approval you gave at setup and within a cap the
+matcher contract enforces — set by its admin, never above 10% (see [The Safe](/non-custodial/the-safe)); and the bridge module, which can
 only carry USDC sent to your address on another supported network to your own Safe on
 Polygon — see [Deposits from other networks](/non-custodial/deposits-from-other-networks).
 If you turn on auto-redeem, your resolved positions can also be redeemed without a
