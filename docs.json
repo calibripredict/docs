@@ -51,6 +51,20 @@
             ]
           },
           {
+            "group": "Community Markets",
+            "pages": [
+              "community/overview",
+              "community/creating-a-market",
+              "community/open-and-team-only",
+              "community/resolution-and-disputes",
+              "community/ai-panel",
+              "community/evidence-and-privacy",
+              "community/fees-bonds-and-rewards",
+              "concepts/community-creator-score",
+              "community/terms"
+            ]
+          },
+          {
             "group": "Self-Custody",
             "pages": [
               "non-custodial/overview",
@@ -78,6 +92,7 @@
             "group": "Legal",
             "pages": [
               "terms-of-use",
+              "community/terms",
               "privacy-policy"
             ]
           }
@@ -284,11 +299,11 @@
         "items": [
           {
             "label": "Terms of use",
-            "href": "https://calibri.io/hub/terms-of-use"
+            "href": "https://news.calibri.io/terms/"
           },
           {
             "label": "Privacy policy",
-            "href": "https://calibri.io/hub/privacy-policy"
+            "href": "https://news.calibri.io/privacy/"
           }
         ]
       }

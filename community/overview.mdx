@@ -1,0 +1,175 @@
+---
+title: "Community markets"
+description: "Markets created and resolved by members — on an event of their own or on a Calibri event — carrying a Community label, listed publicly, and decided by the creator's posted proof, with an AI panel ruling on disputes."
+---
+
+A **community market** is a yes/no market created by a member rather than by
+Calibri. The member writes the question, declares in advance how the answer will be
+proven, places the first bet, and posts the result with proof. If anyone who traded
+the market disagrees, they dispute it, and **a panel of three AI models rules. The
+ruling is final.**
+
+**Calibri does not decide community outcomes, except in a short list of exceptional
+cases.** It runs the order book, the content checks and the dispute process, and
+reports each outcome on-chain exactly as for its own markets.
+
+- **Anyone can create.** No KYC, no account-age or trading-history requirement. You need a self-custodial wallet — the same [Safe](/non-custodial/the-safe) you trade from.
+- **Everything is public.** Every community market is listed and anyone can trade it. Its title, rules, result, evidence and dispute statements can be seen by anyone, and evidence is stored permanently.
+- **Calibri never holds your funds.** Trading is self-custodial as on every other market. The fees and bonds you pay to create or dispute are **payments to Calibri, not deposits** — nothing is held on your behalf, and there is no escrow.
+
+## Two shapes
+
+"Community" is a property of the **market**. A market is a community market when a
+member created it, whichever event it sits in.
+
+| | A community event | A Calibri event |
+| --- | --- | --- |
+| Example | "Saturday golf round" | "Red Sox vs Yankees" |
+| Who owns the event | The member who created it | Calibri |
+| Its markets | All community markets | Calibri's own markets, plus community markets members add |
+| Who may add markets | Depends on the event's [Open or Team only](/community/open-and-team-only) setting | Any member — a Calibri event is always Open |
+| Community markets per event | Up to 20 | Up to 50 |
+| Per member per event | Up to 5, under one bond | Up to 5, under one bond |
+
+### A member's own event
+
+You create the event — the occasion — and up to five yes/no questions under it, in
+one [four-step wizard](/community/creating-a-market). "Saturday golf round" is the
+event; "Will Player A win?" and "Will Player A make more than 2 birdies?" are its
+markets. This is the same shape as a Calibri event: "Nadal vs Federer" is the event,
+"Federer wins" is one of its markets.
+
+### Community markets on a Calibri event
+
+On a Calibri event page, **Add a market to this event** opens the same wizard with
+the event name and category already set. Your market appears on the event's own
+page, in a **Community markets** section below Calibri's markets. There is no
+separate or linked event: one event, one page, one link.
+
+```
+Red Sox vs Yankees                      Sports > Baseball
+
+Markets
+  Red Sox win?                               YES 46c
+  Total runs over 8.5?                       YES 52c
+
+Community markets                            3 of 50
+  COMMUNITY  Will there be a grand slam?     YES 9c
+             by lee_k    Score 92%     Proof: Official source
+  COMMUNITY  Extra innings?                  YES 11c
+             by lee_k    Score 92%     Proof: Official source
+  COMMUNITY  Will Judge hit a home run?      YES 28c
+             by sam_p    New           Proof: Official source
+
+  [ + Add a market to this event ]
+```
+
+The section is ordered by trading volume, then by [creator score](/concepts/community-creator-score).
+The top 10 are shown, with **Show all** for the rest; new markets with no trades sit
+at the bottom.
+
+Your market must be **about the event** and decided by it or within its time — a
+cricket question does not belong on a baseball game. See
+[Relevance](/community/creating-a-market#relevance).
+
+<Note>
+  A Calibri event is marked settled only when every market in it is final, community ones included, so its settled status can trail Calibri's own markets. Payouts are per market and are never held back by another market in the event.
+</Note>
+
+## The Community label
+
+Every community market carries a **Community** label, wherever it appears: event
+cards, event pages, search results and the market rows of a Calibri event. Each also
+shows its creator's username, their [creator score](/concepts/community-creator-score)
+and the declared proof type.
+
+| Where | What you see |
+| --- | --- |
+| Event cards and pages | The Community label on every card and page |
+| Search | Community events appear in results |
+| Home page | Community events appear below Calibri's event cards |
+| Community filter | On by default. Switch it off to hide community events; your choice is remembered |
+| Community tab | Every community event in one place, sortable by creator score |
+| Search engines | Community events are indexed, except Mature events and events that name private people |
+
+**Mature (18+)** is a content flag, not an age gate. The creation check sets it, or
+the creator can. Mature events are hidden until you choose to see them.
+
+## How a community market runs
+
+<Steps>
+  <Step title="Created">
+    The creator picks a category, writes up to five yes/no questions, declares the proof type, sets two times — **Trading closes at** and **Result expected by** — and pays a 0.50 USDC check fee and a 1 USDC bond in one payment. Automated content checks run and the event goes live. See [Creating a market](/community/creating-a-market).
+  </Step>
+  <Step title="Traded">
+    The market trades on the order book like any other, at a fixed 8% taker rate, until its close — including while the event is in play. A live market cannot be edited, cancelled or closed early.
+  </Step>
+  <Step title="Result posted">
+    After the close, the creator's team posts the result with evidence of the declared proof type. An AI watcher checks it and flags a doubtful result to every holder.
+  </Step>
+  <Step title="30-minute dispute window">
+    Anyone who traded the market or holds a position in it may dispute, with evidence. No dispute: the market is final when the window ends.
+  </Step>
+  <Step title="Dispute ruled">
+    Every trader in the market may add evidence to either side. Three AI models from different vendors rule; the ruling is final.
+  </Step>
+  <Step title="Paid">
+    Winning contracts redeem for 1.00 USDC, as on any market. The creator reward — 10% of the market's taker fees — is paid to the creator, or to a winning disputer.
+  </Step>
+</Steps>
+
+If the creator's team never posts, **traders answer instead**: every holder is asked
+for the answer with evidence, the AI panel decides, and the market voids only if
+nobody answers or the panel cannot tell. See
+[Resolution and disputes](/community/resolution-and-disputes).
+
+## What is different from a Calibri market
+
+| | Calibri market | Community market |
+| --- | --- | --- |
+| Who writes it | Calibri | A member |
+| How it resolves | The source named on the market, reported by Calibri. See [How markets are resolved](/concepts/resolution-sources) | The creator's team posts the result with the declared proof; a dispute goes to the AI panel |
+| Taker rate | Set by category, 0%–7%. See [Fees](/concepts/fees) | A fixed 8%, whatever the category |
+| Maker rebates and liquidity rewards | Yes | None |
+| Referral rewards | 10% of the taker fee | 10% of the taker fee |
+| Creator reward | None | 10% of the taker fee, to the creator |
+
+<Warning>
+  **Community markets carry risks Calibri markets do not.** A participant-proof market — a golf scorecard photo — can only be checked by the people who were there, and the label says so before you trade. A market is only as good as its rules and its proof: read both before you bet.
+</Warning>
+
+## Names stay off the blockchain
+
+When a community market is registered on-chain, only its market id, a hash of its
+rules and an ID-only link of the form `calibri.io/event/<id>` are recorded. No title,
+question or name is written to the blockchain. They stay on Calibri's own pages,
+which is why a name can still be replaced if the person named asks.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Creating a market" href="/community/creating-a-market">
+    The wizard step by step, proof types, times, tags and limits.
+  </Card>
+  <Card title="Open and Team only" href="/community/open-and-team-only">
+    Who may add markets to an event, and who posts their results.
+  </Card>
+  <Card title="Resolution and disputes" href="/community/resolution-and-disputes">
+    Posting, the dispute window, the AI panel and every outcome.
+  </Card>
+  <Card title="Fees, bonds and rewards" href="/community/fees-bonds-and-rewards">
+    What creating and disputing cost, and what is paid back when.
+  </Card>
+  <Card title="Evidence and privacy" href="/community/evidence-and-privacy">
+    What evidence is accepted, and why it is public and permanent.
+  </Card>
+  <Card title="The AI panel" href="/community/ai-panel">
+    How disputes are ruled, and the model versions in use.
+  </Card>
+  <Card title="Creator score" href="/concepts/community-creator-score">
+    How a creator's record is scored.
+  </Card>
+  <Card title="Community terms" href="/community/terms">
+    The standard terms for every community market.
+  </Card>
+</CardGroup>

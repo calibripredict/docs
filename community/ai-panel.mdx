@@ -1,0 +1,140 @@
+---
+title: "The AI panel"
+description: "How AI models check, watch and rule on community markets — three models from different vendors decide a dispute on sealed inputs, a 2-of-3 majority at 0.70 confidence is final — and the pinned model and prompt versions in use."
+---
+
+**A dispute on a community market is decided by three AI models from different
+vendors, ruling independently on the same sealed inputs. A 2-of-3 majority, each at
+least 0.70 confident, decides, and the ruling is final.** The prompts and the pinned
+model versions are published on this page, and every case's full log is public.
+
+The models are not the authority — **the declared proof is.** The panel's job is to
+read the proof the market named before anyone traded, and say what it shows.
+
+## Where AI is used
+
+| Task | Models | Decision |
+| --- | --- | --- |
+| **Content check**, at creation | 2 | If either blocks, it is blocked. A model error is also a block |
+| **Result watcher**, on every posted result | 2 | If either flags, the result is flagged to every holder and the dispute window is extended once |
+| **Dispute panel** | 3 | A 2-of-3 majority at 0.70 confidence; one re-run if unsure |
+| **Silent-creator answers** | 3 | The same panel decides from the holders' answers |
+| **Text extraction** from images and documents | 1 | The text, which then gets the same checks as typed text |
+| **Injection screen** on extracted text | 1 | Marks text that addresses instructions to a model |
+
+The vendors are **Anthropic, OpenAI, xAI and Google**. Each task uses the number of
+them shown, from different vendors, with one pinned model per vendor.
+
+## What the panel sees
+
+The inputs are **frozen and hashed before the first model is called**, so evidence
+added later, a retry or a restart can never change what was ruled on.
+
+- The market's title, rules and declared proof type.
+- **Answer A** and **answer B**, each with its statement, its rebuttal and its evidence. The words "creator" and "disputer" do not appear.
+- For each evidence item: the stored image, the text extracted from it, whether it was an in-app capture and its recorded capture time, or its archive time for a link — and a label saying who sent it, which side of the market they hold, how old the account is, and any link to either party.
+- For proof anyone can find, the declared source itself.
+
+**The panel is instructed to weigh evidence by verifiability, never by volume**, and
+to rule on the declared proof type first: other material is supporting only.
+
+## What each model answers
+
+Every model returns the same structured answer:
+
+| Field | Values |
+| --- | --- |
+| `answer` | `A`, `B` or `cannot_tell` |
+| `proof_status` | `adequate`, `missing` or `ambiguous` — about the declared proof |
+| `confidence` | 0 to 1 |
+| Evidence relied on | The items the answer rests on |
+
+A model may also mark an evidence item as **fabricated**; see
+[Fabricated evidence](/community/evidence-and-privacy#fabricated-evidence). A call that
+fails is recorded as an error, never counted as `cannot_tell`.
+
+## How the decision is made
+
+Checked in this order:
+
+| Condition | Decision |
+| --- | --- |
+| Two or three models find the market's own "Void if…" rule met | **Void** under that rule. The disputer gets the bond back; the creator reward is paid |
+| Two or three models report the declared proof missing or ambiguous | **Void for weak proof.** The disputer wins |
+| Two or three agree on A or B, each at or above 0.70 | **That answer.** Final |
+| Otherwise, on the first run | **Run once more**, on the same sealed inputs |
+| Otherwise, after the re-run | **The posted result stands.** The disputer gets the bond back; it does not count as a loss |
+| Two or more calls failed after retries | No decision. The case waits and staff are alerted; a lasting failure is one of the [exceptional cases](/community/resolution-and-disputes#admin-override-exceptional-cases-only) for an admin override |
+
+Counter-evidence of another proof type cannot produce a void by itself. Every outcome
+and what it pays: [Resolution and disputes](/community/resolution-and-disputes#every-outcome).
+
+## Hidden instructions in evidence
+
+Members' statements and the text read out of their evidence are passed to the models
+as **marked, untrusted data**, never as instructions. Extracted text is screened for
+instructions addressed to a model before the case runs, statements have length
+limits, and every answer must fit the fixed structure above. These measures reduce
+the risk of a planted instruction steering a ruling; they do not remove it entirely.
+
+## The case log
+
+Each case produces **one public log, stored permanently**: the sealed inputs, the
+A/B label map, the prompt and model versions, every request and raw response for
+each run, the decision and the rule applied. It is linked from the market's
+resolution panel on calibri.io. The parties' statements are in it, and are therefore
+public and permanent.
+
+**Re-running a case.** Anyone can resend a case's requests to the same model versions.
+They may not get the same answer — models do not always answer identically, and
+vendors retire models — so the stored responses, not a re-run, are the record.
+
+## Versions in use
+
+The panel runs **pinned** model versions: a vendor's newer model is not used until
+the configuration names it. Each case log records the exact versions that ruled on it.
+
+### Prompts
+
+| Task | Prompt version |
+| --- | --- |
+| Content check | To be published at launch |
+| Result watcher | To be published at launch |
+| Dispute panel | To be published at launch |
+| Text extraction | To be published at launch |
+| Injection screen | To be published at launch |
+
+### Models
+
+| Vendor | Pinned model | Used for |
+| --- | --- | --- |
+| Anthropic | To be published at launch | To be published at launch |
+| OpenAI | To be published at launch | To be published at launch |
+| xAI | To be published at launch | To be published at launch |
+| Google | To be published at launch | To be published at launch |
+
+{/* Filled from the community_creator resolution source config (each task's prompt version and one pinned model id per vendor) at launch. */}
+
+## What leaves Calibri
+
+Every disputed case sends the members' statements and evidence to three AI vendors,
+and every posted result sends its evidence to two. Uploads also pass through
+moderation and hash-matching services before they are stored. See
+[Evidence and privacy](/community/evidence-and-privacy#who-sees-what).
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Resolution and disputes" href="/community/resolution-and-disputes">
+    When the panel runs, and every outcome.
+  </Card>
+  <Card title="Evidence and privacy" href="/community/evidence-and-privacy">
+    What evidence is accepted, and the caps in a dispute.
+  </Card>
+  <Card title="Creating a market" href="/community/creating-a-market#the-content-check">
+    The content check at creation.
+  </Card>
+  <Card title="Community terms" href="/community/terms">
+    The rules the panel's rulings sit under.
+  </Card>
+</CardGroup>

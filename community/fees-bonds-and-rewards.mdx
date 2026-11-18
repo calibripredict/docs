@@ -1,0 +1,179 @@
+---
+title: "Fees, bonds and rewards"
+description: "What community markets cost and pay — a fixed 8% taker rate on the usual curve, a 0.50 USDC check fee and 1 USDC bond to create, a dispute fee and tiered bond to dispute, what is paid back when, and the 10% creator reward."
+---
+
+**Every amount is in USDC, and every payment is a payment — not a deposit.** The
+check fee, the creator bond, the dispute fee and the dispute bond go to Calibri as
+revenue when they are received. **Calibri never holds your funds:** there is no
+escrow, and nothing is held on your behalf. What Calibri pays back — a creator
+reward, a winning disputer's payout — is paid as a reward, to your Safe.
+
+| You | Pay | Can be paid |
+| --- | --- | --- |
+| Trade | The taker fee, at 8%, when your order takes liquidity | 1.00 USDC per winning contract, as on any market |
+| Create an event | 0.50 USDC check fee + 1 USDC bond, and a first bet of at least 1 USDC | The creator reward: 10% of your markets' taker fees |
+| Add a market to an event | 0.50 USDC check fee and a first bet; plus the 1 USDC bond if it is your first market in that event | The creator reward on that market |
+| Dispute | 0.60 USDC fee + a 10 or 50 USDC bond | If you win: everything you paid, plus the creator reward |
+| Add evidence to a dispute | Nothing | Nothing — a correct result is the point |
+| Answer when the team is silent | Nothing | Nothing |
+
+The app also shows each amount in your chosen reference currency, as an
+approximation at the live rate.
+
+## The taker fee
+
+Every community market charges **one fixed taker rate of 8%**, whatever its
+category. The formula is the one every Calibri market uses:
+
+```
+fee = rate × volume × P × (1 − P)
+```
+
+where **P** is the trade price (0–1) and **volume** is the number of contracts. The
+fee is highest at 0.50 and falls toward zero at the extremes. **Makers pay nothing.**
+
+| Trade price | Fee per contract at 8% | As a share of the stake |
+| --- | --- | --- |
+| `0.50` | 0.0200 USDC | 4.0% |
+| `0.30` / `0.70` | 0.0168 USDC | 5.6% at 0.30; 2.4% at 0.70 |
+| `0.10` / `0.90` | 0.0072 USDC | 7.2% at 0.10; 0.8% at 0.90 |
+
+### Worked example
+
+Buying **100 contracts** of YES at `0.60` on a community market:
+
+```
+P × (1 − P) = 0.60 × 0.40 = 0.24
+fee         = 0.08 × 100 × 0.24 = 1.92 USDC
+```
+
+Your stake is `60.00 USDC`, so the fee is **3.2% of what you put in**. Everything
+else about the fee — the reserve set aside when you place, rounding, and how it is
+collected on-chain — works exactly as in [Fees](/concepts/fees).
+
+| Share of the taker fee | Goes to |
+| --- | --- |
+| **10%** | The market's creator, as the [creator reward](#the-creator-reward) |
+| **10%** | The taker's referrer, if they were referred — the normal [referral](/rewards-referral-program) rate |
+| The remainder | Calibri |
+
+**There are no maker rebates and no liquidity rewards on community markets.** This
+is fixed by the market being a community market, not by a setting.
+
+## Creating
+
+| Item | Amount | Comes back? |
+| --- | --- | --- |
+| **Check fee** | 0.50 USDC per submission, and per market added later | **No.** It pays for up to 4 content checks (the first and 3 rewrites), the AI watcher on your result, and storage of your result's evidence |
+| **Creator bond** | 1 USDC, once per member per event | **No**, once the event is live, whatever the outcome. Paid back only if your submission is blocked and never goes live |
+| **First bet** | At least 1 USDC, on one market | It is your own bet, on the order book: it pays out or loses like any other |
+
+- **One payment.** The check fee and bond go to Calibri in a single USDC transfer from your Safe, at the same signing prompt as your first bet, signed with your passkey or your own wallet — never a session key.
+- **Your first market in an event carries the bond.** Each further market you add to the same event costs a check fee and its own first bet, with no second bond.
+- **Repeated blocks cost more.** After 3 blocked checks in 24 hours, your next check costs 1.10 USDC.
+
+<Note>
+  **On a small event you can lose money.** The 1.50 USDC paid at creation is more than the creator reward on a lightly traded market. It is the cost of creating a market. What grows with a market is the creator reward.
+</Note>
+
+## Disputing
+
+| Disputed market's open interest, at its close | Dispute fee | Dispute bond | You pay |
+| --- | --- | --- | --- |
+| Up to 2,500 USDC | 0.60 USDC | 10 USDC | **10.60 USDC** |
+| Over 2,500 USDC | 0.60 USDC | 50 USDC | **50.60 USDC** |
+
+The fee pays for the AI panel and the dispute's evidence storage. Both are paid in
+one transfer to Calibri, shown before you confirm.
+
+## What is paid back, and when
+
+| What happens | Paid back to you |
+| --- | --- |
+| **Your submission is blocked** and never goes live | The 1 USDC bond, if this submission paid one. The 0.50 USDC check fee is kept. A market added under a bond you already paid for that event paid only the check fee, so nothing is paid back |
+| **Your event goes live** | Nothing. The check fee and bond are Calibri's |
+| **You win a dispute** — the result is overturned, or voided because the declared proof was missing, unreadable or ambiguous | **Everything you paid**, fee and bond (10.60 or 50.60 USDC), **plus the creator reward** on that market |
+| **Your dispute ends with no winner** — the panel stays unsure, the market's "Void if…" rule applies, a takedown, or an admin override | The bond. The 0.60 USDC fee is kept |
+| **You lose a dispute** | Nothing. Calibri keeps the whole payment; the creator gets no share of it |
+| **Your dispute payment confirms too late** — more than 10 minutes after you claimed the slot, or after the market is final | Everything, 10.60 or 50.60 USDC, fee included |
+| **You win a dispute on a market whose team never posted** | Everything you paid, fee and bond. There is no creator reward to add: it was forfeited when the team stayed silent |
+
+Everything paid back arrives in your Safe **with the next daily payout**.
+
+The creator's 1 USDC bond is never paid back once the event is live, and never passed
+to a disputer: Calibri keeps it in every case.
+
+## The creator reward
+
+**The creator earns 10% of the taker fees on their markets**, paid once each market
+is final and clean.
+
+- **It is a reward**, like referral rewards: Calibri pays it from its own revenue. It is not a share of a pool held for you.
+- **The creator's own taker fills do not count.** Wash trading through your own market earns nothing on those fills.
+- **It accrues per trade** and stays pending until the market is final.
+- **The percentage is recorded on the event at creation**, so a later change never alters a live event. There is no monthly cap.
+- **On a Calibri event**, the member who added a market earns the reward on that market.
+
+| How the market ends | The creator reward |
+| --- | --- |
+| Final and clean | Paid to the creator |
+| A tagged team member posted the result | Paid to the creator, as normal |
+| The market's own "Void if…" rule applies | Paid to the creator |
+| Overturned on dispute, or voided for weak proof | **Paid to the disputer** |
+| Fabricated evidence linked to the creator | **Paid to the disputer** |
+| Nobody on the team posted | Forfeited, paid to nobody — even if a disputer later wins |
+| Policy takedown | Forfeited, paid to nobody |
+| Admin override | Paid to the creator — unless the override is for the creator's own fraud; then forfeited |
+
+### Examples
+
+| Market | Taker fees | Creator reward |
+| --- | --- | --- |
+| A golf round: 200 contracts at an average of 0.50 | 4 USDC | 0.40 USDC |
+| A pothole: 4,000 contracts at 0.50 | 80 USDC | 8 USDC |
+| The same, with 500 of those contracts bought by the creator as taker | 70 USDC counted | 7 USDC |
+| A by-election: 600,000 contracts at 0.50 | 12,000 USDC | 1,200 USDC |
+
+On the pothole market, a creator who posts a false result and is overturned loses the
+8 USDC reward to the disputer, who is paid 10.60 + 8 = **18.60 USDC** for a net gain of
+8 USDC.
+
+## When you are paid
+
+- **Rewards and payouts go to your Safe** with the daily reward payout, **within 24 hours of the market becoming final**. That covers the creator reward and a winning disputer's payout.
+- **Paybacks** — a creator bond after a blocked submission, a disputer's bond, a late dispute payment — arrive with the next daily payout too.
+- **Winning contracts** are redeemed as on any market. See [Redeeming winnings](/non-custodial/redeeming-winnings).
+- **If Calibri is offline**, you have nothing held with Calibri to recover: your USDC is in your own Safe. Rewards owed are paid when it is back.
+
+## Money settings are fixed per event
+
+The taker rate, the creator reward percentage, the check fee, the bond, the dispute
+fee and the dispute-bond tiers in force when an event is created are **recorded on
+it**. A later change applies to new events only.
+
+## In short
+
+> Creating costs **1.50 USDC** — a 0.50 check fee and a 1 USDC bond — plus a first bet
+> of at least 1 USDC, and none of the 1.50 comes back once you are live. You earn
+> **10% of the taker fees** on your markets once they are final and clean. Disputing
+> costs **10.60 USDC**, or **50.60 USDC** on a market over 2,500 USDC; win and you get it
+> all back plus the creator reward, lose and you get nothing. Every payment is a
+> payment, not a deposit: Calibri never holds your funds.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Fees" href="/concepts/fees">
+    The taker-fee curve, the reserve and rounding.
+  </Card>
+  <Card title="Rewards" href="/concepts/rewards">
+    Referral and other rewards, and the daily payout.
+  </Card>
+  <Card title="Resolution and disputes" href="/community/resolution-and-disputes">
+    When each outcome happens.
+  </Card>
+  <Card title="Creating a market" href="/community/creating-a-market">
+    Where each payment is made.
+  </Card>
+</CardGroup>

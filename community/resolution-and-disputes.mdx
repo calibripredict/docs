@@ -1,0 +1,268 @@
+---
+title: "Resolution and disputes"
+description: "How a community market is decided — the creator's team posts the result with proof, a 30-minute dispute window follows, and a disputed result goes to a panel of three AI models whose ruling is final. What happens if nobody posts, every outcome, and the few cases where Calibri steps in."
+---
+
+**The creator's team posts the result with proof. Every posted result then runs a
+30-minute dispute window, and if nobody disputes, it is final.** A dispute is decided
+by a panel of three AI models from different vendors, with evidence open to every
+trader in the market, and **its ruling is final at every market size.** There is no
+appeal to UMA or to any other arbiter.
+
+Community markets settle through the same on-chain path as Calibri's own markets:
+Calibri reports the outcome with its operator key, and winning contracts become
+redeemable for 1.00 USDC. See [Market resolution](/non-custodial/resolution).
+
+## What happens, in order
+
+<Steps>
+  <Step title="Trading closes">
+    At the time the creator set — never earlier. Until then the market trades, including while the event is in play.
+  </Step>
+  <Step title="The team posts the result">
+    With evidence of the declared proof type, from the close until 24 hours after **Result expected by**. The first post counts. A result must be posted even if nobody traded.
+  </Step>
+  <Step title="The AI watcher checks it">
+    If the result looks wrong, a public flag appears on the market, every holder gets a push notification, and the dispute window is extended once, by 30 minutes. The watcher never disputes on its own.
+  </Step>
+  <Step title="30-minute dispute window">
+    Anyone who traded the market or holds a position in it may dispute, with evidence. No dispute: the market is final when the window ends. There is no "accept result" step and no early finality.
+  </Step>
+  <Step title="Evidence, rebuttal, ruling">
+    If disputed: every trader in the market is notified and may add evidence to either side during the evidence window. Then one rebuttal each (1 hour), then the AI panel rules.
+  </Step>
+  <Step title="Final">
+    Winning contracts redeem in full. A winning disputer is paid, and the creator reward is settled, with the next daily payout.
+  </Step>
+</Steps>
+
+## Posting the result
+
+| | Rule |
+| --- | --- |
+| Who | The team. For a [Team only](/community/open-and-team-only) event, the event's team posts every market; on an Open event or a Calibri event, each member who added markets posts their own, with their own accepted tags |
+| When | One window: from the close until **Result expected by + 24 hours** |
+| What | The result, with evidence of the declared proof type |
+| Which post counts | The first one |
+| Cost | Nothing. The bond paid at creation covers whoever on the team posts |
+| Creator reward | Stays with the creator, whoever on the team posts |
+
+Nobody outside the team can post. Posting requires the
+[public-and-permanent acknowledgement](/community/evidence-and-privacy#public-and-permanent).
+
+## If the creator's team does not post
+
+**A silent creator cannot force a void.** When the posting window ends with no
+result, the traders answer instead.
+
+<Steps>
+  <Step title="Every holder is notified">
+    "The creator didn't post a result. Submit the answer with evidence."
+  </Step>
+  <Step title="24-hour answer window">
+    Any member who currently holds a position may submit an answer with evidence of the declared proof type — custodial members included. It is free, within the [upload limits](/community/evidence-and-privacy#limits).
+  </Step>
+  <Step title="The AI panel decides">
+    From the submitted answers. Where the proof is something anyone can find — a news or web link, an official source or a published document — the panel also reads the declared source itself.
+  </Step>
+  <Step title="The normal 30-minute dispute window">
+    Then final, or a dispute as usual.
+  </Step>
+</Steps>
+
+The market voids at 0.50 only if **nobody answers, or the panel cannot tell.**
+
+For the creator, an abandoned event means the **creator reward is forfeited**, the
+abandonment goes on their [creator score](/concepts/community-creator-score), and
+**two abandonments within 30 days bring a 30-day creation ban.**
+
+## Disputing a result
+
+### Who may dispute
+
+You may dispute a market's posted result if you have a self-custodial wallet **and**
+either:
+
+- you have **traded in that market** — at least one fill, even if you have since sold; or
+- you **currently hold a position** in it.
+
+The app enforces this. There is **one dispute per market**. A member on a custodial
+balance cannot dispute, but may add evidence to someone else's dispute.
+
+### Filing a dispute
+
+- **Evidence is required when you file.** A dispute with nothing attached is refused, nothing is paid, and the slot stays open.
+- **You pay the dispute fee and a dispute bond** in one payment, at one signing prompt. Both amounts are shown before you confirm, with the fact that neither comes back if the dispute fails.
+- **Starting a dispute claims the slot at once.** Your payment must confirm **within 10 minutes**, or the claim lapses and the slot reopens for anyone; nothing is charged. A payment that confirms after the claim lapsed, or after the market is final, is paid back to you in full, fee included, with the next daily payout.
+- **You must also tick the [public-and-permanent acknowledgement](/community/evidence-and-privacy#public-and-permanent).** Your dispute statement is public.
+
+### Fee, bond and windows
+
+The dispute window is 30 minutes at every size. The evidence window and the dispute
+bond follow the **disputed market's own open interest, measured when the market
+closed** — not the event's.
+
+| Disputed market's open interest | Under 250 USDC | 250 to 2,500 USDC | Over 2,500 USDC |
+| --- | --- | --- | --- |
+| Dispute window after a result is posted | 30 min | 30 min | 30 min |
+| Extension when the watcher flags (once) | + 30 min | + 30 min | + 30 min |
+| Evidence window after a dispute is filed | 6h | 12h | 24h |
+| Rebuttal, each side | 1h | 1h | 1h |
+| Dispute fee | 0.60 USDC | 0.60 USDC | 0.60 USDC |
+| Dispute bond | 10 USDC | 10 USDC | 50 USDC |
+| **You pay** | **10.60 USDC** | **10.60 USDC** | **50.60 USDC** |
+
+Every window runs its stated length **at any hour**. There is no night rule.
+Deadlines are acted on within a few minutes of passing, not to the second.
+
+<Warning>
+  **The fee and the bond are payments to Calibri, not deposits.** Calibri holds nothing on your behalf. If you win, Calibri pays you back everything you paid, plus the creator reward, as a reward. If you lose, nothing comes back. See [Fees, bonds and rewards](/community/fees-bonds-and-rewards#disputing).
+</Warning>
+
+### Open evidence
+
+When a dispute opens, **every member who traded in that market is notified** and may
+add evidence to either side during the evidence window. It is free and needs no bond.
+Caps per person and per side, labels on every item and the treatment of linked
+accounts stop one side winning by volume. See
+[Evidence in a dispute](/community/evidence-and-privacy#evidence-in-a-dispute).
+
+### Losing disputes repeatedly
+
+A member who **loses 3 disputes in 30 days** cannot dispute for 30 days. It shows on
+their record; they can still trade and add evidence to others' disputes. An "unsure"
+ruling does not count as a loss.
+
+## The AI watcher
+
+- It checks **every** posted result against the declared proof type and the market rules.
+- It can only **flag**. A flag is public on the market and pushed to every holder.
+- A flag extends the dispute window **once**, by 30 minutes.
+
+## The AI panel
+
+- **Three models from different vendors** decide independently, on the same sealed inputs. The two positions are labelled **A** and **B**, not "creator" and "disputer".
+- **The decision is a 2-of-3 majority** in which each agreeing model is at least **0.70** confident. **It is final.**
+- **Weak proof is the only dispute void.** If the declared proof is missing, unreadable or ambiguous, the market voids and the disputer wins.
+- **Panel unsure.** Below the threshold, or a 1-1-1 split, the panel runs once more. If it is still unsure, **the posted result stands.** An unsure panel does not void the market, does not count as a loss for the disputer, and is not passed to staff.
+- **In public.** The prompts and the pinned model versions are published on [The AI panel](/community/ai-panel). Each case's full log — inputs, every model's answer and reasoning, and the parties' statements — is linked from the market's resolution panel on calibri.io and stored permanently.
+
+How the models are asked, what they see and how hidden instructions in evidence are
+handled: [The AI panel](/community/ai-panel).
+
+## Every outcome
+
+| How it ends | The market | The disputer | The creator reward |
+| --- | --- | --- | --- |
+| No dispute | Final on the posted result | No dispute | Paid to the creator |
+| Dispute, result upheld | Final on the posted result | **Loses.** Nothing back | Paid to the creator |
+| Dispute, result overturned | Final on the panel's answer | **Wins.** Everything they paid back, plus the creator reward | Paid to the disputer |
+| Dispute, declared proof missing, unreadable or ambiguous | **Void** at 0.50 | **Wins**, as above | Paid to the disputer |
+| Dispute, panel still unsure after the re-run | Final on the posted result | Bond back; the 0.60 USDC fee is kept | Paid to the creator |
+| The market's own "Void if…" rule applies | **Void** at 0.50 | If there was a dispute: bond back, fee kept | Paid to the creator |
+| Team did not post; holders answered and the panel decided | Final on the panel's answer, after its own dispute window | If disputed: a winner gets fee and bond back; otherwise as for any dispute | Forfeited — paid to nobody, even if a disputer wins |
+| Team did not post; nobody answered, or the panel cannot tell | **Void** at 0.50 | No dispute | Forfeited |
+| Policy takedown | **Void** at 0.50 | If there was a dispute: bond back, fee kept | Forfeited |
+| Admin override (below) | Void or a result | Bond back, fee kept | Paid to the creator, unless the override is for the creator's own fraud |
+
+**A void pays 0.50 per contract to both YES and NO.** It is not a refund of what you
+paid: a member who bought YES at 0.80 loses 0.30 per contract on a void; one who bought
+NO at 0.20 gains 0.30.
+
+The creator's 1 USDC bond is never paid back once the event is live, in any of these
+cases.
+
+## Admin override: exceptional cases only
+
+The policy is one sentence: **"We do not decide community outcomes, except in these
+exceptional cases."**
+
+An admin may void a market or decide a dispute only when one of these applies:
+
+| Case | Example |
+| --- | --- |
+| Court order or legal requirement | An order to stop or unwind a market |
+| Illegal-content takedown | A market or its evidence breaks the law |
+| Proven fraud or exploit | Fabricated proof established beyond the dispute process; a bug used to take funds |
+| AI, vendor or system failure | The panel cannot run; a vendor outage; a platform fault that corrupts a ruling |
+
+- **Disagreeing with a panel ruling is not on the list.** A wrong-looking ruling stands.
+- **Only before the outcome is on-chain.** An override can act only before the outcome is reported on the blockchain. Once reported, the outcome is final and cannot be reversed.
+- **Shown on the market.** Every override appears on the market or event itself: **Resolved by Calibri admin**, the action (void or result), the reason and the date. No staff names.
+- **Money.** A disputer gets the bond back and the fee is kept. The creator keeps the creator reward — unless the override is for the creator's own fraud, which forfeits it and brings a permanent creation ban.
+
+## If Calibri fails to report
+
+Every community market is registered with the same on-chain resolver as Calibri's
+own markets, so the same **safety net** applies: if Calibri has not reported an
+outcome by the market's registered deadline, anyone can escalate it to UMA, and past
+a later hard cap anyone can force a void at 0.50 per contract. See
+[Market resolution](/non-custodial/resolution#the-escalation-ladder).
+
+This is a fallback for **Calibri going silent**, not a way to appeal a ruling. A
+dispute is decided by the AI panel, and its ruling is final.
+
+## Timers
+
+| Timer | Runs | What happens |
+| --- | --- | --- |
+| Trading closes | At the set time only | The book freezes |
+| Result expected by | The close, or up to 7 days later | Starts the 24-hour countdown to the posting deadline |
+| Posting window | Close to Result expected by + 24h | The team may post. The first post counts |
+| Answer window | 24h after the posting window, only if nobody posted | Any holder may answer with evidence; then the panel decides |
+| Dispute window | 30 min from a posted result, or from the panel's decision on answers | No dispute: final |
+| Watcher extension | Once, + 30 min | Added to the dispute window when the watcher flags |
+| Evidence window | 6h / 12h / 24h by open interest | Every trader in the market may add evidence |
+| Rebuttal | 1h | One each; then the panel rules |
+| Payouts | Daily | Creator reward and winning-disputer payouts within 24h of the market becoming final |
+
+### Time from posting to final
+
+| Case | Time |
+| --- | --- |
+| No dispute | 30 minutes after the result is posted |
+| No dispute, watcher flags | 1 hour after the result is posted |
+| Disputed, under 250 USDC | About 7.5 hours after the dispute |
+| Disputed, 250 to 2,500 USDC | About 13.5 hours after the dispute |
+| Disputed, over 2,500 USDC | About 25.5 hours after the dispute |
+| Team does not post, holders answer, no dispute | About 48.5 hours after Result expected by |
+| Worst case | About 75 hours after Result expected by |
+
+A dispute on one market delays only that market. The other markets in the event —
+the creator's and Calibri's — become final on their own timelines.
+
+## Worked example
+
+"Will the Main Rd pothole be fixed by Fri 18:00?", proof type news or web link, with
+the local news site and the council's notice page named as sources.
+
+| When | What happens |
+| --- | --- |
+| Fri 18:00 | Trading closes. Open interest is 1,700 USDC |
+| Fri 18:20 | The creator, who holds NO, posts NO, citing an article from before the repair |
+| Fri 18:20 | The watcher flags it: the article predates the deadline. Every holder is notified; the window is extended to 19:20 |
+| Fri 19:05 | A YES holder disputes with the council's "completed" notice dated Thursday, paying 10.60 USDC. The 12-hour evidence window runs to Sat 07:05 |
+| Overnight | Two other YES holders add their own dated photos of the repaired road |
+| Sat 07:05–08:05 | One rebuttal each |
+| Sat about 08:20 | The panel rules YES, 3 of 3. The result is overturned. Final |
+
+The disputer is paid **18.60 USDC**: their 10.60 back plus the 8 USDC creator reward.
+YES holders redeem in full. The overturn goes on the creator's record. Without the
+watcher's extension, the dispute at 19:05 would have been 15 minutes too late.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Evidence and privacy" href="/community/evidence-and-privacy">
+    What evidence counts, caps per person and side, and why it is permanent.
+  </Card>
+  <Card title="Fees, bonds and rewards" href="/community/fees-bonds-and-rewards">
+    Every amount paid and paid back.
+  </Card>
+  <Card title="Creator score" href="/concepts/community-creator-score">
+    How overturns and abandonments show on a creator's record.
+  </Card>
+  <Card title="Market resolution" href="/non-custodial/resolution">
+    The on-chain reporting path every market settles through.
+  </Card>
+</CardGroup>

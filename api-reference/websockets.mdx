@@ -82,6 +82,7 @@ such as `BTC-USD`.
 | `{market}.kline-{period}` | none | OHLC candle updates — `[ts, o, h, l, c, v]` |
 | `{market}.trades` | none | Public trade tape (matched contracts), including `taker_side` |
 | `{market}.ticker` | none | Rolling 24h figures — the same object as `GET /public/markets/{market}/ticker` |
+| `{market}.status` | none | The market's public state, pushed when it changes — including a community market's resolution phase |
 | `crypto.{symbol}` | none | Underlying-asset price ticks |
 | `order` | signed | Your order create / update / fill / cancel events |
 | `contract` | signed | Your own fills |
@@ -139,6 +140,60 @@ Unix seconds.
 the book is empty — never `"0"`, which would read as a price.
 
 The figures can trail fills; use `{market}.trades` to see each fill as it happens.
+
+## Market status format
+
+`{market}.status` is pushed whenever the market's public state changes, and says
+exactly what `GET /api/v2/pythia/public/markets/{market}` says at that moment. It
+replaces polling the event page for a result after a market closes.
+
+```json
+{ "12.status": {
+    "market_id":    12,
+    "status":       "determined",
+    "result":       "yes",
+    "close_at":     "2026-09-20T00:00:00Z",
+    "event_status": "resolving"
+  } }
+```
+
+`status` is the published vocabulary — `active`, `closed`, `determined`, `settled`,
+`cancelled`, `voided`. `result` is `yes`, `no`, `void` or `null`; `close_at` is
+RFC 3339 or `null`. `event_status` is the parent event's state as `/public/events`
+serves it.
+
+### Community markets
+
+A [community market](/community/overview)'s frame also carries where it stands in
+its resolution timeline. Both keys are **absent** from every other market's frame.
+
+```json
+{ "12.status": {
+    "market_id":      12,
+    "status":         "closed",
+    "result":         null,
+    "close_at":       "2026-11-21T11:00:00Z",
+    "event_status":   "active",
+    "phase":          "dispute_window",
+    "phase_deadline": "2026-11-21T11:45:00Z"
+  } }
+```
+
+| `phase` | Meaning |
+| --- | --- |
+| `trading` | Open for trading |
+| `awaiting_result` | Closed; the creator's team may post the result, until result expected + 24h |
+| `answer_window` | The team did not post; holders may submit answers, for 24h |
+| `deciding` | The AI panel is deciding from the holders' answers |
+| `dispute_window` | A result is posted and can be disputed, for 30 min (+ 30 min once if the watcher flags) |
+| `disputed` | A dispute is open: evidence, rebuttals, then the panel |
+| `override` | An admin override is in progress (exceptional cases only) |
+| `final` | The result stands; settlement follows |
+
+`phase_deadline` is when the current phase ends, RFC 3339 UTC — for `dispute_window`,
+the end of the window — or absent when the phase has no fixed end. A phase change
+arrives as a new frame, like any other status change. The rules behind each phase
+are in [Resolution and disputes](/community/resolution-and-disputes).
 
 ## Candle format
 

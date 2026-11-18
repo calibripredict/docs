@@ -1,0 +1,190 @@
+---
+title: "Evidence and privacy"
+description: "What evidence a community market accepts, why everything posted is public and permanent, the personal-information checks and automatic blurring, the caps per person and per side in a dispute, and what happens to fabricated evidence."
+---
+
+**Everything posted on a community market is public, and evidence is stored
+permanently.** It cannot be deleted later — by you or by Calibri. Every file is
+therefore checked before it is stored: personal information is blocked, faces and
+number plates are blurred, and anything illegal is refused.
+
+## What evidence is accepted
+
+The evidence posted with a result must be of the **proof type declared when the
+market was created**. That evidence is the primary proof for both sides; anything
+else counts as supporting material only.
+
+| Proof type | Who can get it | Accepted as primary proof |
+| --- | --- | --- |
+| News or web link | Anyone | A link to one of the sources the creator named, or to any reputable outlet if they chose that |
+| Official source | Anyone | A link to the named official URL or domain |
+| Published document | Anyone | The gazette, notice or similar document, as a PDF or image |
+| Participant photo | Participants only | A photo **taken in the app** when you post. A gallery photo is supporting evidence only |
+| Participant document | Participants only | The results sheet or similar document, as a PDF or image |
+
+A participant photo's capture time is recorded before its metadata is removed. There
+is no camera attestation, so this does not prove the image came from a camera; the
+capture time and a reverse image search narrow the gap.
+
+### Limits
+
+| Limit | Value |
+| --- | --- |
+| File types | JPEG, PNG, WebP, HEIC (converted); PDF up to 10 pages (converted to images) |
+| Size | Up to 10 MB per file uploaded. Stored at up to 500 KB per file or PDF page, longest edge up to 2,048 px — legible for scorecards, photos and A4 text |
+| Posting a result | Up to 5 files and 5 links |
+| In a dispute: the disputer | Up to 10 files |
+| In a dispute: the creator's team | Up to 10 files |
+| In a dispute: each other trader | Up to 3 files |
+| In a dispute: all non-party evidence | 20 files per side |
+| Per account | Up to 20 uploads per day |
+
+Each allowance is cumulative for the action that paid for it: files, pages and stored
+bytes all count, and once it is used nothing more can be added under that fee.
+
+## Public and permanent
+
+- **Everything is public.** The market, its rules, the result, every piece of evidence and every dispute statement can be seen by anyone. A disputed case's full log is linked from the market's resolution panel on calibri.io.
+- **Files are stored on Arweave** — permanent storage, paid once, not operated or controlled by Calibri. They cannot be deleted. Each file's content ID is recorded with the result.
+- **Links are archived** through the Internet Archive's Save Page Now, with the snapshot URL and a hash recorded.
+- **After 12 months** evidence is hidden on Calibri's own pages. The copies on permanent storage and the public case logs remain public.
+
+Before you post a result, file a dispute or create an event, you must tick:
+
+```
+Post your proof
+
+  [ Take photo ]   scorecard_1   scorecard_2
+
+  Anyone can see this, and it is stored permanently.
+  It cannot be deleted later, by you or by us.
+  Check your photo for faces, number plates, phone numbers,
+  addresses or anything about children before you post.
+
+  [ ] I understand this market and my evidence are public and
+      permanent; I have not included personal information or
+      illegal content.                               (required)
+```
+
+Nothing can be submitted without it.
+
+## Personal information
+
+**Do not include personal information or anything illegal.** Personal information
+means ID numbers, phone numbers, addresses, email addresses, bank details, faces or
+number plates of people who have not agreed, and anything about children.
+
+| Treatment | What |
+| --- | --- |
+| **Always blocked** | South African ID numbers, phone numbers, email addresses, bank and card numbers, home addresses (house numbers) |
+| **Allowed** | Names of tagged participants who have accepted (on a scorecard, for example), public figures, street and place names for public locations ("Main Rd"), business names |
+| **Blurred automatically** | Every face and every number plate in an uploaded image. Detection cannot tell who is a tagged participant, so all of them are blurred |
+
+A blocked item is refused with the reason. Nothing is redacted for you: remove the
+detail and submit again. Blurring may occasionally obscure part of the proof; that is
+accepted.
+
+**Disguised details are caught too.** Text — including text read out of images — is
+normalised before it is matched:
+
+- "dot com" becomes ".com"; "at" and "(at)" become "@".
+- Digits spelled out or spaced apart are joined.
+- Look-alike characters from other alphabets are mapped back, and hidden characters are removed.
+- Details split across lines or fields are joined.
+
+The AI content check also looks for masked contact and personal details. A hit from
+either check blocks the item. The same check runs on titles, questions and rules at
+creation.
+
+## What happens to a file before it is stored
+
+<Steps>
+  <Step title="Scanned in memory">
+    On the server. Calibri does not keep a copy.
+  </Step>
+  <Step title="Child-abuse material check">
+    Runs first and is mandatory. A match blocks the upload, freezes the account and is reported as the law requires.
+  </Step>
+  <Step title="Explicit and violent content check">
+    Borderline files, and a random sample of the rest, get a second check.
+  </Step>
+  <Step title="Personal-information check">
+    Typed text and text read out of the image are normalised and checked for the always-blocked items.
+  </Step>
+  <Step title="Faces and number plates blurred">
+    Every one, before upload.
+  </Step>
+  <Step title="Policy check on the text">
+    Text in or with the evidence gets the same checks as a market title.
+  </Step>
+  <Step title="Metadata stripped">
+    Location data and other metadata are removed after the capture time is recorded, and images are re-encoded. A PDF becomes one image per page, so what is stored is exactly what was checked.
+  </Step>
+</Steps>
+
+Calibri cannot delete a stored file, but it controls what its own pages show:
+anything flagged after upload is hidden there.
+
+### When an upload is blocked
+
+- You are told why, and the file is not stored.
+- **3 blocked uploads in 24 hours** suspends your uploads for 24 hours.
+- A child-abuse-material match freezes the account and triggers a report.
+
+## Evidence in a dispute
+
+Any trader in a disputed market may add evidence, free — including a member on a
+custodial balance, who cannot dispute themselves. These rules stop one side winning
+by volume or by using extra accounts.
+
+| Rule | Detail |
+| --- | --- |
+| **Evidence at filing** | A dispute cannot be filed without evidence |
+| **Caps per person and per side** | The disputer 10 files, the creator's team 10 files, each other trader 3 files. Non-party evidence has a total of 20 files per side. Evidence from the two parties is always read in full |
+| **Near-duplicates merged** | Images that look the same, and texts that say the same, count as one item |
+| **Every item is labelled** | Who sent it (creator's team, disputer or trader), which side of the market they hold, how old the account is, and any link to either party |
+| **Weighed by verifiability, never by volume** | This is the panel's instruction |
+| **Linked accounts count as the party** | An account whose wallet was funded from the same wallet as a party's counts as that party: its files use that party's cap and are flagged to the panel |
+| **The source beats a screenshot** | For proof anyone can find, the panel reads the declared source itself |
+| **One rebuttal each** | One hour per side, after the evidence window |
+
+A referral link, a shared IP address, or a wallet that has funded more than 5 member
+wallets is a flag for staff only — not a link to a party.
+
+## Fabricated evidence
+
+The AI panel can mark an evidence item as **fabricated**.
+
+- **The account that submitted it loses its dispute and evidence rights permanently.**
+- **If that account is the creator's, or linked to the creator, it is creator fraud:** the ruling goes against the creator, the creator reward goes to the disputer, and the creator is permanently banned from creating.
+
+Proven fraud established outside the dispute process is one of the
+[exceptional cases](/community/resolution-and-disputes#admin-override-exceptional-cases-only)
+where Calibri may step in.
+
+## Who sees what
+
+- **The public** sees the market, the result, the evidence and the dispute statements, with faces and plates blurred.
+- **Calibri's moderation staff** see all evidence for an event in the admin tool, next to the result, disputes, watcher flags and the panel's ruling and reasoning. Flagged or hidden evidence stays visible to staff behind a warning and is never shown to the public.
+- **AI vendors.** Every dispute sends its evidence to three AI vendors, and every upload goes through moderation and hash-matching services before it is stored.
+
+<Warning>
+  **What gets through cannot be deleted.** Permanent storage means a privacy request cannot remove a stored file — Calibri can only hide it on its own pages. Check every photo and document before you post it.
+</Warning>
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Resolution and disputes" href="/community/resolution-and-disputes">
+    How evidence is used, the panel, and every outcome.
+  </Card>
+  <Card title="Community terms" href="/community/terms">
+    The content rules, named people and takedowns.
+  </Card>
+  <Card title="Creating a market" href="/community/creating-a-market">
+    Choosing a proof type when you create.
+  </Card>
+  <Card title="Privacy policy" href="/privacy-policy">
+    What Calibri collects, and what is public regardless.
+  </Card>
+</CardGroup>

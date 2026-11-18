@@ -11,6 +11,10 @@ independent of whether the market has resolved.
 - **Referral reward** — When someone **you referred trades as the taker**, **you (the referrer)** earn a share of the fee they paid. Tied to your referred members' taker activity.
 - **Liquidity reward** — On markets that have a liquidity pool, resting buy orders within the market's spread band (`liquidity_reward.max_spread` on each market), and at least its minimum size (`liquidity_reward.min_size`), earn a share of a fixed pool for that market. Your score in a market is the larger of your smaller side and a third of your larger side, so quoting both sides evenly earns full credit and quoting one side earns a third; while the market's mid is below 0.15 or above 0.85, no order earns. While you have a resting sell order on any market, none of your orders earn a liquidity reward. It is paid daily, like the other rewards. It is not funded from the taker fee.
 
+<Note>
+  **Community markets** — markets members create — pay **no maker rebate and no liquidity reward**. Referral rewards apply to their taker fees at the normal 10%. Their creator earns a fourth kind of reward, the **creator reward**: 10% of the taker fees on their markets, paid once each market is final and clean. See [Fees, bonds and rewards](/community/fees-bonds-and-rewards#the-creator-reward).
+</Note>
+
 ## Maker and referral rewards are a share of the taker fee
 
 | Reward | Who earns it | Based on |

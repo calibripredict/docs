@@ -99,6 +99,13 @@ default rate of 7.00%, and `effective_taker_fee_rate_bps` is `null`.
 | Tech | 4.00% |
 | Geopolitics | 0.00% |
 | World | 0.00% |
+| **Community markets** | **8.00%**, whatever the category |
+
+A [community market](/community/overview) — one a member created — is charged one
+fixed rate of **8.00%** in every category, on the same formula. Its rate is recorded
+when the market is created and never changes for it. A community market added to a
+Calibri event pays 8% while Calibri's own markets in that event pay their category's
+rate. See [Fees, bonds and rewards](/community/fees-bonds-and-rewards).
 
 A market whose category carries a `0.00%` rate is **free to take** — no fee is
 charged and no rebate or referral reward is generated from it.
@@ -125,6 +132,10 @@ The maker's share is set per category — **20%** in Crypto, **15%** in Sports,
 **25%** everywhere else. See [Maker rebates](/concepts/maker-rebates) for the
 full table. The referral share is **10%** in every category — see the
 [referral program](/rewards-referral-program).
+
+On a **community market** there is no maker rebate. Instead **10% of the fee** goes
+to the market's creator as the [creator reward](/community/fees-bonds-and-rewards#the-creator-reward),
+and the referral share is the same 10%.
 
 Both rewards are a percentage **of the taker fee**, not of your stake — so on
 the 1.68 USDC Crypto example above, the maker earns `0.20 × 1.68 = 0.336 USDC`.
@@ -221,7 +232,8 @@ See [Withdrawals to other networks](/non-custodial/withdrawals-to-other-networks
 > You pay a single **taker fee** when your order fills — **never again** at
 > settlement. **Makers pay nothing** and earn a rebate. The fee is highest around
 > 50/50 prices, near-zero on lopsided prices, and scales with your fill size. The
-> rate depends on the market's category (0%–7%).
+> rate depends on the market's category (0%–7%), or is a fixed 8% on community
+> markets.
 
 ## Related
 

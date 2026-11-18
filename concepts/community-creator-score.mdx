@@ -1,0 +1,101 @@
+---
+title: "Creator score"
+description: "The public score every community-market creator carries — one number built from how cleanly their events resolve, shown as New until they have three resolved events, and lowered by overturns, weak proof, abandonments and takedowns."
+---
+
+**Every member who creates community markets has a public creator score**: one
+headline number, from 0 to 100%, built from their record of resolving events
+cleanly. It sits next to their username on every community market they create, so
+you can judge a creator before you trade their market.
+
+## What is scored: events, not markets
+
+The score counts **resolved events**. A creator's event is their group of markets in
+one event: a whole community event they created, or the markets they added to a
+Calibri event. Five markets in one event are one event for the score.
+
+An event is **resolved** once every one of the creator's markets in it is final. It
+then counts as exactly one of these, checked in this order:
+
+| The event counts as | When | Effect |
+| --- | --- | --- |
+| **Takedown** | Any of its markets was taken down for breaking the [content rules](/community/terms) | Strongly negative |
+| **Overturned** | Otherwise, any market was overturned on dispute, voided for weak proof, or ruled against the creator for fraud | Negative |
+| **Abandoned** | Otherwise, any market whose result nobody on the team posted — holders answered, or it voided with no answers | Negative |
+| **Clean** | Otherwise: every posted result stood | Positive |
+
+A market voided by its own **"Void if…"** rule, or cancelled, says nothing about the
+creator and is left out. An event whose markets were all left out is not counted.
+
+## How the score is calculated
+
+```
+score = (clean − 2 × (overturned + abandoned) − 5 × takedowns) ÷ resolved
+```
+
+where each term counts events, and `resolved` is the total of the four. The result
+is shown as a percentage and **never goes below 0%**.
+
+### Example
+
+A creator with 12 resolved events: 11 clean and 1 overturned.
+
+```
+(11 − 2 × 1) ÷ 12 = 9 ÷ 12 = 75%
+```
+
+An overturned or abandoned event weighs twice, and a takedown five times, against
+each clean one. A dispute that fails does not lower the score: the result stood.
+
+## "New"
+
+Until a creator has **3 resolved events**, their markets show **New** in place of a
+number.
+
+```
+| by golfer_dave   Score 75%  12 resolved      |
+| by new_member    New                         |
+```
+
+## Only the creator is scored
+
+The score belongs to the member who created the markets. **Tagged team members carry
+no mark**, whoever on the team posted the result. On a Team only event, a market a
+team member added counts toward that member's own score, as its creator.
+
+## Where it shows
+
+| Where | What you see |
+| --- | --- |
+| Event cards | The creator's username, score and number of resolved events |
+| Event pages | The same, on each community market — including in the Community markets section of a Calibri event |
+| The creator's profile | The score and the full record: events created, clean, disputed, overturned, abandoned, takedowns, total traded volume and account age |
+| The Community tab | A sort option by creator score |
+
+The name shown is the member's **username**.
+
+## What it does not do
+
+- **It does not raise any limit.** Every creator has the same limits — 3 active events, 5 markets per event — whatever their score. There are no tiers.
+- **It does not change what anyone pays.** The fees, bonds and the creator reward are the same at every score.
+
+The score is a record, not a gate. A market's traders are protected by the
+[dispute process](/community/resolution-and-disputes) and the AI watcher at every
+score.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Community markets" href="/community/overview">
+    What community markets are, and the Community label.
+  </Card>
+  <Card title="Resolution and disputes" href="/community/resolution-and-disputes">
+    Overturns, abandonment and what each costs a creator.
+  </Card>
+  <Card title="Community terms" href="/community/terms">
+    The content rules behind a takedown.
+  </Card>
+  <Card title="Creating a market" href="/community/creating-a-market">
+    Becoming a creator.
+  </Card>
+</CardGroup>
