@@ -249,10 +249,11 @@ components:
       properties:
         confirm_password:
           description: 'Must equal `password` exactly; the server rejects a mismatch.'
-          example: 'a new passphrase'
+          example: 'A new passphrase 9'
           type: 'string'
         password:
-          example: 'a new passphrase'
+          description: 'At least 8 characters, with an uppercase letter, a lowercase letter and a number. Each rule not met is one error code: `identity.password.too_short`, `identity.password.missing_uppercase`, `identity.password.missing_lowercase`, `identity.password.missing_number`.'
+          example: 'A new passphrase 9'
           type: 'string'
         reset_password_token:
           description: 'From the emailed link.'
@@ -278,7 +279,8 @@ components:
     PasswordUpdateRequest:
       properties:
         new_password:
-          example: 'a new passphrase'
+          description: 'At least 8 characters, with an uppercase letter, a lowercase letter and a number. Each rule not met is one error code: `identity.password.too_short`, `identity.password.missing_uppercase`, `identity.password.missing_lowercase`, `identity.password.missing_number`.'
+          example: 'A new passphrase 9'
           type: 'string'
         old_password:
           description: 'Verified against the stored hash before anything changes.'
@@ -392,7 +394,8 @@ components:
           example: 'alex@example.com'
           type: 'string'
         password:
-          example: 'correct horse battery staple'
+          description: 'At least 8 characters, with an uppercase letter, a lowercase letter and a number. Each rule not met is one error code: `identity.password.too_short`, `identity.password.missing_uppercase`, `identity.password.missing_lowercase`, `identity.password.missing_number`.'
+          example: 'Correct horse battery 9'
           type: 'string'
         refid:
           description: 'The referrer''s code, if the signup came through a referral link.'
