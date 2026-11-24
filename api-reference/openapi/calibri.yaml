@@ -594,8 +594,14 @@ paths:
         Pass `series` to drill into one and get its individual windows, or
         `expand_series=true` to list every window of every series uncollapsed.
 
-        `q` searches title, description, category, sub-category, tags and market
-        titles (case-insensitive substring, 2+ characters). Collapsing still
+        `q` searches title, market titles, tags, sub-category, category and
+        description (2+ characters). Every word must match, in any field and any
+        order, as a whole word, a prefix (3+ letters) or a near spelling (one typo
+        from 5 letters, two from 8); accents and case are ignored and joining words
+        ("vs", "the", "will"…) are skipped. When no event matches every word, events
+        matching at least half of them are returned instead. `match=any` needs only
+        one word. With `q` the default `sort` is `relevance` (best match first, then
+        soonest close); any other `sort` still applies. Collapsing still
         applies, but AFTER the search: a series is represented by its best
         MATCHING window, so a search naming one window returns that window.
 
@@ -603,9 +609,14 @@ paths:
         headers out — the same headers as `/orders`. `Total` counts every
         matching event after collapsing; a page past the end is `[]`.
       parameters:
-        - description: Search text, case-insensitive substring; under 2 characters is ignored
+        - description: Search text; under 2 characters is ignored
           in: query
           name: q
+          schema:
+            type: string
+        - description: 'How the words of q combine: all (default) or any'
+          in: query
+          name: match
           schema:
             type: string
         - description: Filter by category
@@ -638,7 +649,7 @@ paths:
           name: frequency
           schema:
             type: string
-        - description: Sort order, e.g. newest
+        - description: Sort order, e.g. newest; relevance (the default with q) ranks search matches
           in: query
           name: sort
           schema:
