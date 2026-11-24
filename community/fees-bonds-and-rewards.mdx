@@ -12,8 +12,8 @@ reward, a winning disputer's payout — is paid as a reward, to your Safe.
 | You | Pay | Can be paid |
 | --- | --- | --- |
 | Trade | The taker fee, at 8%, when your order takes liquidity | 1.00 USDC per winning contract, as on any market |
-| Create an event | 0.50 USDC check fee + 1 USDC bond, and a first bet of at least 1 USDC | The creator reward: 10% of your markets' taker fees |
-| Add a market to an event | 0.50 USDC check fee and a first bet; plus the 1 USDC bond if it is your first market in that event | The creator reward on that market |
+| Create an event | 0.50 USDC check fee + 1 USDC bond, and a first prediction of at least 1 USDC | The creator reward: 10% of your markets' taker fees |
+| Add a market to an event | 0.50 USDC check fee and a first prediction; plus the 1 USDC bond if it is your first market in that event | The creator reward on that market |
 | Dispute | 0.60 USDC fee + a 10 or 50 USDC bond | If you win: everything you paid, plus the creator reward |
 | Add evidence to a dispute | Nothing | Nothing — a correct result is the point |
 | Answer when the team is silent | Nothing | Nothing |
@@ -67,10 +67,10 @@ is fixed by the market being a community market, not by a setting.
 | --- | --- | --- |
 | **Check fee** | 0.50 USDC per submission, and per market added later | **No.** It pays for up to 4 content checks (the first and 3 rewrites), the AI watcher on your result, and storage of your result's evidence |
 | **Creator bond** | 1 USDC, once per member per event | **No**, once the event is live, whatever the outcome. Paid back only if your submission is blocked and never goes live |
-| **First bet** | At least 1 USDC, on one market | It is your own bet, on the order book: it pays out or loses like any other |
+| **First prediction** | At least 1 USDC, on one market | It is your own prediction, on the order book: it pays out or loses like any other |
 
-- **One payment.** The check fee and bond go to Calibri in a single USDC transfer from your Safe, at the same signing prompt as your first bet, signed with your passkey or your own wallet — never a session key.
-- **Your first market in an event carries the bond.** Each further market you add to the same event costs a check fee and its own first bet, with no second bond.
+- **One payment.** The check fee and bond go to Calibri in a single USDC transfer from your Safe, at the same signing prompt as your first prediction, signed with your passkey or your own wallet — never a session key.
+- **Your first market in an event carries the bond.** Each further market you add to the same event costs a check fee and its own first prediction, with no second bond.
 - **Repeated blocks cost more.** After 3 blocked checks in 24 hours, your next check costs 1.10 USDC.
 
 <Note>
@@ -118,7 +118,7 @@ is final and clean.
 | How the market ends | The creator reward |
 | --- | --- |
 | Final and clean | Paid to the creator |
-| A tagged team member posted the result | Paid to the creator, as normal |
+| A team member posted the result | Paid to the creator, as normal |
 | The market's own "Void if…" rule applies | Paid to the creator |
 | Overturned on dispute, or voided for weak proof | **Paid to the disputer** |
 | Fabricated evidence linked to the creator | **Paid to the disputer** |
@@ -154,7 +154,7 @@ it**. A later change applies to new events only.
 
 ## In short
 
-> Creating costs **1.50 USDC** — a 0.50 check fee and a 1 USDC bond — plus a first bet
+> Creating costs **1.50 USDC** — a 0.50 check fee and a 1 USDC bond — plus a first prediction
 > of at least 1 USDC, and none of the 1.50 comes back once you are live. You earn
 > **10% of the taker fees** on your markets once they are final and clean. Disputing
 > costs **10.60 USDC**, or **50.60 USDC** on a market over 2,500 USDC; win and you get it
