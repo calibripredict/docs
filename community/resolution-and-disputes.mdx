@@ -163,7 +163,7 @@ handled: [The AI panel](/community/ai-panel).
 | Team did not post; holders answered and the panel decided | Final on the panel's answer, after its own dispute window | If disputed: a winner gets fee and bond back; otherwise as for any dispute | Forfeited — paid to nobody, even if a disputer wins |
 | Team did not post; nobody answered, or the panel cannot tell | **Void** at 0.50 | No dispute | Forfeited |
 | Policy takedown | **Void** at 0.50 | If there was a dispute: bond back, fee kept | Forfeited |
-| Admin override (below) | Void or a result | Bond back, fee kept | Paid to the creator, unless the override is for the creator's own fraud |
+| Admin override (below) | Void or a result | Bond back, fee kept | Paid to the creator, unless the override is for the creator's own fraud or a duplicate listing |
 
 **A void pays 0.50 per contract to both YES and NO.** It is not a refund of what you
 paid: a member who bought YES at 0.80 loses 0.30 per contract on a void; one who bought
@@ -185,11 +185,13 @@ An admin may void a market or decide a dispute only when one of these applies:
 | Illegal-content takedown | A market or its evidence breaks the law |
 | Proven fraud or exploit | Fabricated proof established beyond the dispute process; a bug used to take funds |
 | AI, vendor or system failure | The panel cannot run; a vendor outage; a platform fault that corrupts a ruling |
+| Duplicate of an event already listed | "Federer vs Nadal with friends" created while "Federer vs Nadal" is listed. Always a void, with a link to the listed event |
 
 - **Disagreeing with a panel ruling is not on the list.** A wrong-looking ruling stands.
+- **A duplicate can be stopped while it trades.** Once it is hidden for review, an admin can close its trading at once and void it, rather than wait for its close. Resting orders are cancelled; positions are paid by the void (50¢ per contract).
 - **Only before the outcome is on-chain.** An override can act only before the outcome is reported on the blockchain. Once reported, the outcome is final and cannot be reversed.
-- **Shown on the market.** Every override appears on the market or event itself: **Resolved by Calibri admin**, the action (void or result), the reason and the date. No staff names.
-- **Money.** A disputer gets the bond back and the fee is kept. The creator keeps the creator reward — unless the override is for the creator's own fraud, which forfeits it and brings a permanent creation ban.
+- **Shown on the market.** Every override appears on the market or event itself: **Resolved by Calibri admin**, the action (void or result), the reason and the date, and a banner at the top of the event when markets in it were voided. A duplicate links to the event already listed. No staff names.
+- **Money.** A disputer gets the bond back and the fee is kept. The creator keeps the creator reward — unless the override is for the creator's own fraud, which forfeits it and brings a permanent creation ban, or for a duplicate listing, which forfeits it and counts against the creator score like a takedown, with no ban.
 
 ## If Calibri fails to report
 
