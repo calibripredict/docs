@@ -142,6 +142,7 @@
                   "api-reference/models/bundled-order-book",
                   "api-reference/models/cancel-all-request",
                   "api-reference/models/cancel-all-result",
+                  "api-reference/models/cancel-batch-request",
                   "api-reference/models/candle-point",
                   "api-reference/models/category-node",
                   "api-reference/models/category-parent-ref",
