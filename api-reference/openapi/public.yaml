@@ -276,6 +276,8 @@ components:
           example: 3
           type: integer
       type: object
+    CancelBatchRequest:
+      type: object
     CandlePoint:
       properties:
         c:
@@ -1557,6 +1559,15 @@ components:
           type:
           - string
           - "null"
+        event_title:
+          description: |-
+            EventTitle is the parent event's title, so a list that spans events can
+            head a row "event — market" without reading the event. Null when the
+            market's metadata is not available.
+          example: BTC price on 31 Dec 2026
+          type:
+          - string
+          - "null"
         expires_at:
           description: |-
             ExpiresAt is when the order's authorisation lapses (a signed order's
@@ -1622,6 +1633,21 @@ components:
         origin_volume:
           example: "10"
           type: string
+        outcome_labels:
+          description: |-
+            OutcomeLabels are the display names of the market's two legs, `[yes, no]`,
+            with the ["Yes","No"] default applied, as on /public/markets/{market}. With
+            market_title and event_slug they name the outcome `side` holds without a
+            market read. Null when the market's metadata is not available.
+          example:
+          - "Yes"
+          - "No"
+          items:
+            type: string
+          type:
+          - array
+          - "null"
+          uniqueItems: false
         post_only:
           description: |-
             PostOnly: the order could only rest as a maker; it was rejected rather
@@ -2560,14 +2586,21 @@ paths:
         name: client_order_id
         schema:
           type: string
-      - description: 'Lower bound, Unix SECONDS (not milliseconds). Open orders only:
-          ignored when state includes done, cancel or reject'
+      - description: 'Only these orders: up to 100 comma-separated order ids. Without
+          `state`, each is looked up in open orders, then history, so one call answers
+          for orders in any state; an id that is not yours is left out'
+        in: query
+        name: ids
+        schema:
+          type: string
+      - description: Lower bound on created_at, Unix SECONDS (not milliseconds), inclusive.
+          Applies to open orders and history alike
         in: query
         name: time_from
         schema:
           type: integer
-      - description: 'Upper bound, Unix SECONDS (not milliseconds). Open orders only:
-          ignored when state includes done, cancel or reject'
+      - description: Upper bound on created_at, Unix SECONDS (not milliseconds), inclusive.
+          Applies to open orders and history alike
         in: query
         name: time_to
         schema:
@@ -2607,6 +2640,13 @@ paths:
             Total:
               schema:
                 type: integer
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: 'market.order.invalid_id: an id in `ids` is not a number, or
+            there are more than 100'
         "401":
           content:
             application/json:
@@ -2707,6 +2747,7 @@ paths:
         `{"market_id": 12, "side": "yes"}` (a body field wins over the same
         query parameter). `orders` lists the orders cancelled, as `GET /orders`
         rows (state `cancel`); `failed` counts orders that could not be.
+        To cancel named orders use `POST /orders/cancel/batch`.
         Shares a per-member budget with single cancels
         (429 `market.order.rate_limited` over it).
       parameters:
@@ -2758,6 +2799,63 @@ paths:
       security:
       - apiKey: []
       summary: Cancel all own orders
+      tags:
+      - Trade
+  /api/v2/pythia/orders/cancel/batch:
+    post:
+      description: |-
+        Cancels the orders you name, up to 100, in one call — on the query
+        string (`ids=1420,1421`) or as a JSON body `{"ids": [1420, 1421]}`.
+        `orders` lists the orders cancelled, as `GET /orders` rows (state
+        `cancel`); an id that is not yours or not open is left out, not
+        failed — read it with `GET /orders?ids=` to see its state. `failed`
+        counts orders that could not be cancelled. Shares a per-member budget
+        with single cancels (429 `market.order.rate_limited` over it).
+      parameters:
+      - description: Up to 100 comma-separated order ids
+        in: query
+        name: ids
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+              - $ref: '#/components/schemas/CancelBatchRequest'
+                description: The ids as a JSON body
+                summary: body
+        description: The ids as a JSON body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelAllResult'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: 'market.order.invalid_id: no ids, an id that is not a number,
+            or more than 100'
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Unauthorized
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Too Many Requests
+      security:
+      - apiKey: []
+      summary: Cancel several orders
       tags:
       - Trade
   /api/v2/pythia/public/activity:
@@ -3616,7 +3714,16 @@ paths:
       description: |-
         A snapshot of the rolling 24h ticker for every live market, keyed
         by market id. Prefer this over N single-market ticker calls when
-        building a multi-market board.
+        building a multi-market board. `market_ids` narrows it to those
+        markets (up to 200), for a client that needs a handful — a
+        portfolio's marks — rather than the whole board; a market that is not
+        live has no ticker and is left out.
+      parameters:
+      - description: 'Only these markets: up to 200 comma-separated market ids'
+        in: query
+        name: market_ids
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -3657,6 +3764,13 @@ paths:
                     quote_volume: '352.6'
                     change_24h: '-0.0667'
           description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: 'public.market.invalid_ids: an id is not a number, or there
+            are more than 200'
       summary: All tickers
       tags:
       - Market Data
