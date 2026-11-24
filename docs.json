@@ -227,6 +227,7 @@
                   "api-reference/models/relay-request",
                   "api-reference/models/relay-result-entity",
                   "api-reference/models/replaced-order-entity",
+                  "api-reference/models/safe-nonce-entity",
                   "api-reference/models/safe-owner-prepare-entity",
                   "api-reference/models/safe-owner-request",
                   "api-reference/models/safe-owners-entity",
