@@ -1,10 +1,10 @@
 ---
 title: "Resolution and disputes"
-description: "How a community market is decided — the creator's team posts the result with proof, a 30-minute dispute window follows, and a disputed result goes to a panel of three AI models whose ruling is final. What happens if nobody posts, every outcome, and the few cases where Calibri steps in."
+description: "How a community market is decided — the creator's team posts the result with proof, a 15-minute dispute window follows, and a disputed result goes to a panel of three AI models whose ruling is final. What happens if nobody posts, every outcome, and the few cases where Calibri steps in."
 ---
 
 **The creator's team posts the result with proof. Every posted result then runs a
-30-minute dispute window, and if nobody disputes, it is final.** A dispute is decided
+15-minute dispute window, and if nobody disputes, it is final.** A dispute is decided
 by a panel of three AI models from different vendors, with evidence open to every
 trader in the market, and **its ruling is final at every market size.** There is no
 appeal to UMA or to any other arbiter.
@@ -25,11 +25,11 @@ redeemable for 1.00 USDC. See [Market resolution](/non-custodial/resolution).
   <Step title="The AI watcher checks it">
     If the result looks wrong, a public flag appears on the market, every holder gets a push notification, and the dispute window is extended once, by 30 minutes. The watcher never disputes on its own.
   </Step>
-  <Step title="30-minute dispute window">
+  <Step title="15-minute dispute window">
     Anyone who traded the market or holds a position in it may dispute, with evidence. No dispute: the market is final when the window ends. There is no "accept result" step and no early finality.
   </Step>
   <Step title="Evidence, rebuttal, ruling">
-    If disputed: every trader in the market is notified and may add evidence to either side during the evidence window. Then one rebuttal each (1 hour), then the AI panel rules.
+    If disputed: every trader in the market is notified and may add evidence to either side during the 15-minute evidence window, which closes early once both sides have given their statement. Then one rebuttal each (10 minutes), then the AI panel rules.
   </Step>
   <Step title="Final">
     Winning contracts redeem in full. A winning disputer is paid, and the creator reward is settled, with the next daily payout.
@@ -65,7 +65,7 @@ result, the traders answer instead.
   <Step title="The AI panel decides">
     From the submitted answers. Where the proof is something anyone can find — a news or web link, an official source or a published document — the panel also reads the declared source itself.
   </Step>
-  <Step title="The normal 30-minute dispute window">
+  <Step title="The normal 15-minute dispute window">
     Then final, or a dispute as usual.
   </Step>
 </Steps>
@@ -98,22 +98,26 @@ balance cannot dispute, but may add evidence to someone else's dispute.
 
 ### Fee, bond and windows
 
-The dispute window is 30 minutes at every size. The evidence window and the dispute
-bond follow the **disputed market's own open interest, measured when the market
-closed** — not the event's.
+The dispute window and the evidence window are 15 minutes at every size, and each
+side's rebuttal is 10 minutes. The dispute bond follows the **disputed market's own open interest,
+measured when the market closed** — not the event's.
 
 | Disputed market's open interest | Under 250 USDC | 250 to 2,500 USDC | Over 2,500 USDC |
 | --- | --- | --- | --- |
-| Dispute window after a result is posted | 30 min | 30 min | 30 min |
+| Dispute window after a result is posted | 15 min | 15 min | 15 min |
 | Extension when the watcher flags (once) | + 30 min | + 30 min | + 30 min |
-| Evidence window after a dispute is filed | 6h | 12h | 24h |
-| Rebuttal, each side | 1h | 1h | 1h |
+| Evidence window after a dispute is filed | 15 min | 15 min | 15 min |
+| Rebuttal, each side | 10 min | 10 min | 10 min |
 | Dispute fee | 0.60 USDC | 0.60 USDC | 0.60 USDC |
 | Dispute bond | 10 USDC | 10 USDC | 50 USDC |
 | **You pay** | **10.60 USDC** | **10.60 USDC** | **50.60 USDC** |
 
 Every window runs its stated length **at any hour**. There is no night rule.
-Deadlines are acted on within a few minutes of passing, not to the second.
+Deadlines are acted on within a few minutes of passing, not to the second. The
+evidence window is the one exception to running its full length: it
+[closes early](#open-evidence) once both sides have given their statement. A market
+created before these windows were shortened keeps the evidence window it was created
+with.
 
 <Warning>
   **The fee and the bond are payments to Calibri, not deposits.** Calibri holds nothing on your behalf. If you win, Calibri pays you back everything you paid, plus the creator reward, as a reward. If you lose, nothing comes back. See [Fees, bonds and rewards](/community/fees-bonds-and-rewards#disputing).
@@ -126,6 +130,13 @@ add evidence to either side during the evidence window. It is free and needs no 
 Caps per person and per side, labels on every item and the treatment of linked
 accounts stop one side winning by volume. See
 [Evidence in a dispute](/community/evidence-and-privacy#evidence-in-a-dispute).
+
+**Evidence closes early once both sides are in.** The disputer gives their statement
+when they file. As soon as the creator's team sends its statement, the evidence
+window closes for everyone, including other traders, and the 10-minute rebuttal
+starts. If you are on the creator's team, add your evidence first and send your
+statement last. On a result decided from holders' answers there is no team
+statement, so the evidence window runs its full 15 minutes.
 
 ### Losing disputes repeatedly
 
@@ -212,23 +223,21 @@ dispute is decided by the AI panel, and its ruling is final.
 | Result expected by | The close, or up to 7 days later | Starts the 24-hour countdown to the posting deadline |
 | Posting window | Close to Result expected by + 24h | The team may post. The first post counts |
 | Answer window | 24h after the posting window, only if nobody posted | Any holder may answer with evidence; then the panel decides |
-| Dispute window | 30 min from a posted result, or from the panel's decision on answers | No dispute: final |
+| Dispute window | 15 min from a posted result, or from the panel's decision on answers | No dispute: final |
 | Watcher extension | Once, + 30 min | Added to the dispute window when the watcher flags |
-| Evidence window | 6h / 12h / 24h by open interest | Every trader in the market may add evidence |
-| Rebuttal | 1h | One each; then the panel rules |
+| Evidence window | 15 min, or until both sides have given their statement | Every trader in the market may add evidence |
+| Rebuttal | 10 min | One each; then the panel rules |
 | Payouts | Daily | Creator reward and winning-disputer payouts within 24h of the market becoming final |
 
 ### Time from posting to final
 
 | Case | Time |
 | --- | --- |
-| No dispute | 30 minutes after the result is posted |
-| No dispute, watcher flags | 1 hour after the result is posted |
-| Disputed, under 250 USDC | About 7.5 hours after the dispute |
-| Disputed, 250 to 2,500 USDC | About 13.5 hours after the dispute |
-| Disputed, over 2,500 USDC | About 25.5 hours after the dispute |
-| Team does not post, holders answer, no dispute | About 48.5 hours after Result expected by |
-| Worst case | About 75 hours after Result expected by |
+| No dispute | 15 minutes after the result is posted |
+| No dispute, watcher flags | 45 minutes after the result is posted |
+| Disputed | About 1 hour after the dispute, sooner when evidence closes early |
+| Team does not post, holders answer, no dispute | About 48 hours 15 minutes after Result expected by |
+| Worst case | About 50 hours after Result expected by |
 
 A dispute on one market delays only that market. The other markets in the event —
 the creator's and Calibri's — become final on their own timelines.
@@ -242,15 +251,16 @@ the local news site and the council's notice page named as sources.
 | --- | --- |
 | Fri 18:00 | Trading closes. Open interest is 1,700 USDC |
 | Fri 18:20 | The creator, who holds NO, posts NO, citing an article from before the repair |
-| Fri 18:20 | The watcher flags it: the article predates the deadline. Every holder is notified; the window is extended to 19:20 |
-| Fri 19:05 | A YES holder disputes with the council's "completed" notice dated Thursday, paying 10.60 USDC. The 12-hour evidence window runs to Sat 07:05 |
-| Overnight | Two other YES holders add their own dated photos of the repaired road |
-| Sat 07:05–08:05 | One rebuttal each |
-| Sat about 08:20 | The panel rules YES, 3 of 3. The result is overturned. Final |
+| Fri 18:20 | The watcher flags it: the article predates the deadline. Every holder is notified; the window is extended to 19:05 |
+| Fri 18:50 | A YES holder disputes with the council's "completed" notice dated Thursday, paying 10.60 USDC. The 15-minute evidence window runs to 19:05 |
+| Fri 18:52–18:58 | Two other YES holders add their own dated photos of the repaired road |
+| Fri 19:00 | The creator's team sends its statement. Both sides are in, so evidence closes now |
+| Fri 19:00–19:10 | One rebuttal each |
+| Fri about 19:25 | The panel rules YES, 3 of 3. The result is overturned. Final |
 
 The disputer is paid **18.60 USDC**: their 10.60 back plus the 8 USDC creator reward.
 YES holders redeem in full. The overturn goes on the creator's record. Without the
-watcher's extension, the dispute at 19:05 would have been 15 minutes too late.
+watcher's extension, the dispute at 18:50 would have been 15 minutes too late.
 
 ## Related
 
