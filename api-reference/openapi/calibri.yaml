@@ -4813,6 +4813,17 @@ components:
           type:
             - string
             - 'null'
+        voids_at:
+          description: |-
+            The earliest time the on-chain 50/50 deadman can void the market if
+            nothing has resolved it, RFC 3339 UTC: the later of the market's
+            registered resolution deadline and its close, plus 30 days. Once voided,
+            each contract pays half to YES and NO holders alike. Atlas checks hourly,
+            so the void lands up to an hour after this.
+          example: '2026-08-22T10:00:00Z'
+          type:
+            - string
+            - 'null'
       type: object
     PriceFeed:
       description: |-
