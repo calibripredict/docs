@@ -3185,6 +3185,10 @@ components:
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+        uma:
+          anyOf:
+            - $ref: '#/components/schemas/MarketUMA'
+            - type: 'null'
         volume:
           description: |-
             Lifetime contract volume for this market. Same unit as volume_24h —
@@ -3630,6 +3634,10 @@ components:
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+        uma:
+          anyOf:
+            - $ref: '#/components/schemas/MarketUMA'
+            - type: 'null'
         volume:
           description: |-
             Lifetime contract volume for this market. Same unit as volume_24h —
@@ -3975,6 +3983,10 @@ components:
         title:
           example: Will BTC close above $70,000 on 31 Dec 2026?
           type: string
+        uma:
+          anyOf:
+            - $ref: '#/components/schemas/MarketUMA'
+            - type: 'null'
         yes_token_id:
           description: |-
             YesTokenID / NoTokenID are the on-chain ERC-1155 position ids for this
@@ -4732,6 +4744,75 @@ components:
           anyOf:
             - $ref: '#/components/schemas/TermsUnderlying'
             - type: 'null'
+      type: object
+    MarketUMA:
+      description: |-
+        UMA is the market's request on the UMA Optimistic Oracle: its status,
+        the escalation and status transactions, the open proposal and its dispute
+        window, and the settled answer. Null for a market never sent to UMA.
+      properties:
+        escalated_at:
+          description: When the market was sent to UMA, RFC 3339 UTC.
+          example: '2026-07-23T10:00:00Z'
+          type:
+            - string
+            - 'null'
+        escalation_tx:
+          description: The transaction that sent the market to UMA.
+          example: 4.1754673891915774e+76
+          type:
+            - string
+            - 'null'
+        proposal_expires_at:
+          description: When the open proposal's dispute window ends, RFC 3339 UTC.
+          example: '2026-07-23T12:00:00Z'
+          type:
+            - string
+            - 'null'
+        proposed_result:
+          description: |-
+            The open proposal's answer. `other` is an answer that is none of yes, no
+            or void.
+          enum:
+            - 'yes'
+            - 'no'
+            - void
+            - other
+            - null
+          example: 'yes'
+          type:
+            - string
+            - 'null'
+        result:
+          description: UMA's settled answer, once status is `settled`.
+          enum:
+            - 'yes'
+            - 'no'
+            - void
+            - other
+            - null
+          example: 'yes'
+          type:
+            - string
+            - 'null'
+        status:
+          description: |-
+            requested (sent to UMA, no proposal yet), proposed (an answer is proposed
+            and open to dispute until proposal_expires_at), disputed (the proposal was
+            disputed and goes to UMA's vote) or settled (UMA's answer is final).
+          enum:
+            - requested
+            - proposed
+            - disputed
+            - settled
+          example: proposed
+          type: string
+        status_tx:
+          description: The transaction that set the current status.
+          example: 7.199744459932657e+76
+          type:
+            - string
+            - 'null'
       type: object
     PriceFeed:
       description: |-

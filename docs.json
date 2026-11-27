@@ -161,6 +161,7 @@
                   "api-reference/models/liquidity-reward",
                   "api-reference/models/market-payload",
                   "api-reference/models/market-terms",
+                  "api-reference/models/market-uma",
                   "api-reference/models/member-order",
                   "api-reference/models/order-book-response",
                   "api-reference/models/order-cancel-result",
